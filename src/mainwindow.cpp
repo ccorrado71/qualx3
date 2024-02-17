@@ -106,6 +106,12 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setBOperator(DbQueryBuilder::JUST_OP);
         builder.setElements("Al and O and P");
         break;
+    case 18:
+        builder.setNames("potassium");
+        builder.setSubfiles({"I"});
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al and P");
+        break;
     }
 }
 
@@ -115,7 +121,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 17);
+    testSelection(builder, 18);
 
     builder.buildQuery();
     db.makeQuery(builder);
