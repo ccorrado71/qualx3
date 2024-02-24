@@ -121,7 +121,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 18);
+    testSelection(builder, 16);
 
     builder.buildQuery();
     db.makeQuery(builder);

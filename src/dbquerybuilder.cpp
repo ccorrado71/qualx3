@@ -14,7 +14,7 @@ void DbQueryBuilder::initialize()
     names.clear();
     subfiles.clear();
     elString.clear();
-    queryString.clear();
+    queryChemical.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -22,9 +22,9 @@ void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
     subfiles = newSubfiles;
 }
 
-QString DbQueryBuilder::getQueryString() const
+QString DbQueryBuilder::getChemicalString() const
 {
-    return queryString;
+    return queryChemical;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
@@ -37,30 +37,40 @@ void DbQueryBuilder::setBOperator(boolOperator newBOperator)
     bOperator = newBOperator;
 }
 
+void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
+{
+    csysString = newCsysString;
+}
+
 void DbQueryBuilder::setElements(const QString &newElements)
 {
     elString = newElements;
 }
 
+void DbQueryBuilder::setNames(const QString &newNames)
+{
+    names = newNames;
+}
+
 void DbQueryBuilder::buildQuery()
 {
-    queryString = queryNameString();
-    if (!queryString.isEmpty() && printEnabled) {
-        qInfo() << "Query chemical name: " << queryString;
+    queryChemical = queryNameString();
+    if (!queryChemical.isEmpty() && printEnabled) {
+        qInfo() << "Query chemical name: " << queryChemical;
     }
 
     QString querySubfile = querySubfilesString();
     if (!querySubfile.isEmpty()) {
-        if (!queryString.isEmpty()) queryString += " intersect ";
-        queryString += querySubfile;
-        if (printEnabled) qInfo() << "Query subfiles: " << queryString;
+        if (!queryChemical.isEmpty()) queryChemical += " intersect ";
+        queryChemical += querySubfile;
+        if (printEnabled) qInfo() << "Query subfiles: " << queryChemical;
     }
 
     QString queryElements = queryElementString();
     if (!queryElements.isEmpty()) {
-        if (!queryString.isEmpty()) queryString += " intersect ";
-        queryString += queryElements;
-        if (printEnabled) qInfo() << "Query elements: " << queryString;
+        if (!queryChemical.isEmpty()) queryChemical += " intersect ";
+        queryChemical += queryElements;
+        if (printEnabled) qInfo() << "Query elements: " << queryChemical;
     }
 }
 
@@ -244,7 +254,12 @@ QString DbQueryBuilder::queryElementString()
     return queryElement;
 }
 
-void DbQueryBuilder::setNames(const QString &newNames)
+QString DbQueryBuilder::queryCrystalSystem()
 {
-    names = newNames;
+    QString queryCSys;
+
+    //TOFIX: accedi a csysString to build the query
+
+    return queryCSys;
 }
+

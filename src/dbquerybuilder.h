@@ -10,25 +10,31 @@ public:
 
     DbQueryBuilder();
     void initialize();
+
     void setNames(const QString &newNames);
     void setSubfiles(const QStringList &newSubfiles);
     void setElements(const QString &newElements);
+    void setCsysString(const QStringList &newCsysString);
+
     void buildQuery();
-    QString getQueryString() const;
+    QString getChemicalString() const;
     void setPrintEnabled(bool newPrintEnabled);    
     void setBOperator(boolOperator newBOperator);
 
 private:
-    QString queryString;
+    QString queryChemical;
+    QString queryCrySys;
     QString names;
     QStringList subfiles;
     QString elString;
+    QStringList csysString;
     bool printEnabled;
     boolOperator bOperator;
 
     QString queryNameString();
     QString querySubfilesString();
     QString queryElementString();
+    QString queryCrystalSystem();
 };
 
 #endif // DBQUERYBUILDER_H

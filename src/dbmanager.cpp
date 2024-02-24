@@ -146,7 +146,7 @@ void DbManager::getCardAdditionalInfo(const QString &idCard)
 
 void DbManager::makeQuery(const DbQueryBuilder &builder)
 {
-    QString queryString = builder.getQueryString();
+    QString queryString = builder.getChemicalString();
 
     int ncount = queryForCount(queryString);
     qInfo() << "NCOUNT: " << ncount;
