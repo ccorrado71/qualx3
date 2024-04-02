@@ -1,7 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "dbmanager.h"
+//#include "dbmanager.h"
+#include "qualxdbmanager.h"
 
 #include <QMainWindow>
 
@@ -26,7 +27,8 @@ private slots:
 private:
     Ui::MainWindow *ui;    
     QString currentDatabase;
-    DbManager db, dbInfo;
+    QualxDbManager qualxDb;
+    //DbManager db, dbInfo, dbInfoStat;
     void testSelection(DbQueryBuilder &builder, int testCase);
 };
 #endif // MAINWINDOW_H

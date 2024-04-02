@@ -64,9 +64,6 @@ void DbManager::getInfo(int &ncard, QString &type)
 
 void DbManager::getCardInfo(const QString &idCard)
 {
-    //QSqlDatabase db = QSqlDatabase::database("cod2205ino.sq");
-
-    //QString idCard = "2300375";
     QSqlQuery queryId(m_db);
     queryId.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, intensita, dvalue, nd FROM id WHERE id="+idCard);
     if (queryId.exec()) {
@@ -104,49 +101,16 @@ void DbManager::getCardAdditionalInfo(const QString &idCard)
 
 }
 
-// void DbManager::makeQuery(const QString &names, const QStringList &subfiles, const QString &elements)
-// {
-//     QString queryString = queryNameString(names);
-//     qInfo() << "Query chemical name: " << queryString;
-
-//     QString querySubfile = querySubfilesString(subfiles);
-//     if (!querySubfile.isEmpty()) {
-//         if (!queryString.isEmpty()) queryString += " intersect ";
-//         queryString += querySubfile;
-//         qInfo() << "Query subfiles: " << queryString;
-//     }
-
-//     QString queryElements = queryElementString(elements);
-//     if (!queryElements.isEmpty()) {
-//         if (!queryString.isEmpty()) queryString += " intersect ";
-//         queryString += queryElements;
-//         qInfo() << "Query elements: " << queryString;
-//     }
-
-//     int ncount = queryForCount(queryString);
-//     qInfo() << "NCOUNT: " << ncount;
-
-//     if (ncount > 0) {
-//         qInfo() << "Start query for idsString";
-//         QSqlQuery query(m_db);
-//         query.prepare(queryString);
-
-//         QString idsString;
-//         if (query.exec()) {
-//             while (query.next()) {
-//                 idsString.append("'"+query.value(0).toString()+"',");
-//             }
-//             idsString.chop(1); //rimove last ','
-//             qInfo() << "End query for idsString";
-
-//             queryInfoIds(idsString, ncount);
-//         }
-//     }
-// }
-
 void DbManager::makeQuery(const DbQueryBuilder &builder)
 {
-    QString queryString = builder.getChemicalString();
+    //Step 1: query for crystal system and space groups
+    QString qCrySys = builder.getCrySysQueryString();
+    if (!qCrySys.isEmpty()) {
+        makeQueryCrystalSystem(qCrySys);
+    }
+
+    //Step 2: query for chemical elements
+    QString queryString = builder.getChemicalQueryString();
 
     int ncount = queryForCount(queryString);
     qInfo() << "NCOUNT: " << ncount;
@@ -164,9 +128,14 @@ void DbManager::makeQuery(const DbQueryBuilder &builder)
             idsString.chop(1); //rimove last ','
             qInfo() << "End query for idsString";
 
-            queryInfoIds(idsString, ncount);
+            makeQueryInfoIds(idsString, ncount);
         }
     }
+}
+
+QSqlDatabase DbManager::db() const
+{
+    return m_db;
 }
 
 int DbManager::queryForCount(const QString &queryString)
@@ -185,121 +154,21 @@ int DbManager::queryForCount(const QString &queryString)
     return count;
 }
 
-QString DbManager::querySubfilesString(const QStringList &subfiles)
+void DbManager::makeQueryCrystalSystem(const QString &qString)
 {
-    QString queryString;
-    if (subfiles.size() > 0) {
-        queryString = QString("Select id from subfiles where subfile = '%1'").arg(subfiles.at(0));
-        for (int i = 1; i < subfiles.size(); i++) {
-            queryString += QString("and id in (Select id from subfiles where subfile = '%1')").arg(subfiles.at(i));
+    qInfo() << "Start query crystal system";
+    QSqlQuery query(m_db);
+    query.prepare(qString);
+    if (query.exec()) {
+        while (query.next()) {
+            qInfo() << "Space groups: " << query.value(0).toString();
+            qInfo() << "N: " << query.value(1).toInt();
         }
     }
-
-    return queryString;
+    qInfo() << "End query crystal system";
 }
 
-QString DbManager::queryNameString(const QString &names)
-{
-    //Select id, name from id where (
-    //(name like '%silicon%' and name like '%oxide%')
-    //or (mineralname like '%silicon' and mineralname like '%oxide'))
-    QString queryName;
-    QStringList nameList = names.split(" ", Qt::SkipEmptyParts);
-    if (nameList.size() > 0) {
-        queryName = "Select id from id where ( (";
-
-        for (int i = 0; i < nameList.size(); i++) {
-            queryName += "name like '%" + nameList.at(i) + "%'";
-            if (i != nameList.size()-1) queryName += " and ";
-        }
-        queryName += ") or (";
-        for (int i = 0; i < nameList.size(); i++) {
-            queryName += "mineralname like '%" + nameList.at(i) + "%'";
-            if (i != nameList.size()-1) queryName += " and ";
-        }
-        queryName += ")";
-        queryName += ")";
-    }
-
-    return queryName;
-}
-
-// QString DbManager::queryElementString(const QString &elString)
-// {
-//     QString queryElement;
-
-//     if (!elString.isEmpty()) {
-//         QStringList list = elString.split(" ");
-//         if (list.size() % 2 == 0) {
-//             qInfo() << "Something wrong happens";
-//             return queryElement;
-//         }
-
-//         QStringList elements(std::ceil(static_cast<double>(list.size()) / 2));
-//         QStringList logicOper(elements.size()-1);
-//         int j = 0, k = 0;
-//         for (int i = 0; i < list.size(); i++) {
-//             if (i % 2 == 0) {
-//                 elements[j++] = list.at(i);
-//             } else {
-//                 logicOper[k++] = list.at(i);
-//             }
-//         }
-//         qInfo() << "ELEMENTS: " << elements;
-//         qInfo() << "LOGIC: " << logicOper;
-//         if (elements.size() == 1) {
-//             queryElement = "Select distinct(c0.id) from chemical as c0 where c0.chemical_element='"+elements.at(0)+"'";
-//         } else {
-//             bool allAnd = true;
-//             foreach(const QString& item, logicOper) {
-//                 if (item != "and") {
-//                     allAnd = false;
-//                     break;
-//                 }
-//             }
-//             if (allAnd) {
-//                 queryElement = "Select distinct(c0.id) from ";
-//                 for (int i = 0; i < elements.size(); i++) {
-//                     queryElement += QString("chemical as c%1").arg(i);
-//                     if (i != elements.size()-1) queryElement+=", ";
-//                 }
-//                 queryElement += " where ";
-//                 for (int i = 0; i < elements.size(); i++) {
-//                     queryElement += QString("c%1.chemical_element='%2'").arg(i).arg(elements.at(i));
-//                     if (i != elements.size()-1) {
-//                         queryElement+= QString(" and c%1.id=c%2.id and ").arg(i).arg(i+1);
-//                     }
-//                 }
-//             } else {
-//                 //Start query with first element
-//                 queryElement = QString("Select distinct(id) from chemical where chemical_element='%1'").arg(elements.at(0));
-
-//                 //Add elements with 'and' operator to query
-//                 for (int i = 0; i < logicOper.size(); i++) {
-//                     if (logicOper.at(i) == "and") {
-//                         queryElement += QString(" and id in (select distinct(id) from chemical where chemical_element='%1')").arg(elements.at(i+1));
-//                     }
-//                 }
-
-//                 //Add elements with 'or' operator to query
-//                 for (int i = 0; i < logicOper.size(); i++) {
-//                     if (logicOper.at(i) == "or") {
-//                         queryElement += QString(" union select distinct(id) from chemical where chemical_element='%1'").arg(elements.at(i+1));
-//                     }
-//                 }
-//             }
-
-//             //TODO:
-//             //1) Scrivi una classe QueryBuilder che servirà per generare la query dalle info della GUI
-//             //2) Testa le query gestite finora
-//         }
-
-//     }
-
-//     return queryElement;
-// }
-
-void DbManager::queryInfoIds(const QString &idsString, int count)
+void DbManager::makeQueryInfoIds(const QString &idsString, int count)
 {
     qInfo() << "Start queryIds";
     QSqlQuery queryIds(m_db);

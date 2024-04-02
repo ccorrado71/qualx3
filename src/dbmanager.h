@@ -14,21 +14,20 @@ public:
     bool openDb(const QString &path);
     void closeDb();
     bool isOpen() const;
+    int queryForCount(const QString &queryString);
 
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
-    //void makeQuery(const QString &names, const QStringList &subfiles, const QString &elements);
     void makeQuery(const DbQueryBuilder &builder);
-    //void queryRestraintName(const QString &name, const QString &subFile);
+
+    QSqlDatabase db() const;
 
 private:
     QSqlDatabase m_db;
-    int queryForCount(const QString &queryString);
-    QString querySubfilesString(const QStringList &subfiles);
-    QString queryNameString(const QString &names);
     QString queryElementString(const QString &elString);
-    void queryInfoIds(const QString &idsString, int count);
+    void makeQueryCrystalSystem(const QString  &qString);
+    void makeQueryInfoIds(const QString &idsString, int count);
 };
 
 #endif // DBMANAGER_H

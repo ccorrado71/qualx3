@@ -15,10 +15,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     //currentDatabase = "/home/corrado/temp/codino/cod2205ino.sq";
-    currentDatabase = "/home/corrado/temp/cod/cod2205.sq";
+    //old currentDatabase = "/home/corrado/temp/cod/cod2205.sq";
 
-    if (!db.openDb(currentDatabase)) return;
-    if (!dbInfo.openDb(currentDatabase+".info")) return;
+    // if (!db.openDb(currentDatabase)) return;
+    // if (!dbInfo.openDb(currentDatabase+".info")) return;
+    // if (!dbInfoStat.openDb(currentDatabase+".infostat")) return;
+
+    currentDatabase = "/home/corrado/temp/cod/cod2205";
+    qualxDb.openDatabases(currentDatabase);
 }
 
 MainWindow::~MainWindow()
@@ -30,16 +34,18 @@ void MainWindow::on_actionDatabaseInfo_triggered()
 {
     int ncard;
     QString type;
-    db.getInfo(ncard, type);
-    qInfo() << "Ncard: " << ncard << "Type: " << type;
+    //FIX LATER
+//    db.getInfo(ncard, type);
+//    qInfo() << "Ncard: " << ncard << "Type: " << type;
 }
 
 void MainWindow::on_actionGet_Card_triggered()
 {
     QString idCard = "2300375";
     //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
-    db.getCardInfo(idCard);
-    dbInfo.getCardAdditionalInfo(idCard);
+    //FIX LATER
+    // db.getCardInfo(idCard);
+    // dbInfo.getCardAdditionalInfo(idCard);
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
@@ -112,6 +118,8 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setBOperator(DbQueryBuilder::ONLY_OP);
         builder.setElements("Al and P");
         break;
+    case 19:
+        builder.setCsysString({"Cubic"});
     }
 }
 
@@ -121,8 +129,8 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 16);
+    testSelection(builder, 19);
 
     builder.buildQuery();
-    db.makeQuery(builder);
+    qualxDb.makeQuery(builder);
 }

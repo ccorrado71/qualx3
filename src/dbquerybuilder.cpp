@@ -22,9 +22,14 @@ void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
     subfiles = newSubfiles;
 }
 
-QString DbQueryBuilder::getChemicalString() const
+QString DbQueryBuilder::getChemicalQueryString() const
 {
     return queryChemical;
+}
+
+QString DbQueryBuilder::getCrySysQueryString() const
+{
+    return queryCrySys;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
@@ -54,6 +59,11 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
+    queryCrySys = queryCrystalSystem();
+    if (!queryCrySys.isEmpty() && printEnabled) {
+        qInfo() << "Query crystal system: " << queryCrySys;
+    }
+
     queryChemical = queryNameString();
     if (!queryChemical.isEmpty() && printEnabled) {
         qInfo() << "Query chemical name: " << queryChemical;
@@ -258,7 +268,14 @@ QString DbQueryBuilder::queryCrystalSystem()
 {
     QString queryCSys;
 
-    //TOFIX: accedi a csysString to build the query
+    if (csysString.size() == 0) return QString();
+
+    queryCSys = "select ids,n from stat_type where (";
+    for (int i = 0; i < csysString.size(); i++) {
+        queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
+        if (i != csysString.size()-1) queryCSys += " or ";
+    }
+    queryCSys += ")";
 
     return queryCSys;
 }

@@ -17,7 +17,8 @@ public:
     void setCsysString(const QStringList &newCsysString);
 
     void buildQuery();
-    QString getChemicalString() const;
+    QString getChemicalQueryString() const;
+    QString getCrySysQueryString() const;
     void setPrintEnabled(bool newPrintEnabled);    
     void setBOperator(boolOperator newBOperator);
 

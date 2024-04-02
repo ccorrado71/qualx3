@@ -7,6 +7,8 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.cpp
     mainwindow.ui
+    qualxdbmanager.cpp
+    qualxdbmanager.h
 )
 
 set(FORTRAN_SOURCES 
@@ -17,5 +19,5 @@ qt_add_resources(PROJECT_SOURCES resource.qrc)
 
 add_executable(${CMAKE_PROJECT_NAME}
 	${PROJECT_SOURCES}
-        ${FORTRAN_SOURCES}        
+        ${FORTRAN_SOURCES}
 )
