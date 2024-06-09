@@ -66,18 +66,22 @@ void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
     }
 }
 
-void QualxDbManager::makeQueryCrystalSystem(const QString &qString)
+int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &result)
 {
     qInfo() << "Start query crystal system";
+    int ndata = 0;
     QSqlQuery query(dbInfoStat.db());
     query.prepare(qString);
     if (query.exec()) {
         while (query.next()) {
-            qInfo() << "Space groups: " << query.value(0).toString();
-            qInfo() << "N: " << query.value(1).toInt();
+            result = query.value(0).toString();
+            //qInfo() << "Space groups: " << result;
+            ndata = query.value(1).toInt();
+            qInfo() << "N: " << ndata;
         }
     }
     qInfo() << "End query crystal system";
+    return ndata;
 }
 
 void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
@@ -92,7 +96,8 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
             nId++;
             float perc = 100.0f*nId/count;
             if (fmod(perc,10) == 0) qInfo() << perc << "%";
-            qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString();
+            qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
+                    << queryIds.value(4).toString();
         }
     }
     qInfo() << "End queryIds";
@@ -100,22 +105,26 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
 
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
-    //Step 1: query for crystal system and space groups
-    QString qCrySys = builder.getCrySysQueryString();
-    if (!qCrySys.isEmpty()) {
-        makeQueryCrystalSystem(qCrySys);
+    //Step 1: build and make query for crystal system and space groups
+    QString queryCrySys = builder.getCrySysQueryString();
+    int nCountCry = 0;
+    QString qCrySysResult;
+    if (!queryCrySys.isEmpty()) {
+        nCountCry = makeQueryCrystalSystem(queryCrySys, qCrySysResult);
     }
 
-    //Step 2: query for chemical elements
-    QString queryString = builder.getChemicalQueryString();
+    //Step 2: build query for chemical elements
+    QString queryChemical = builder.getChemicalQueryString();
+    if (nCountCry > 0 && !queryChemical.isEmpty()) {
+        queryChemical = queryChemical + " intersect select id from chemical where id in (" + qCrySysResult + ")";
+    }
 
-    int ncount = dbMain.queryForCount(queryString);
-    qInfo() << "NCOUNT: " << ncount;
-
-    if (ncount > 0) {
+    if (!queryChemical.isEmpty()) {
+        int nCountChemical = dbMain.queryForCount(queryChemical);
+        qInfo() << "NCOUNT: " << nCountChemical;
         qInfo() << "Start query for idsString";
         QSqlQuery query(dbMain.db());
-        query.prepare(queryString);
+        query.prepare(queryChemical);
 
         QString idsString;
         if (query.exec()) {
@@ -125,8 +134,12 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             idsString.chop(1); //rimove last ','
             qInfo() << "End query for idsString";
 
-            makeQueryInfoIds(idsString, ncount);
+            //qInfo() << "idsString: " << idsString;
+            makeQueryInfoIds(idsString, nCountChemical);
         }
+
+    } else if (nCountCry > 0) {
+        makeQueryInfoIds(qCrySysResult, nCountCry);
     }
 }
 

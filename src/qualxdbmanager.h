@@ -20,7 +20,7 @@ private:
 
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
-    void makeQueryCrystalSystem(const QString  &qString);
+    int  makeQueryCrystalSystem(const QString  &qString, QString &result);
     void makeQueryInfoIds(const QString &idsString, int count);
 };
 

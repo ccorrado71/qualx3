@@ -120,6 +120,15 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         break;
     case 19:
         builder.setCsysString({"Cubic"});
+        break;
+    case 20:
+        builder.setCsysString({"hexagonal", "rhombohedral"});
+        break;
+    case 21:
+        builder.setCsysString({"hexagonal"});
+        builder.setElements("Al");
+        break;
+
     }
 }
 
@@ -129,7 +138,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 19);
+    testSelection(builder, 21);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);
