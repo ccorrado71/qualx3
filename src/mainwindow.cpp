@@ -120,6 +120,24 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         break;
     case 19:
         builder.setCsysString({"Cubic"});
+        break;
+    case 20:
+        builder.setCsysString({"Cubic","Tetragonal"});
+        break;
+    case 21:
+        builder.setCsysString({"hexagonal"});
+        builder.setElements("Al");
+        break;
+    case 22:
+        builder.setSpgString({"P 1 1 2"});
+        break;
+    case 23:
+        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
+        break;
+    case 24:
+        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
+        builder.setCsysString({"Cubic"});
+        break;
     }
 }
 
@@ -129,7 +147,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 19);
+    testSelection(builder, 24);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);

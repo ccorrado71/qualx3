@@ -14,7 +14,11 @@ void DbQueryBuilder::initialize()
     names.clear();
     subfiles.clear();
     elString.clear();
+    spgString.clear();
+
     queryChemical.clear();
+    queryCrySys.clear();
+    querySymmetry.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -27,9 +31,14 @@ QString DbQueryBuilder::getChemicalQueryString() const
     return queryChemical;
 }
 
-QString DbQueryBuilder::getCrySysQueryString() const
+// QString DbQueryBuilder::getCrySysQueryString() const
+// {
+//     return queryCrySys;
+// }
+
+QString DbQueryBuilder::getSymmetryQueryString() const
 {
-    return queryCrySys;
+    return querySymmetry;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
@@ -41,6 +50,16 @@ void DbQueryBuilder::setBOperator(boolOperator newBOperator)
 {
     bOperator = newBOperator;
 }
+
+void DbQueryBuilder::setSpgString(const QStringList &newSpgString)
+{
+    spgString = newSpgString;
+}
+
+// QString DbQueryBuilder::getQuerySpaceGroup() const
+// {
+//     return querySymmetry;
+// }
 
 void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
 {
@@ -59,24 +78,29 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
-    queryCrySys = queryCrystalSystem();
-    if (!queryCrySys.isEmpty() && printEnabled) {
-        qInfo() << "Query crystal system: " << queryCrySys;
+    // queryCrySys = buildQueryCrystalSystem();
+    // if (!queryCrySys.isEmpty() && printEnabled) {
+    //     qInfo() << "Query crystal system: " << queryCrySys;
+    // }
+
+    querySymmetry = buildQuerySymmetry();
+    if (!querySymmetry.isEmpty() && printEnabled) {
+        qInfo() << "Query symmetry: " << querySymmetry;
     }
 
-    queryChemical = queryNameString();
+    queryChemical = buildQueryNameString();
     if (!queryChemical.isEmpty() && printEnabled) {
         qInfo() << "Query chemical name: " << queryChemical;
     }
 
-    QString querySubfile = querySubfilesString();
+    QString querySubfile = buildQuerySubfilesString();
     if (!querySubfile.isEmpty()) {
         if (!queryChemical.isEmpty()) queryChemical += " intersect ";
         queryChemical += querySubfile;
         if (printEnabled) qInfo() << "Query subfiles: " << queryChemical;
     }
 
-    QString queryElements = queryElementString();
+    QString queryElements = buildQueryElementString();
     if (!queryElements.isEmpty()) {
         if (!queryChemical.isEmpty()) queryChemical += " intersect ";
         queryChemical += queryElements;
@@ -84,7 +108,7 @@ void DbQueryBuilder::buildQuery()
     }
 }
 
-QString DbQueryBuilder::queryNameString()
+QString DbQueryBuilder::buildQueryNameString()
 {
     //Example: Select id, name from id where (
     //(name like '%silicon%' and name like '%oxide%')
@@ -110,7 +134,7 @@ QString DbQueryBuilder::queryNameString()
     return queryName;
 }
 
-QString DbQueryBuilder::querySubfilesString()
+QString DbQueryBuilder::buildQuerySubfilesString()
 {
     QString queryString;
     if (subfiles.size() > 0) {
@@ -123,7 +147,7 @@ QString DbQueryBuilder::querySubfilesString()
     return queryString;
 }
 
-QString DbQueryBuilder::queryElementString()
+QString DbQueryBuilder::buildQueryElementString()
 {
     QString queryElement;
 
@@ -264,19 +288,61 @@ QString DbQueryBuilder::queryElementString()
     return queryElement;
 }
 
-QString DbQueryBuilder::queryCrystalSystem()
+// QString DbQueryBuilder::buildQueryCrystalSystem()
+// {
+//     QString queryCSys;
+
+//     if (csysString.size() == 0) return QString();
+
+//     queryCSys = "select ids,n from stat_type where (";
+//     for (int i = 0; i < csysString.size(); i++) {
+//         queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
+//         if (i != csysString.size()-1) queryCSys += " or ";
+//     }
+//     queryCSys += ")";
+
+//     return queryCSys;
+// }
+
+QString DbQueryBuilder::buildQuerySymmetry()
 {
-    QString queryCSys;
+    QString querySymm;
 
-    if (csysString.size() == 0) return QString();
+    if (spgString.size() != 0) {
+        querySymm = "select ids,n from spgrstat where (";
+        for (int i = 0; i < spgString.size(); i++) {
+            querySymm += QString("trim(spacegroup) = '%1'").arg(spgString.at(i));
+            if (i != spgString.size()-1) querySymm += " or ";
+        }
 
-    queryCSys = "select ids,n from stat_type where (";
-    for (int i = 0; i < csysString.size(); i++) {
-        queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
-        if (i != csysString.size()-1) queryCSys += " or ";
+        for (int i = 0; i < csysString.size(); i++) {
+            querySymm += QString(" or type='%1'").arg(csysString.at(i));
+        }
+
+        querySymm += ")";
+
+        return querySymm;
     }
-    queryCSys += ")";
 
-    return queryCSys;
+    if (csysString.size() != 0) {
+        querySymm = "select ids,n from stat_type where (";
+        for (int i = 0; i < csysString.size(); i++) {
+            querySymm += QString("trim(val) like '%1'").arg(csysString.at(i));
+            if (i != csysString.size()-1) querySymm += " or ";
+        }
+        querySymm += ")";
+    }
+
+    return querySymm;
 }
+
+// QString DbQueryBuilder::buildQuerySymmetry()
+// {
+//     QString querySymm;
+
+//     if (spgString.size() == 0 && csysString.size() == 0) return QString();
+
+//     querySymm = "select ids,n from spgrstat where (";
+//     return querySymm;
+// }
 
