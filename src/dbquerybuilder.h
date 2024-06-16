@@ -22,20 +22,27 @@ public:
     void setPrintEnabled(bool newPrintEnabled);    
     void setBOperator(boolOperator newBOperator);
 
+    void setSpgString(const QStringList &newSpgString);
+
+    QString getQuerySpaceGroup() const;
+
 private:
     QString queryChemical;
     QString queryCrySys;
+    QString querySpaceGroup;
     QString names;
     QStringList subfiles;
     QString elString;
     QStringList csysString;
+    QStringList spgString;
     bool printEnabled;
     boolOperator bOperator;
 
-    QString queryNameString();
-    QString querySubfilesString();
-    QString queryElementString();
-    QString queryCrystalSystem();
+    QString buildQueryNameString();
+    QString buildQuerySubfilesString();
+    QString buildQueryElementString();
+    QString buildQueryCrystalSystem();
+    QString buildQuerySpaceGroup();
 };
 
 #endif // DBQUERYBUILDER_H

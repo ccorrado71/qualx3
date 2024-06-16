@@ -14,7 +14,11 @@ void DbQueryBuilder::initialize()
     names.clear();
     subfiles.clear();
     elString.clear();
+    spgString.clear();
+
     queryChemical.clear();
+    queryCrySys.clear();
+    querySpaceGroup.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -42,6 +46,16 @@ void DbQueryBuilder::setBOperator(boolOperator newBOperator)
     bOperator = newBOperator;
 }
 
+void DbQueryBuilder::setSpgString(const QStringList &newSpgString)
+{
+    spgString = newSpgString;
+}
+
+QString DbQueryBuilder::getQuerySpaceGroup() const
+{
+    return querySpaceGroup;
+}
+
 void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
 {
     csysString = newCsysString;
@@ -59,24 +73,29 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
-    queryCrySys = queryCrystalSystem();
+    queryCrySys = buildQueryCrystalSystem();
     if (!queryCrySys.isEmpty() && printEnabled) {
         qInfo() << "Query crystal system: " << queryCrySys;
     }
 
-    queryChemical = queryNameString();
+    querySpaceGroup = buildQuerySpaceGroup();
+    if (!querySpaceGroup.isEmpty() && printEnabled) {
+        qInfo() << "Query space group: " << querySpaceGroup;
+    }
+
+    queryChemical = buildQueryNameString();
     if (!queryChemical.isEmpty() && printEnabled) {
         qInfo() << "Query chemical name: " << queryChemical;
     }
 
-    QString querySubfile = querySubfilesString();
+    QString querySubfile = buildQuerySubfilesString();
     if (!querySubfile.isEmpty()) {
         if (!queryChemical.isEmpty()) queryChemical += " intersect ";
         queryChemical += querySubfile;
         if (printEnabled) qInfo() << "Query subfiles: " << queryChemical;
     }
 
-    QString queryElements = queryElementString();
+    QString queryElements = buildQueryElementString();
     if (!queryElements.isEmpty()) {
         if (!queryChemical.isEmpty()) queryChemical += " intersect ";
         queryChemical += queryElements;
@@ -84,7 +103,7 @@ void DbQueryBuilder::buildQuery()
     }
 }
 
-QString DbQueryBuilder::queryNameString()
+QString DbQueryBuilder::buildQueryNameString()
 {
     //Example: Select id, name from id where (
     //(name like '%silicon%' and name like '%oxide%')
@@ -110,7 +129,7 @@ QString DbQueryBuilder::queryNameString()
     return queryName;
 }
 
-QString DbQueryBuilder::querySubfilesString()
+QString DbQueryBuilder::buildQuerySubfilesString()
 {
     QString queryString;
     if (subfiles.size() > 0) {
@@ -123,7 +142,7 @@ QString DbQueryBuilder::querySubfilesString()
     return queryString;
 }
 
-QString DbQueryBuilder::queryElementString()
+QString DbQueryBuilder::buildQueryElementString()
 {
     QString queryElement;
 
@@ -264,7 +283,7 @@ QString DbQueryBuilder::queryElementString()
     return queryElement;
 }
 
-QString DbQueryBuilder::queryCrystalSystem()
+QString DbQueryBuilder::buildQueryCrystalSystem()
 {
     QString queryCSys;
 
@@ -278,5 +297,20 @@ QString DbQueryBuilder::queryCrystalSystem()
     queryCSys += ")";
 
     return queryCSys;
+}
+
+QString DbQueryBuilder::buildQuerySpaceGroup()
+{
+    QString querySpg;
+
+    if (spgString.size() == 0) return QString();
+    querySpg = "select ids,n from spgrstat where (";
+    for (int i = 0; i < spgString.size(); i++) {
+        querySpg += QString("trim(spacegroup) = '%1'").arg(spgString.at(i));
+        if (i != spgString.size()-1) querySpg += " or ";
+    }
+    querySpg += ")";
+
+    return querySpg;
 }
 

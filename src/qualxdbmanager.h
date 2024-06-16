@@ -21,6 +21,7 @@ private:
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
     int  makeQueryCrystalSystem(const QString  &qString, QString &result);
+    int  makeQuerySpaceGroup(const QString &qString, QString &result);
     void makeQueryInfoIds(const QString &idsString, int count);
 };
 

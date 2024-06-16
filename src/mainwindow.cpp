@@ -128,7 +128,9 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setCsysString({"hexagonal"});
         builder.setElements("Al");
         break;
-
+    case 22:
+        builder.setSpgString({"P 1 1 2"});
+        break;
     }
 }
 
@@ -138,7 +140,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 21);
+    testSelection(builder, 22);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);

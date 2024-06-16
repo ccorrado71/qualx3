@@ -84,6 +84,24 @@ int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &resu
     return ndata;
 }
 
+int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
+{
+    qInfo() << "Start query space group";
+    int ndata = 0;
+    QSqlQuery query(dbInfo.db());
+    query.prepare(qString);
+    if (query.exec()) {
+        while (query.next()) {
+            result = query.value(0).toString();
+            //qInfo() << "Space groups: " << result;
+            ndata = query.value(1).toInt();
+            qInfo() << "N: " << ndata;
+        }
+    }
+    qInfo() << "End query space group";
+    return ndata;
+}
+
 void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
 {
     qInfo() << "Start queryIds";
@@ -113,10 +131,30 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
         nCountCry = makeQueryCrystalSystem(queryCrySys, qCrySysResult);
     }
 
+    QString querySpaceGroup = builder.getQuerySpaceGroup();
+    int nCountSpg = 0;
+    QString qSpgResult;
+    if (!querySpaceGroup.isEmpty()) {
+        nCountSpg = makeQuerySpaceGroup(querySpaceGroup, qSpgResult);
+    }
+
+    QString qSimmetryResult;
+    int nCountSimmetry = 0;
+    if (nCountCry > 0 && nCountSpg > 0) {
+        //FIX THIS LATER
+    }
+    else if (nCountCry > 0) {
+        qSimmetryResult = qCrySysResult;
+        nCountSimmetry = nCountCry;
+    } else if (nCountSpg > 0) {
+        qSimmetryResult = qSpgResult;
+        nCountSimmetry = nCountSpg;
+    }
+
     //Step 2: build query for chemical elements
     QString queryChemical = builder.getChemicalQueryString();
-    if (nCountCry > 0 && !queryChemical.isEmpty()) {
-        queryChemical = queryChemical + " intersect select id from chemical where id in (" + qCrySysResult + ")";
+    if (nCountSimmetry > 0 && !queryChemical.isEmpty()) {
+        queryChemical = queryChemical + " intersect select id from chemical where id in (" + qSimmetryResult + ")";
     }
 
     if (!queryChemical.isEmpty()) {
@@ -138,8 +176,8 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             makeQueryInfoIds(idsString, nCountChemical);
         }
 
-    } else if (nCountCry > 0) {
-        makeQueryInfoIds(qCrySysResult, nCountCry);
+    } else if (nCountSimmetry > 0) {
+        makeQueryInfoIds(qSimmetryResult, nCountSimmetry);
     }
 }
 
