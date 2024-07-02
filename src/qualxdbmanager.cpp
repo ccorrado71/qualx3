@@ -70,16 +70,21 @@ int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &resu
 {
     qInfo() << "Start query crystal system";
     int ndata = 0;
+    result.clear();
     QSqlQuery query(dbInfoStat.db());
     query.prepare(qString);
     if (query.exec()) {
         while (query.next()) {
-            result = query.value(0).toString();
-            //qInfo() << "Space groups: " << result;
-            ndata = query.value(1).toInt();
-            qInfo() << "N: " << ndata;
+            if (result.isEmpty()) {
+                result = query.value(0).toString();
+            } else {
+                result = result + "," + query.value(0).toString();
+            }
+            ndata = ndata + query.value(1).toInt();
         }
     }
+    //qInfo() << "Space groups: " << result;
+    qInfo() << "N: " << ndata;
     qInfo() << "End query crystal system";
     return ndata;
 }
@@ -88,16 +93,21 @@ int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
 {
     qInfo() << "Start query space group";
     int ndata = 0;
+    result.clear();
     QSqlQuery query(dbInfo.db());
     query.prepare(qString);
     if (query.exec()) {
         while (query.next()) {
-            result = query.value(0).toString();
-            //qInfo() << "Space groups: " << result;
-            ndata = query.value(1).toInt();
-            qInfo() << "N: " << ndata;
+            if (result.isEmpty()) {
+                result = query.value(0).toString();
+            } else {
+                result = result + "," + query.value(0).toString();
+            }
+            ndata = ndata + query.value(1).toInt();
         }
     }
+    //qInfo() << "Space groups: " << result;
+    qInfo() << "N: " << ndata;
     qInfo() << "End query space group";
     return ndata;
 }
@@ -123,6 +133,13 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
 
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
+    //Gestione space groups + crystal system
+    //1: scrivi due metodi (getQuery and makeQuery) che prendono in input entrambe le liste e fa un'unica query
+    //simile a quella del gruppo spaziale ma con i sistemi cristallini in or (es. or type='Monoclinic')
+    //2: se una delle 2 liste è vuota procedi come già indicata e sistema opportunamente il codice rimuovendo la doppia varibile
+    //qCrySysResult e qSpgResult, ne basta solo una. Potresti scrivere anche una solo funzione che gestisce le quesry sulla simmetria
+
+
     //Step 1: build and make query for crystal system and space groups
     QString queryCrySys = builder.getCrySysQueryString();
     int nCountCry = 0;
