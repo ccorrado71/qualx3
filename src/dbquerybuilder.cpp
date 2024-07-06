@@ -18,7 +18,7 @@ void DbQueryBuilder::initialize()
 
     queryChemical.clear();
     queryCrySys.clear();
-    querySpaceGroup.clear();
+    querySymmetry.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -31,9 +31,14 @@ QString DbQueryBuilder::getChemicalQueryString() const
     return queryChemical;
 }
 
-QString DbQueryBuilder::getCrySysQueryString() const
+// QString DbQueryBuilder::getCrySysQueryString() const
+// {
+//     return queryCrySys;
+// }
+
+QString DbQueryBuilder::getSymmetryQueryString() const
 {
-    return queryCrySys;
+    return querySymmetry;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
@@ -51,10 +56,10 @@ void DbQueryBuilder::setSpgString(const QStringList &newSpgString)
     spgString = newSpgString;
 }
 
-QString DbQueryBuilder::getQuerySpaceGroup() const
-{
-    return querySpaceGroup;
-}
+// QString DbQueryBuilder::getQuerySpaceGroup() const
+// {
+//     return querySymmetry;
+// }
 
 void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
 {
@@ -73,14 +78,14 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
-    queryCrySys = buildQueryCrystalSystem();
-    if (!queryCrySys.isEmpty() && printEnabled) {
-        qInfo() << "Query crystal system: " << queryCrySys;
-    }
+    // queryCrySys = buildQueryCrystalSystem();
+    // if (!queryCrySys.isEmpty() && printEnabled) {
+    //     qInfo() << "Query crystal system: " << queryCrySys;
+    // }
 
-    querySpaceGroup = buildQuerySpaceGroup();
-    if (!querySpaceGroup.isEmpty() && printEnabled) {
-        qInfo() << "Query space group: " << querySpaceGroup;
+    querySymmetry = buildQuerySymmetry();
+    if (!querySymmetry.isEmpty() && printEnabled) {
+        qInfo() << "Query symmetry: " << querySymmetry;
     }
 
     queryChemical = buildQueryNameString();
@@ -283,34 +288,61 @@ QString DbQueryBuilder::buildQueryElementString()
     return queryElement;
 }
 
-QString DbQueryBuilder::buildQueryCrystalSystem()
+// QString DbQueryBuilder::buildQueryCrystalSystem()
+// {
+//     QString queryCSys;
+
+//     if (csysString.size() == 0) return QString();
+
+//     queryCSys = "select ids,n from stat_type where (";
+//     for (int i = 0; i < csysString.size(); i++) {
+//         queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
+//         if (i != csysString.size()-1) queryCSys += " or ";
+//     }
+//     queryCSys += ")";
+
+//     return queryCSys;
+// }
+
+QString DbQueryBuilder::buildQuerySymmetry()
 {
-    QString queryCSys;
+    QString querySymm;
 
-    if (csysString.size() == 0) return QString();
+    if (spgString.size() != 0) {
+        querySymm = "select ids,n from spgrstat where (";
+        for (int i = 0; i < spgString.size(); i++) {
+            querySymm += QString("trim(spacegroup) = '%1'").arg(spgString.at(i));
+            if (i != spgString.size()-1) querySymm += " or ";
+        }
 
-    queryCSys = "select ids,n from stat_type where (";
-    for (int i = 0; i < csysString.size(); i++) {
-        queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
-        if (i != csysString.size()-1) queryCSys += " or ";
+        for (int i = 0; i < csysString.size(); i++) {
+            querySymm += QString(" or type='%1'").arg(csysString.at(i));
+        }
+
+        querySymm += ")";
+
+        return querySymm;
     }
-    queryCSys += ")";
 
-    return queryCSys;
+    if (csysString.size() != 0) {
+        querySymm = "select ids,n from stat_type where (";
+        for (int i = 0; i < csysString.size(); i++) {
+            querySymm += QString("trim(val) like '%1'").arg(csysString.at(i));
+            if (i != csysString.size()-1) querySymm += " or ";
+        }
+        querySymm += ")";
+    }
+
+    return querySymm;
 }
 
-QString DbQueryBuilder::buildQuerySpaceGroup()
-{
-    QString querySpg;
+// QString DbQueryBuilder::buildQuerySymmetry()
+// {
+//     QString querySymm;
 
-    if (spgString.size() == 0) return QString();
-    querySpg = "select ids,n from spgrstat where (";
-    for (int i = 0; i < spgString.size(); i++) {
-        querySpg += QString("trim(spacegroup) = '%1'").arg(spgString.at(i));
-        if (i != spgString.size()-1) querySpg += " or ";
-    }
-    querySpg += ")";
+//     if (spgString.size() == 0 && csysString.size() == 0) return QString();
 
-    return querySpg;
-}
+//     querySymm = "select ids,n from spgrstat where (";
+//     return querySymm;
+// }
 

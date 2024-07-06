@@ -18,18 +18,19 @@ public:
 
     void buildQuery();
     QString getChemicalQueryString() const;
-    QString getCrySysQueryString() const;
+//    QString getCrySysQueryString() const;
+    QString getSymmetryQueryString() const;
     void setPrintEnabled(bool newPrintEnabled);    
     void setBOperator(boolOperator newBOperator);
 
     void setSpgString(const QStringList &newSpgString);
 
-    QString getQuerySpaceGroup() const;
+//    QString getQuerySpaceGroup() const;
 
 private:
     QString queryChemical;
     QString queryCrySys;
-    QString querySpaceGroup;
+    QString querySymmetry;
     QString names;
     QStringList subfiles;
     QString elString;
@@ -41,8 +42,8 @@ private:
     QString buildQueryNameString();
     QString buildQuerySubfilesString();
     QString buildQueryElementString();
-    QString buildQueryCrystalSystem();
-    QString buildQuerySpaceGroup();
+//    QString buildQueryCrystalSystem();
+    QString buildQuerySymmetry();
 };
 
 #endif // DBQUERYBUILDER_H

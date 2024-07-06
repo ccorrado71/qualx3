@@ -66,35 +66,64 @@ void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
     }
 }
 
-int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &result)
-{
-    qInfo() << "Start query crystal system";
-    int ndata = 0;
-    result.clear();
-    QSqlQuery query(dbInfoStat.db());
-    query.prepare(qString);
-    if (query.exec()) {
-        while (query.next()) {
-            if (result.isEmpty()) {
-                result = query.value(0).toString();
-            } else {
-                result = result + "," + query.value(0).toString();
-            }
-            ndata = ndata + query.value(1).toInt();
-        }
-    }
-    //qInfo() << "Space groups: " << result;
-    qInfo() << "N: " << ndata;
-    qInfo() << "End query crystal system";
-    return ndata;
-}
+// int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &result)
+// {
+//     qInfo() << "Start query crystal system";
+//     int ndata = 0;
+//     result.clear();
+//     QSqlQuery query(dbInfoStat.db());
+//     query.prepare(qString);
+//     if (query.exec()) {
+//         while (query.next()) {
+//             if (result.isEmpty()) {
+//                 result = query.value(0).toString();
+//             } else {
+//                 result = result + "," + query.value(0).toString();
+//             }
+//             ndata = ndata + query.value(1).toInt();
+//         }
+//     }
+//     //qInfo() << "Space groups: " << result;
+//     qInfo() << "N: " << ndata;
+//     qInfo() << "End query crystal system";
+//     return ndata;
+// }
 
-int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
+// int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
+// {
+//     qInfo() << "Start query space group";
+//     int ndata = 0;
+//     result.clear();
+//     QSqlQuery query(dbInfo.db());
+//     query.prepare(qString);
+//     if (query.exec()) {
+//         while (query.next()) {
+//             if (result.isEmpty()) {
+//                 result = query.value(0).toString();
+//             } else {
+//                 result = result + "," + query.value(0).toString();
+//             }
+//             ndata = ndata + query.value(1).toInt();
+//         }
+//     }
+//     //qInfo() << "Space groups: " << result;
+//     qInfo() << "N: " << ndata;
+//     qInfo() << "End query space group";
+//     return ndata;
+// }
+
+int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
 {
-    qInfo() << "Start query space group";
+    qInfo() << "Start query symmetry";
     int ndata = 0;
     result.clear();
-    QSqlQuery query(dbInfo.db());
+
+    QSqlQuery query;
+    if (qString.contains("from spgrstat"))
+        query = QSqlQuery(dbInfo.db());
+    else
+        query = QSqlQuery(dbInfoStat.db());
+
     query.prepare(qString);
     if (query.exec()) {
         while (query.next()) {
@@ -108,7 +137,7 @@ int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
     }
     //qInfo() << "Space groups: " << result;
     qInfo() << "N: " << ndata;
-    qInfo() << "End query space group";
+    qInfo() << "End query symmetry";
     return ndata;
 }
 
@@ -141,32 +170,38 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 
 
     //Step 1: build and make query for crystal system and space groups
-    QString queryCrySys = builder.getCrySysQueryString();
-    int nCountCry = 0;
-    QString qCrySysResult;
-    if (!queryCrySys.isEmpty()) {
-        nCountCry = makeQueryCrystalSystem(queryCrySys, qCrySysResult);
-    }
+    // QString queryCrySys = builder.getCrySysQueryString();
+    // int nCountCry = 0;
+    // QString qCrySysResult;
+    // if (!queryCrySys.isEmpty()) {
+    //     nCountCry = makeQueryCrystalSystem(queryCrySys, qCrySysResult);
+    // }
 
-    QString querySpaceGroup = builder.getQuerySpaceGroup();
-    int nCountSpg = 0;
-    QString qSpgResult;
-    if (!querySpaceGroup.isEmpty()) {
-        nCountSpg = makeQuerySpaceGroup(querySpaceGroup, qSpgResult);
-    }
+    // QString querySpaceGroup = builder.getQuerySpaceGroup();
+    // int nCountSpg = 0;
+    // QString qSpgResult;
+    // if (!querySpaceGroup.isEmpty()) {
+    //     nCountSpg = makeQuerySpaceGroup(querySpaceGroup, qSpgResult);
+    // }
 
     QString qSimmetryResult;
     int nCountSimmetry = 0;
-    if (nCountCry > 0 && nCountSpg > 0) {
-        //FIX THIS LATER
+    QString querySymm = builder.getSymmetryQueryString();
+    if (!querySymm.isEmpty()) {
+        nCountSimmetry = makeQuerySymmetry(querySymm, qSimmetryResult);
     }
-    else if (nCountCry > 0) {
-        qSimmetryResult = qCrySysResult;
-        nCountSimmetry = nCountCry;
-    } else if (nCountSpg > 0) {
-        qSimmetryResult = qSpgResult;
-        nCountSimmetry = nCountSpg;
-    }
+
+
+    // if (nCountCry > 0 && nCountSpg > 0) {
+    //     //FIX THIS LATER
+    // }
+    // else if (nCountCry > 0) {
+    //     qSimmetryResult = qCrySysResult;
+    //     nCountSimmetry = nCountCry;
+    // } else if (nCountSpg > 0) {
+    //     qSimmetryResult = qSpgResult;
+    //     nCountSimmetry = nCountSpg;
+    // }
 
     //Step 2: build query for chemical elements
     QString queryChemical = builder.getChemicalQueryString();
