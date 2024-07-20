@@ -138,6 +138,10 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setSpgString({"P 1 1 2", "P 2 1 1"});
         builder.setCsysString({"Cubic"});
         break;
+    case 25:
+        builder.setCellParameter(0, 5.00, 5.01);
+        builder.setCellParameter(1, 5.00, 5.01);
+        break;
     }
 }
 
@@ -147,7 +151,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 24);
+    testSelection(builder, 25);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);

@@ -66,51 +66,56 @@ void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
     }
 }
 
-// int QualxDbManager::makeQueryCrystalSystem(const QString &qString, QString &result)
-// {
-//     qInfo() << "Start query crystal system";
-//     int ndata = 0;
-//     result.clear();
-//     QSqlQuery query(dbInfoStat.db());
-//     query.prepare(qString);
-//     if (query.exec()) {
-//         while (query.next()) {
-//             if (result.isEmpty()) {
-//                 result = query.value(0).toString();
-//             } else {
-//                 result = result + "," + query.value(0).toString();
-//             }
-//             ndata = ndata + query.value(1).toInt();
-//         }
-//     }
-//     //qInfo() << "Space groups: " << result;
-//     qInfo() << "N: " << ndata;
-//     qInfo() << "End query crystal system";
-//     return ndata;
-// }
+int QualxDbManager::makeQueryCellPar(const QString &qString, QString &result)
+{
+    qInfo() << "Start query cell parameter";
+    int nData = 0;
+    result.clear();
 
-// int QualxDbManager::makeQuerySpaceGroup(const QString &qString, QString &result)
-// {
-//     qInfo() << "Start query space group";
-//     int ndata = 0;
-//     result.clear();
-//     QSqlQuery query(dbInfo.db());
-//     query.prepare(qString);
-//     if (query.exec()) {
-//         while (query.next()) {
-//             if (result.isEmpty()) {
-//                 result = query.value(0).toString();
-//             } else {
-//                 result = result + "," + query.value(0).toString();
-//             }
-//             ndata = ndata + query.value(1).toInt();
-//         }
-//     }
-//     //qInfo() << "Space groups: " << result;
-//     qInfo() << "N: " << ndata;
-//     qInfo() << "End query space group";
-//     return ndata;
-// }
+    QSqlQuery query = QSqlQuery(dbInfoStat.db());
+
+    query.prepare(qString);
+    if (query.exec()) {
+        while (query.next()) {
+            if (result.isEmpty()) {
+                result = query.value(0).toString();
+            } else {
+                result = result + "," + query.value(0).toString();
+            }
+            nData = nData + query.value(1).toInt();
+        }
+    }
+    qInfo() << "N: " << nData;
+    qInfo() << "End query cell parameter";
+    return nData;
+}
+
+int QualxDbManager::makeQueryCellParameters(const QStringList &qParList, QString &result)
+{
+
+    int nData = 0;
+    result.clear();
+
+    for (int i = 0; i < qParList.size(); i++) {
+        qInfo() << "Start query cell parameter n. " << i;
+        if (i == 0) {
+            nData = makeQueryCellPar(qParList.at(i), result);
+        } else {
+            QString tmpResult;
+            int tmpData = makeQueryCellPar(qParList.at(i), tmpResult);
+            QStringList list1 = result.split(",");
+            QStringList list2 = tmpResult.split(",");
+            QStringList resultTmp;
+            nData = stringInnerJoin(list1, list2, resultTmp);
+            result = resultTmp.join(",");
+        }
+        qInfo() << "ID: " << result;
+        qInfo() << "N: " << nData;
+        qInfo() << "End query cell parameter n. " << i;
+    }
+
+    return nData;
+}
 
 int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
 {
@@ -160,53 +165,45 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
     qInfo() << "End queryIds";
 }
 
+int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result)
+{
+    foreach(QString str, list1) {
+        if (list2.contains(str)) {
+            result.append(str);
+        }
+    }
+    return result.size();
+}
+
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
-    //Gestione space groups + crystal system
-    //1: scrivi due metodi (getQuery and makeQuery) che prendono in input entrambe le liste e fa un'unica query
-    //simile a quella del gruppo spaziale ma con i sistemi cristallini in or (es. or type='Monoclinic')
-    //2: se una delle 2 liste è vuota procedi come già indicata e sistema opportunamente il codice rimuovendo la doppia varibile
-    //qCrySysResult e qSpgResult, ne basta solo una. Potresti scrivere anche una solo funzione che gestisce le quesry sulla simmetria
+    //Step 1: build and make query for cell parameters
+    QString queryResult;
+    int nCountQuery = 0;
+    QStringList queryCellPar = builder.getQueryCellPar();
+    if (!queryCellPar.isEmpty()) {
+        nCountQuery = makeQueryCellParameters(queryCellPar, queryResult);
+    }
 
-
-    //Step 1: build and make query for crystal system and space groups
-    // QString queryCrySys = builder.getCrySysQueryString();
-    // int nCountCry = 0;
-    // QString qCrySysResult;
-    // if (!queryCrySys.isEmpty()) {
-    //     nCountCry = makeQueryCrystalSystem(queryCrySys, qCrySysResult);
-    // }
-
-    // QString querySpaceGroup = builder.getQuerySpaceGroup();
-    // int nCountSpg = 0;
-    // QString qSpgResult;
-    // if (!querySpaceGroup.isEmpty()) {
-    //     nCountSpg = makeQuerySpaceGroup(querySpaceGroup, qSpgResult);
-    // }
-
+    //Step 2: build and make query for crystal system and space groups
     QString qSimmetryResult;
     int nCountSimmetry = 0;
     QString querySymm = builder.getSymmetryQueryString();
     if (!querySymm.isEmpty()) {
         nCountSimmetry = makeQuerySymmetry(querySymm, qSimmetryResult);
+        if (!queryResult.isEmpty() && nCountSimmetry > 0) {
+            QStringList list1 = queryResult.split(",");
+            QStringList list2 = qSimmetryResult.split(",");
+            QStringList resultTmp;
+            nCountQuery = stringInnerJoin(list1, list2, resultTmp);
+            queryResult = resultTmp.join(",");
+        }
     }
 
-
-    // if (nCountCry > 0 && nCountSpg > 0) {
-    //     //FIX THIS LATER
-    // }
-    // else if (nCountCry > 0) {
-    //     qSimmetryResult = qCrySysResult;
-    //     nCountSimmetry = nCountCry;
-    // } else if (nCountSpg > 0) {
-    //     qSimmetryResult = qSpgResult;
-    //     nCountSimmetry = nCountSpg;
-    // }
-
-    //Step 2: build query for chemical elements
+    //Step 3: build query for chemical elements
     QString queryChemical = builder.getChemicalQueryString();
-    if (nCountSimmetry > 0 && !queryChemical.isEmpty()) {
-        queryChemical = queryChemical + " intersect select id from chemical where id in (" + qSimmetryResult + ")";
+    if (nCountQuery > 0 && !queryChemical.isEmpty()) {
+        queryChemical = queryChemical + " intersect select id from chemical where id in (" + queryResult + ")";
     }
 
     if (!queryChemical.isEmpty()) {
@@ -228,8 +225,8 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             makeQueryInfoIds(idsString, nCountChemical);
         }
 
-    } else if (nCountSimmetry > 0) {
-        makeQueryInfoIds(qSimmetryResult, nCountSimmetry);
+    } else if (nCountQuery > 0) {
+        makeQueryInfoIds(queryResult, nCountQuery);
     }
 }
 

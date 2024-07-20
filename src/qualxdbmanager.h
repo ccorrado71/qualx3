@@ -20,10 +20,11 @@ private:
 
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
-    // int  makeQueryCrystalSystem(const QString  &qString, QString &result);
-    // int  makeQuerySpaceGroup(const QString &qString, QString &result);
+    int  makeQueryCellPar(const QString &qString, QString &result);
+    int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);
     void makeQueryInfoIds(const QString &idsString, int count);
+    int stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result);
 };
 
 #endif // QUALXDBMANAGER_H

@@ -5,7 +5,7 @@ DbQueryBuilder::DbQueryBuilder()
     : printEnabled(false),
     bOperator(AND_OR_OP)
 {
-
+    initialize();
 }
 
 void DbQueryBuilder::initialize()
@@ -15,10 +15,15 @@ void DbQueryBuilder::initialize()
     subfiles.clear();
     elString.clear();
     spgString.clear();
+    for (int i = 0; i < 6; i++) {
+        cellParMin[i] = -1;
+        cellParMax[i] = -1;
+    }
 
     queryChemical.clear();
     queryCrySys.clear();
     querySymmetry.clear();
+    queryCellPar.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -31,14 +36,14 @@ QString DbQueryBuilder::getChemicalQueryString() const
     return queryChemical;
 }
 
-// QString DbQueryBuilder::getCrySysQueryString() const
-// {
-//     return queryCrySys;
-// }
-
 QString DbQueryBuilder::getSymmetryQueryString() const
 {
     return querySymmetry;
+}
+
+QStringList DbQueryBuilder::getQueryCellPar() const
+{
+    return queryCellPar;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
@@ -56,10 +61,11 @@ void DbQueryBuilder::setSpgString(const QStringList &newSpgString)
     spgString = newSpgString;
 }
 
-// QString DbQueryBuilder::getQuerySpaceGroup() const
-// {
-//     return querySymmetry;
-// }
+void DbQueryBuilder::setCellParameter(int index, double min, double max)
+{
+    cellParMin[index] = min;
+    cellParMax[index] = max;
+}
 
 void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
 {
@@ -78,10 +84,12 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
-    // queryCrySys = buildQueryCrystalSystem();
-    // if (!queryCrySys.isEmpty() && printEnabled) {
-    //     qInfo() << "Query crystal system: " << queryCrySys;
-    // }
+    queryCellPar = buildQueryCellParameters();
+    if (printEnabled) {
+        for (int i = 0; i < queryCellPar.size(); i++) {
+            qInfo() << "Query cell parameter " << i << ": " << queryCellPar.at(i);
+        }
+    }
 
     querySymmetry = buildQuerySymmetry();
     if (!querySymmetry.isEmpty() && printEnabled) {
@@ -288,22 +296,6 @@ QString DbQueryBuilder::buildQueryElementString()
     return queryElement;
 }
 
-// QString DbQueryBuilder::buildQueryCrystalSystem()
-// {
-//     QString queryCSys;
-
-//     if (csysString.size() == 0) return QString();
-
-//     queryCSys = "select ids,n from stat_type where (";
-//     for (int i = 0; i < csysString.size(); i++) {
-//         queryCSys += QString("trim(val) like '%1'").arg(csysString.at(i));
-//         if (i != csysString.size()-1) queryCSys += " or ";
-//     }
-//     queryCSys += ")";
-
-//     return queryCSys;
-// }
-
 QString DbQueryBuilder::buildQuerySymmetry()
 {
     QString querySymm;
@@ -336,13 +328,20 @@ QString DbQueryBuilder::buildQuerySymmetry()
     return querySymm;
 }
 
-// QString DbQueryBuilder::buildQuerySymmetry()
-// {
-//     QString querySymm;
+QStringList DbQueryBuilder::buildQueryCellParameters()
+{
+    const QStringList cellParStr = {"a", "b", "c", "alpha", "beta", "gamma"};
+    QStringList queryCell;
 
-//     if (spgString.size() == 0 && csysString.size() == 0) return QString();
+    for (int i = 0; i < 6; i++) {
+        if (cellParMin[i] > -1 && cellParMax[i] > -1) {
+            QString query = "select ids,n from stat_" + cellParStr.at(i) + " where (";
+            query += QString("val >= %1 and val <= %2").arg(cellParMin[i]).arg(cellParMax[i]);
+            query += ")";
+            queryCell.append(query);
+        }
+    }
 
-//     querySymm = "select ids,n from spgrstat where (";
-//     return querySymm;
-// }
+    return queryCell;
+}
 
