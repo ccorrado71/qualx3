@@ -68,7 +68,7 @@ void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
 
 int QualxDbManager::makeQueryCellPar(const QString &qString, QString &result)
 {
-    qInfo() << "Start query cell parameter";
+    //qInfo() << "Start query cell parameter";
     int nData = 0;
     result.clear();
 
@@ -85,8 +85,8 @@ int QualxDbManager::makeQueryCellPar(const QString &qString, QString &result)
             nData = nData + query.value(1).toInt();
         }
     }
-    qInfo() << "N: " << nData;
-    qInfo() << "End query cell parameter";
+    // qInfo() << "N: " << nData;
+    // qInfo() << "End query cell parameter";
     return nData;
 }
 
@@ -107,9 +107,10 @@ int QualxDbManager::makeQueryCellParameters(const QStringList &qParList, QString
             QStringList list2 = tmpResult.split(",");
             QStringList resultTmp;
             nData = stringInnerJoin(list1, list2, resultTmp);
+            qInfo() << "Inner join: " << list1.size() << " - " << list2.size() << " -> " << nData;
             result = resultTmp.join(",");
         }
-        qInfo() << "ID: " << result;
+        //qInfo() << "ID: " << result;
         qInfo() << "N: " << nData;
         qInfo() << "End query cell parameter n. " << i;
     }
@@ -196,6 +197,7 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             QStringList list2 = qSimmetryResult.split(",");
             QStringList resultTmp;
             nCountQuery = stringInnerJoin(list1, list2, resultTmp);
+            qInfo() << "Inner join: " << list1.size() << " - " << list2.size() << " -> " << nCountQuery;
             queryResult = resultTmp.join(",");
         }
     }

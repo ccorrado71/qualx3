@@ -142,6 +142,24 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setCellParameter(0, 5.00, 5.01);
         builder.setCellParameter(1, 5.00, 5.01);
         break;
+    case 26:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        break;
+    case 27:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        builder.setSubfiles({"I"});
+        break;
+    case 28:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        builder.setSubfiles({"I"});
+        builder.setElements("Al");
+        break;
     }
 }
 
@@ -151,7 +169,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 25);
+    testSelection(builder, 28);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);
