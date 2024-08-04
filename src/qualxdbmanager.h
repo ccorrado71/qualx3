@@ -2,6 +2,7 @@
 #define QUALXDBMANAGER_H
 
 #include "dbmanager.h"
+#include "dbquerybuilder.h"
 
 class QualxDbManager
 {

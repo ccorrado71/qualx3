@@ -202,8 +202,18 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
         }
     }
 
-    //Step 3: build query for chemical elements
+    //Spep 3: get query for id entries
+    QString qIdEntry = builder.getQueryIdEntry();
+
+    //Step 4: build query for chemical elements
     QString queryChemical = builder.getChemicalQueryString();
+    if (!qIdEntry.isEmpty()) {
+        if (!queryChemical.isEmpty()) {
+            queryChemical = qIdEntry + " intersect " + queryChemical;
+        } else {
+            queryChemical = qIdEntry;
+        }
+    }
     if (nCountQuery > 0 && !queryChemical.isEmpty()) {
         queryChemical = queryChemical + " intersect select id from chemical where id in (" + queryResult + ")";
     }

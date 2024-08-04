@@ -160,6 +160,9 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setSubfiles({"I"});
         builder.setElements("Al");
         break;
+    case 29:
+        builder.setIdEntry({"1000000","1000017"});
+        break;
     }
 }
 
@@ -169,7 +172,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 28);
+    testSelection(builder, 29);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);
