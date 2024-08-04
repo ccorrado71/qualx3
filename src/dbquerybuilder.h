@@ -17,6 +17,7 @@ public:
     void setCsysString(const QStringList &newCsysString);
     void setSpgString(const QStringList &newSpgString);
     void setCellParameter(int index, double min, double max);
+    void setIdEntry(const QStringList &newIdEntry);
     void setPrintEnabled(bool newPrintEnabled);
     void setBOperator(boolOperator newBOperator);
 
@@ -24,17 +25,20 @@ public:
     QString getChemicalQueryString() const;
     QString getSymmetryQueryString() const;
     QStringList getQueryCellPar() const;
+    QString getQueryIdEntry() const;
 
 private:
     QString queryChemical;
     QString queryCrySys;
     QString querySymmetry;
     QStringList queryCellPar;
+    QString queryIdEntry;
     QString names;
     QStringList subfiles;
     QString elString;
     QStringList csysString;
     QStringList spgString;
+    QStringList idEntry;
     double cellParMin[6], cellParMax[6];
     bool printEnabled;
     boolOperator bOperator;
@@ -44,6 +48,7 @@ private:
     QString buildQueryElementString();
     QString buildQuerySymmetry();
     QStringList buildQueryCellParameters();
+    QString buildQueryIdEntry();
 };
 
 #endif // DBQUERYBUILDER_H

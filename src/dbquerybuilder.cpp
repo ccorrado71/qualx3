@@ -46,6 +46,11 @@ QStringList DbQueryBuilder::getQueryCellPar() const
     return queryCellPar;
 }
 
+QString DbQueryBuilder::getQueryIdEntry() const
+{
+    return queryIdEntry;
+}
+
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
 {
     printEnabled = newPrintEnabled;
@@ -65,6 +70,11 @@ void DbQueryBuilder::setCellParameter(int index, double min, double max)
 {
     cellParMin[index] = min;
     cellParMax[index] = max;
+}
+
+void DbQueryBuilder::setIdEntry(const QStringList &newIdEntry)
+{
+    idEntry = newIdEntry;
 }
 
 void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
@@ -113,6 +123,11 @@ void DbQueryBuilder::buildQuery()
         if (!queryChemical.isEmpty()) queryChemical += " intersect ";
         queryChemical += queryElements;
         if (printEnabled) qInfo() << "Query elements: " << queryChemical;
+    }
+
+    queryIdEntry = buildQueryIdEntry();
+    if (!queryIdEntry.isEmpty() && printEnabled) {
+        qInfo() << "Query id entry: " << queryIdEntry;
     }
 }
 
@@ -345,3 +360,18 @@ QStringList DbQueryBuilder::buildQueryCellParameters()
     return queryCell;
 }
 
+QString DbQueryBuilder::buildQueryIdEntry()
+{
+    //Example: select id from id where id in (1000000, 1000017)
+    QString queryId;
+    if (idEntry.size() > 0) {
+        queryId = "select id from id where id in (";
+        for (int i = 0; i < idEntry.size(); i++) {
+            queryId += idEntry.at(i);
+            if (i != idEntry.size()-1) queryId += ", ";
+        }
+        queryId += ")";
+    }
+
+    return queryId;
+}

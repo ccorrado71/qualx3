@@ -199,16 +199,30 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             nCountQuery = stringInnerJoin(list1, list2, resultTmp);
             qInfo() << "Inner join: " << list1.size() << " - " << list2.size() << " -> " << nCountQuery;
             queryResult = resultTmp.join(",");
+        } else {
+            nCountQuery = nCountSimmetry;
+            queryResult = qSimmetryResult;
         }
     }
 
-    //Step 3: build query for chemical elements
+    //Spep 3: get query for id entries
+    QString qIdEntry = builder.getQueryIdEntry();
+
+    //Step 4: build query for chemical elements
     QString queryChemical = builder.getChemicalQueryString();
+    if (!qIdEntry.isEmpty()) {
+        if (!queryChemical.isEmpty()) {
+            queryChemical = qIdEntry + " intersect " + queryChemical;
+        } else {
+            queryChemical = qIdEntry;
+        }
+    }
     if (nCountQuery > 0 && !queryChemical.isEmpty()) {
         queryChemical = queryChemical + " intersect select id from chemical where id in (" + queryResult + ")";
     }
 
     if (!queryChemical.isEmpty()) {
+        //qInfo() << "Query chemical: " << queryChemical;
         int nCountChemical = dbMain.queryForCount(queryChemical);
         qInfo() << "NCOUNT: " << nCountChemical;
         qInfo() << "Start query for idsString";
