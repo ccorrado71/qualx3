@@ -53,6 +53,7 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
     switch (testCase) {
     case 1:
         builder.setNames("nickel");
+        builder.enableDeleted(false);
         break;
     case 2:
         builder.setNames("nickel");
@@ -175,7 +176,7 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 29);
+    testSelection(builder, 1);
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);

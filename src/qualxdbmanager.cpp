@@ -147,12 +147,26 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
     return ndata;
 }
 
-void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
+void QualxDbManager::makeQueryInfoIds(const QString &idsString, bool addDeleted, int count)
 {
     qInfo() << "Start queryIds";
     QSqlQuery queryIds(dbMain.db());
-    queryIds.prepare("Select id, name, mineralname, chemical_formula, spacegroup, "
-                     "quality, rir, nrec, intensita, dvalue,n from id where id in ("+idsString+")");
+    QString queryString;
+    queryString = "Select id, name, mineralname, chemical_formula, spacegroup, "
+                  "quality, rir, nrec, intensita, dvalue,n from id";
+    if (addDeleted) {
+        queryString = queryString + " where trim(quality)!='D' and id in ("+idsString+")";
+    } else {
+        queryString = queryString + " where id in ("+idsString+")";
+    }
+    queryIds.prepare(queryString);
+    // if (addDeleted) {
+    //     queryIds.prepare("Select id, name, mineralname, chemical_formula, spacegroup, "
+    //                      "quality, rir, nrec, intensita, dvalue,n from id where trim(quality)!='D' where id in ("+idsString+")");
+    // } else {
+    //     queryIds.prepare("Select id, name, mineralname, chemical_formula, spacegroup, "
+    //                      "quality, rir, nrec, intensita, dvalue,n from id where id in ("+idsString+")");
+    // }
     int nId = 0;
     if (queryIds.exec()) {
         while (queryIds.next()) {
@@ -164,6 +178,42 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, int count)
         }
     }
     qInfo() << "End queryIds";
+}
+
+void QualxDbManager::makeQuerySearch(bool addDeleted, QString &result)
+{
+    qInfo() << "Start query for search";
+    QSqlQuery querySearch(dbMain.db());
+    QString queryString;
+    queryString = "Select id, name, mineralname, chemical_formula, spacegroup, "
+                  "quality, rir, nrec, intensita, dvalue,n from id";
+    if (addDeleted) {
+        queryString = queryString + " where trim(quality)!='D'";
+    }
+    int count = dbMain.queryForCount(queryString);
+    qInfo() << "Count: " << count;
+    querySearch.prepare(queryString);
+    if (querySearch.exec()) {
+        // while (querySearch.next()) {
+        //     result = result + querySearch.value(0).toString() + ",";
+        // }
+    }
+    qInfo() << "End query for search";
+}
+
+void QualxDbManager::makeQuerySearchStrongest(QString &result)
+{
+    qInfo() << "Start query search with strongest";
+    int count = dbSearch.queryForCount("top");
+    qInfo() << "Count: " << count;
+    QSqlQuery queryStrong(dbSearch.db());
+    queryStrong.prepare("select id, dval from top");
+    if (queryStrong.exec()) {
+        // while (queryStrong.next()) {
+        //     result = result + queryStrong.value(0).toString() + ",";
+        // }
+    }
+    qInfo() << "End query strongest";
 }
 
 int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result)
@@ -178,6 +228,11 @@ int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList 
 
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
+    // QString resultSearch;
+    // makeQuerySearchStrongest(resultSearch);
+    // makeQuerySearch(builder.deletedEnabled(), resultSearch);
+    // return;
+
     //Step 1: build and make query for cell parameters
     QString queryResult;
     int nCountQuery = 0;
@@ -238,11 +293,11 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             qInfo() << "End query for idsString";
 
             //qInfo() << "idsString: " << idsString;
-            makeQueryInfoIds(idsString, nCountChemical);
+            makeQueryInfoIds(idsString, builder.deletedEnabled(), nCountChemical);
         }
 
     } else if (nCountQuery > 0) {
-        makeQueryInfoIds(queryResult, nCountQuery);
+        makeQueryInfoIds(queryResult, builder.deletedEnabled(), nCountQuery);
     }
 }
 

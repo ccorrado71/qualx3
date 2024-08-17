@@ -20,12 +20,14 @@ public:
     void setIdEntry(const QStringList &newIdEntry);
     void setPrintEnabled(bool newPrintEnabled);
     void setBOperator(boolOperator newBOperator);
+    void enableDeleted(bool newAddDeleted);
 
     void buildQuery();
     QString getChemicalQueryString() const;
     QString getSymmetryQueryString() const;
     QStringList getQueryCellPar() const;
     QString getQueryIdEntry() const;
+    bool deletedEnabled() const;
 
 private:
     QString queryChemical;
@@ -42,6 +44,7 @@ private:
     double cellParMin[6], cellParMax[6];
     bool printEnabled;
     boolOperator bOperator;
+    bool addDeleted;
 
     QString buildQueryNameString();
     QString buildQuerySubfilesString();

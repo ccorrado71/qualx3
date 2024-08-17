@@ -3,7 +3,8 @@
 
 DbQueryBuilder::DbQueryBuilder()
     : printEnabled(false),
-    bOperator(AND_OR_OP)
+    bOperator(AND_OR_OP),
+    addDeleted(false)
 {
     initialize();
 }
@@ -49,6 +50,16 @@ QStringList DbQueryBuilder::getQueryCellPar() const
 QString DbQueryBuilder::getQueryIdEntry() const
 {
     return queryIdEntry;
+}
+
+bool DbQueryBuilder::deletedEnabled() const
+{
+    return addDeleted;
+}
+
+void DbQueryBuilder::enableDeleted(bool newAddDeleted)
+{
+    addDeleted = newAddDeleted;
 }
 
 void DbQueryBuilder::setPrintEnabled(bool newPrintEnabled)
