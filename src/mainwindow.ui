@@ -21,7 +21,7 @@
     <item>
      <widget class="QScrollBar" name="horizontalScrollBar">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -36,10 +36,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -55,10 +55,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -74,10 +74,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -109,10 +109,11 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionImportDiffractionPattern"/>
     <addaction name="actionQuit"/>
    </widget>
-   <addaction name="menuDatabase"/>
    <addaction name="menuFile"/>
+   <addaction name="menuDatabase"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -149,6 +150,11 @@
    </property>
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionImportDiffractionPattern">
+   <property name="text">
+    <string>Import Diffraction Pattern</string>
    </property>
   </action>
  </widget>

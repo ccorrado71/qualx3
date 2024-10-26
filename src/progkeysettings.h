@@ -1,0 +1,6 @@
+#ifndef PROGKEYSETTINGS_H
+#define PROGKEYSETTINGS_H
+
+#define DEFAULT_DIR_KEY "default_dir"
+
+#endif // PROGKEYSETTINGS_H

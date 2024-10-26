@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "dbquerybuilder.h"
+#include "progkeysettings.h"
 
 //#include "dbmanager.h"
 
@@ -14,12 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    //currentDatabase = "/home/corrado/temp/codino/cod2205ino.sq";
-    //old currentDatabase = "/home/corrado/temp/cod/cod2205.sq";
-
-    // if (!db.openDb(currentDatabase)) return;
-    // if (!dbInfo.openDb(currentDatabase+".info")) return;
-    // if (!dbInfoStat.openDb(currentDatabase+".infostat")) return;
+    actionsSetup();
 
     currentDatabase = "/home/corrado/temp/cod/cod2205";
     qualxDb.openDatabases(currentDatabase);
@@ -28,6 +24,57 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::onActionImportDiffractionPatternTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow)";
+    QString exts = "All files (*.*);;"
+                   "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow);;"
+                   "ASCII profile [start,step,end,intensities] (*.dat *.pow);;"
+                   "XY profile [2theta and intensities in two colomuns] (*.xy *.pow);;"
+                   "GSAS data (*.gda);;"
+                   "CIF powder data (*.rtv *.cif);;"
+                   "CCDC Mercury data (*.xye);;"
+                   "Siemens data (*.uxd);;"
+                   "Sietronics Sieray data (*.cpi);;"
+                   "XDD data (*.xdd);;"
+                   "DBWS data (*.dbw);;"
+                   "XDA data (*.xda);;"
+                   "Philips UDF data (*.udf);;"
+                   "PANalytical XRDML data (*.xrdml)";
+
+    qInfo() << "Import Diffraction Pattern From";
+
+    QStringList files = QFileDialog::getOpenFileNames(this,
+                                                      tr("Import Diffraction Pattern From"),
+                                                      settings.value(DEFAULT_DIR_KEY).toString(),
+                                                      exts, &selectedFilter);
+
+    if (!files.isEmpty()) {
+        QFileInfo info(files.at(0));
+        QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
+        outFile = QDir::toNativeSeparators(outFile);
+        int nerr = 0;
+    //     fileutils::setCurrentDirFromFile(files.at(0));
+    //     for (int i = 0; i < files.size(); i++) {
+    //         int err;
+    //         QString filename = QDir::toNativeSeparators(files.at(i));
+    //         open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
+    //                               outFile.toStdString().c_str(), outFile.length(),
+    //                               i, &err);
+    //         if (err) {
+    //             nerr++;
+    //         }
+    //     }
+    //     if (nerr < files.size()) {
+    //         QString filename = QDir::toNativeSeparators(files.at(0));
+    //         settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
+    //         outputFileName = outFile;
+    //         setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
+    //     }
+    }
 }
 
 void MainWindow::on_actionDatabaseInfo_triggered()
@@ -46,6 +93,12 @@ void MainWindow::on_actionGet_Card_triggered()
     //FIX LATER
     // db.getCardInfo(idCard);
     // dbInfo.getCardAdditionalInfo(idCard);
+}
+
+void MainWindow::actionsSetup()
+{
+    //File menu
+    connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)

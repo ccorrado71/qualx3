@@ -26,6 +26,7 @@ set(PROJECT_SOURCES
     nr.h
     plotsettings.cpp
     plotsettings.h
+    progkeysettings.h
     qcustomplot.cpp
     qcustomplot.h
     qualxdbmanager.cpp

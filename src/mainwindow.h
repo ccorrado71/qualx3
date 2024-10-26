@@ -18,13 +18,18 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:    
+private slots:
+
+    //File
+    void onActionImportDiffractionPatternTriggered();
 
     void on_actionGet_Card_triggered();
     void on_actionQueryName_triggered();
     void on_actionDatabaseInfo_triggered();
 
 private:
+    void actionsSetup();
+
     Ui::MainWindow *ui;    
     QString currentDatabase;
     QualxDbManager qualxDb;
