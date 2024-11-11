@@ -10,6 +10,8 @@ set(PROJECT_SOURCES
     dbmanager.cpp
     dbquerybuilder.h
     dbquerybuilder.cpp
+    fileutils.cpp
+    fileutils.h
     graphitem.cpp
     graphitem.h
     libcomune.cpp
@@ -38,7 +40,11 @@ set(PROJECT_SOURCES
 )
 
 set(FORTRAN_SOURCES 
+    arrayutil.f90
+    data.f90
     constants.f90
+    recipes.f90
+    strutil.f90
 )
 
 qt_add_resources(PROJECT_SOURCES resource.qrc)

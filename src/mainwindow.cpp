@@ -1,13 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
 #include "dbquerybuilder.h"
 #include "progkeysettings.h"
-
-//#include "dbmanager.h"
+#include "fileutils.h"
 
 #include <QDebug>
 #include <QMessageBox>
+
+extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -57,17 +57,17 @@ void MainWindow::onActionImportDiffractionPatternTriggered()
         QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
         outFile = QDir::toNativeSeparators(outFile);
         int nerr = 0;
-    //     fileutils::setCurrentDirFromFile(files.at(0));
-    //     for (int i = 0; i < files.size(); i++) {
-    //         int err;
-    //         QString filename = QDir::toNativeSeparators(files.at(i));
-    //         open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
-    //                               outFile.toStdString().c_str(), outFile.length(),
-    //                               i, &err);
-    //         if (err) {
-    //             nerr++;
-    //         }
-    //     }
+        fileutils::setCurrentDirFromFile(files.at(0));
+        for (int i = 0; i < files.size(); i++) {
+            int err;
+            QString filename = QDir::toNativeSeparators(files.at(i));
+            open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
+                               outFile.toStdString().c_str(), outFile.length(),
+                                   i, &err);
+            if (err) {
+                nerr++;
+            }
+        }
     //     if (nerr < files.size()) {
     //         QString filename = QDir::toNativeSeparators(files.at(0));
     //         settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());

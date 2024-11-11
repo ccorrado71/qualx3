@@ -12,15 +12,19 @@ STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BT)
 
 IF(BT STREQUAL "RELEASE")
     SET(CMAKE_BUILD_TYPE RELEASE CACHE STRING
-      "Choose the type of build, options are DEBUG, RELEASE, or TESTING."
+      "Choose the type of build, options are DEBUG, RELEASE, RELWITHDEBINFO or TESTING."
       FORCE)
 ELSEIF(BT STREQUAL "DEBUG")
     SET (CMAKE_BUILD_TYPE DEBUG CACHE STRING
-      "Choose the type of build, options are DEBUG, RELEASE, or TESTING."
+      "Choose the type of build, options are DEBUG, RELEASE, RELWITHDEBINFO or TESTING."
+      FORCE)
+ELSEIF(BT STREQUAL "RELWITHDEBINFO")
+    SET (CMAKE_BUILD_TYPE DEBUG CACHE STRING
+      "Choose the type of build, options are DEBUG, RELEASE, RELWITHDEBINFO or TESTING."
       FORCE)
 ELSEIF(BT STREQUAL "TESTING")
     SET (CMAKE_BUILD_TYPE TESTING CACHE STRING
-      "Choose the type of build, options are DEBUG, RELEASE, or TESTING."
+      "Choose the type of build, options are DEBUG, RELEASE, RELWITHDEBINFO or TESTING."
       FORCE)
 ELSEIF(NOT BT)
     SET(CMAKE_BUILD_TYPE RELEASE CACHE STRING
@@ -51,9 +55,16 @@ ENDIF(CMAKE_Fortran_FLAGS_RELEASE AND CMAKE_Fortran_FLAGS_TESTING AND CMAKE_Fort
 ### GENERAL FLAGS ###
 #####################
 
-# Don't add underscores in symbols for C-compatability
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
-                 Fortran "-fno-underscoring")
+#Add options for C-fortran interoperability on Windows
+IF(WIN32)
+   SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
+                    Fortran "/assume:underscore"        # Intel Windows
+                   )
+   
+   SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
+                    Fortran "/names:lowercase"    # Intel Windows
+                   )
+ENDIF()
 
 # There is some bug where -march=native doesn't work on Mac
 IF(APPLE)
@@ -70,11 +81,11 @@ SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
                 )
 
 # Add preprocessor
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
-                 Fortran "-fpp"        # Intel
-                         "/fpp"        # Intel Windows
-                         "-cpp"        # GNU
-                )
+#SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
+#                 Fortran "-fpp"        # Intel
+#                         "/fpp"        # Intel Windows
+#                         "-cpp"        # GNU
+#                )
 
 ###################
 ### DEBUG FLAGS ###
@@ -90,24 +101,30 @@ SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG}"
 
 # Turn on all warnings 
 SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG}"
-                 Fortran "-warn all" # Intel
-                         "/warn:all" # Intel Windows
-                         "-Wall"     # GNU
-                                     # Portland Group (on by default)
+                 Fortran "/warn:all,noexternal,nodeclarations"  # Intel
+                         "-warn all,noexternal,nodeclarations"  # Intel
+                         "-Wall"                                # GNU
+                                                                # Portland Group (on by default)
                 )
 
+# Trap exceptions
+SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG}"
+                 Fortran REQUIRED "-fpe0" # Intel linux
+                                  "/fpe0" # Intel Windows
+                                  "-ffpe-trap=zero,overflow,underflow,invalid,denormal" # GNU (gfortran)
+                )
 # Traceback
 SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG}"
-                 Fortran "-traceback"   # Intel/Portland Group
-                         "/traceback"   # Intel Windows
+	         Fortran "/traceback"   # Intel Windows
+                         "-traceback"   # Intel/Portland Group
                          "-fbacktrace"  # GNU (gfortran)
                          "-ftrace=full" # GNU (g95)
                 )
 
 # Check array bounds
 SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG}"
-                 Fortran "-check bounds"  # Intel
-                         "/check:bounds"  # Intel Windows
+	         Fortran "/check:bounds"  # Intel Windows
+                         "-check bounds"  # Intel
                          "-fcheck=bounds" # GNU (New style)
                          "-fbounds-check" # GNU (Old style)
                          "-Mbounds"       # Portland Group
@@ -127,23 +144,28 @@ SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_TESTING "${CMAKE_Fortran_FLAGS_TESTING}"
 ### RELEASE FLAGS ###
 #####################
 
+#Suppress warnings related to deprecated features
+SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
+#                 Fortran "-std=legacy"       # GNU
+                 Fortran "-w"       # GNU
+                )
+
 # NOTE: agressive optimizations (-O3) are already turned on by default
-
 # Unroll loops
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
-                 Fortran "-funroll-loops" # GNU
-                         "-unroll"        # Intel
-                         "/unroll"        # Intel Windows
-                         "-Munroll"       # Portland Group
-                )
-
+#SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
+#                 Fortran "/Qunroll"       # Intel Windows
+#                         "-funroll-loops" # GNU
+#                         "-unroll"        # Intel
+#                         "-Munroll"       # Portland Group
+#                )
+#
 # Inline functions
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
-                 Fortran "-inline"            # Intel
-                         "/Qinline"           # Intel Windows
-                         "-finline-functions" # GNU
-                         "-Minline"           # Portland Group
-                )
+#SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
+#                 Fortran "-inline"            # Intel
+#                         "/Qinline"           # Intel Windows
+#                         "-finline-functions" # GNU
+#                         "-Minline"           # Portland Group
+#                )
 #doesn't work if you mixed intel and gnu compiler (e.g. g++ and ifort)
 # Interprocedural (link-time) optimizations
 #SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
@@ -154,14 +176,14 @@ SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
 #                )
 
 # Single-file optimizations
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
-                 Fortran "-ip"  # Intel
-                         "/Qip" # Intel Windows
-                )
-
+#SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
+#                 Fortran "/Qip" # Intel Windows
+#                         "-ip"  # Intel
+#                )
+#
 # Vectorize code
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
-                 Fortran "-vec-report0"  # Intel
-                         "/Qvec-report0" # Intel Windows
-                         "-Mvect"        # Portland Group
-                )
+#SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE}"
+#                 Fortran "-vec-report0"  # Intel
+#                         "/Qvec-report0" # Intel Windows
+#                         "-Mvect"        # Portland Group
+#                )
