@@ -40,11 +40,63 @@ set(PROJECT_SOURCES
 )
 
 set(FORTRAN_SOURCES 
+    abscorr.f90
     arrayutil.f90
-    data.f90
+    atombasic.f90
+    atomsutil.F90
+    background.f90
+    bond2014.f90
+    bondsutil.f90
+    bump.f90
+    bvalence.f90
+    centroids.f90
+    cif_form.f90
+    cgeom.f90
     constants.f90
+    constraints.f90
+    contacts.F90
+    counts.f90
+    data.f90
+    dataset.f90
+    datautil.f90
+    elements.f90
+    error.F90
+    filetype.f90
+    fileutil.F90
+    fract.f90
+    fragments.F90
+    genlsq.f90
+    goptutil.F90	
+    kspecmod.f90
+    lib_array.f90
+    lsqnew.f90
+    mapinfo.f90
+    marquardt.f90
+    math_util.F90
+    modeltype.f90
+    moduli.f90
+    molgraph.f90
+    nist_table.f90
+    nl2sol.f90
+    peakutil.f90
+    pfunction.f90
+    plotstyle.f90
+    progtype.F90
     recipes.f90
+    reflectionsutil.f90
+    restraints.f90
+    rigidb.f90
+    scatt_params.F90
+    screen_new.f90
+    smooth.f90
+    spginfo.f90
+    sphase.f90
+    stat.f90
     strutil.f90
+    symm_table.f90
+    symmgrid.f90
+    unit_cell.f90
+    utiln.f90
 )
 
 qt_add_resources(PROJECT_SOURCES resource.qrc)
