@@ -76,11 +76,13 @@ set(FORTRAN_SOURCES
     modeltype.f90
     moduli.f90
     molgraph.f90
+    mpi_util.F90
     nist_table.f90
     nl2sol.f90
     peakutil.f90
     pfunction.f90
     plotstyle.f90
+    prog_names.F90
     progtype.F90
     recipes.f90
     reflectionsutil.f90
@@ -89,6 +91,7 @@ set(FORTRAN_SOURCES
     scatt_params.F90
     screen_new.f90
     smooth.f90
+    specif.f90
     spginfo.f90
     sphase.f90
     stat.f90
