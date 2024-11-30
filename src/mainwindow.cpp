@@ -7,6 +7,8 @@
 #include <QDebug>
 #include <QMessageBox>
 
+MainWindow *mMainWindow;
+
 extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
 
 MainWindow::MainWindow(QWidget *parent)
@@ -19,11 +21,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     currentDatabase = "/home/corrado/temp/cod/cod2205";
     qualxDb.openDatabases(currentDatabase);
+
+    mMainWindow = this;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::enableActions(EnabledActions action, bool state)
+{
+    qInfo() << "FIX LATER enableActions";
 }
 
 void MainWindow::onActionImportDiffractionPatternTriggered()

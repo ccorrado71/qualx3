@@ -16,6 +16,7 @@ set(PROJECT_SOURCES
     graphitem.h
     libcomune.cpp
     libcomune.h
+    libfor.cpp
     libmath.cpp
     libmath.h
     libmatrix.h
@@ -26,15 +27,26 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.ui
     nr.h
-    plotsettings.cpp
     plotsettings.h
+    plotsettings.cpp
     progkeysettings.h
-    qcustomplot.cpp
     qcustomplot.h
-    qualxdbmanager.cpp
+    qcustomplot.cpp
+    qt_utils.h
+    qt_utils.cpp
     qualxdbmanager.h
-    xpdutils.cpp
+    qualxdbmanager.cpp
+    util.f
+    wavedialog.h
+    wavedialog.cpp
+    wavedialog.ui
+    wavelengthscombobox.cpp
+    wavelengthscombobox.h
+    wavelengthswidget.cpp
+    wavelengthswidget.h
+    wavelengthswidget.ui
     xpdutils.h
+    xpdutils.cpp
     xpdviewwidget.h
     xpdviewwidget.cpp
 )

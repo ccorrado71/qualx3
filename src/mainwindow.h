@@ -15,8 +15,30 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum EnabledActions {
+        InitAction,
+        PatternAction,
+        StructureAction,
+        PatternAndStructureAction,
+        DialogOpenAction,
+        RunAction,
+        RunSkipAction,
+        NextAction,
+        PhaseAction,
+        SaveAction,
+        RestoreAction,
+        IntervalsAction,
+        ExtraAction,
+        ExtraBackgroundAction,
+        ProfileAction,
+        CycleAction,
+        PeaksAction
+    };
+    Q_ENUM(EnabledActions)
+
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void enableActions(MainWindow::EnabledActions action, bool state=false);
 
 private slots:
 
