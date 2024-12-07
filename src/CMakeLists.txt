@@ -37,6 +37,7 @@ set(PROJECT_SOURCES
     qualxdbmanager.h
     qualxdbmanager.cpp
     util.f
+    variables.f90
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui
