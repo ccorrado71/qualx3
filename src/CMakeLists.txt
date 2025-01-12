@@ -34,10 +34,12 @@ set(PROJECT_SOURCES
     qcustomplot.cpp
     qt_utils.h
     qt_utils.cpp
+    qualx.f90
     qualxdbmanager.h
     qualxdbmanager.cpp
     util.f
     variables.f90
+    vedi2005.f90
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui

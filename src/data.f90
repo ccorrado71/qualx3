@@ -82,7 +82,7 @@ END MODULE datamod
    subroutine work_on_pattern(datas,add_data)
 !   USE Conteggi, only: npunti
    USE view, only: vedinew
-   USE messagemod
+!   USE messagemod
 !   USE enable_amb
    USE datasetmod, only: dataset_type
    USE molcom, only: jscreen
@@ -93,10 +93,11 @@ END MODULE datamod
 !
 !   if(add_data == 0) call dataset_to_expo(datas)
 
+   write(*,*) 'work_on_pattern: ',jscreen
    if (jscreen > 0) then
-       call init_messages()
+!       call init_messages()
 !       call write_message_pattern(datas%fname)
-       call vedinew(8,1,npunti)
+       call vedinew(8)   !,1,npunti)
 !       call abilita_tasti2()
    endif
 

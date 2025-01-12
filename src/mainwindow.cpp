@@ -30,6 +30,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+XpdViewWidget *MainWindow::xpdViewer() const
+{
+    return ui->xpdWidget;
+}
+
 void MainWindow::enableActions(EnabledActions action, bool state)
 {
     qInfo() << "FIX LATER enableActions";

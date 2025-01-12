@@ -1,2 +1,2 @@
-cmake --build build_debug_ifort
-#cmake --build build_debug_gfortran
+#cmake --build build_debug_ifort
+cmake --build build_debug_gfortran

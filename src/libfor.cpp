@@ -3,6 +3,7 @@
 //#include "fourierpeaklistdialog.h"
 #include "qt_utils.h"
 //#include "stringlistdialog.h"
+#include "graphitem.h"
 
 #include <QStandardPaths>
 #include <QCoreApplication>
@@ -206,29 +207,29 @@ extern "C" void c_enableActions(int action, int state) {
     mMainWindow->enableActions(static_cast<MainWindow::EnabledActions>(action), state);
 }
 
-// extern "C" void set_graphic_area() {
-//     //mMainWindow->setGraphicArea();
-//     mMainWindow->xpdViewer()->setGraphicArea();
-// }
+extern "C" void set_graphic_area() {
+    //mMainWindow->setGraphicArea();
+    mMainWindow->xpdViewer()->setGraphicArea();
+}
 
-// extern "C" void draw_graphic() {
-//     //mMainWindow->draw();
-//     mMainWindow->xpdViewer()->drawPlot();
-// }
+extern "C" void draw_graphic() {
+    //mMainWindow->draw();
+    mMainWindow->xpdViewer()->drawPlot();
+}
 
-// extern "C" void add_plot(float x[], float y[], int num, int type, int visible, float wave, char *name) {
-//     graphItem::ItemType gtype = static_cast<graphItem::ItemType>(type);
-//     mMainWindow->xpdViewer()->addPlot(x, y, num, gtype, visible, wave, QString::fromUtf8(name));
-// }
+extern "C" void add_plot(float x[], float y[], int num, int type, int visible, float wave, char *name) {
+    graphItem::ItemType gtype = static_cast<graphItem::ItemType>(type);
+    mMainWindow->xpdViewer()->addPlot(x, y, num, gtype, visible, wave, QString::fromUtf8(name));
+}
 
 // extern "C" void add_plot2(float x[], int num, int type, int visible, float wave) {
 //     graphItem::ItemType gtype = static_cast<graphItem::ItemType>(type);
 //     mMainWindow->xpdViewer()->addPlot(x, num, gtype, visible, wave);
 // }
 
-// extern "C" void add_reflections(float x[], int h[], int k[], int l[], int num, int visible, float wave) {
-//     mMainWindow->xpdViewer()->addReflections(x, h, k, l, num, visible, wave);
-// }
+extern "C" void add_reflections(float x[], int h[], int k[], int l[], int num, int visible, float wave) {
+    mMainWindow->xpdViewer()->addReflections(x, h, k, l, num, visible, wave);
+}
 
 // extern "C" void add_systematic_absences(int sysabs[], int nsysabs) {
 //     QVector<int> sAbs(nsysabs);
@@ -239,9 +240,9 @@ extern "C" void c_enableActions(int action, int state) {
 //     mMainWindow->xpdViewer()->drawSystematicAbsences();
 // }
 
-// extern "C" void enable_rescale(int rescale) {
-//     mMainWindow->xpdViewer()->enableRescalePlot(rescale);
-// }
+extern "C" void enable_rescale(int rescale) {
+    mMainWindow->xpdViewer()->enableRescalePlot(rescale);
+}
 
 extern "C" void openwave(int *radtype, int *nwave, float wave[], float ratio[]) {
     bool isWaitCursor = stopWaitCursor();

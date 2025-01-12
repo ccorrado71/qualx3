@@ -7,3 +7,9 @@ MODULE Molcom
    integer :: jscreen = 0
    integer :: ifBrekke
 END MODULE Molcom
+
+MODULE PatternRef
+   integer :: kprofile
+   integer, parameter :: PROFILE_EXTRA=1, PROFILE_RIETVELD=2
+   integer :: kprofile_type = PROFILE_RIETVELD
+END MODULE PatternRef

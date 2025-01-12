@@ -3,6 +3,7 @@
 
 //#include "dbmanager.h"
 #include "qualxdbmanager.h"
+#include "xpdviewwidget.h"
 
 #include <QMainWindow>
 
@@ -38,6 +39,7 @@ public:
 
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    XpdViewWidget *xpdViewer() const;
     void enableActions(MainWindow::EnabledActions action, bool state=false);
 
 private slots:
