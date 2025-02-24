@@ -18,13 +18,13 @@ CONTAINS
    ier = 0
    filnam = toFortranString(fileIn,lengthIn)
    filout = toFortranString(fileOut,lengthOut)
-   call open_pattern(filnam,filout,add_data,ier)
+   call open_pattern(filnam,add_data,ier)
 !     
    end subroutine open_diffraction_patt
 
 !---------------------------------------------------------------------------
 
-   subroutine open_pattern(input_file,output_file,add_data,ier)
+   subroutine open_pattern(input_file,add_data,ier)
    USE fileutil
 !   USE General, only: StructureName, fname, ext, INP_FILE, OUT_FILE
    USE datasetmod
@@ -33,7 +33,7 @@ CONTAINS
    USE strutil
 !   USE General, only:lo
    USE variables, only: dataset   !,cryst
-   character(len=*), intent(in) :: input_file,output_file
+   character(len=*), intent(in) :: input_file
    integer, intent(in), value   :: add_data
    integer, intent(out)         :: ier
    integer                      :: iflag

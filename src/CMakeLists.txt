@@ -4,6 +4,8 @@ set(PROJECT_SOURCES
     colorwidget.cpp         
     colorwidget.h
     colorwidget.ui
+    commandline.cpp
+    commandline.h
     customplotzoom.cpp
     customplotzoom.h
     dbmanager.h
@@ -117,6 +119,8 @@ set(FORTRAN_SOURCES
     utiln.f90
 )
 
+set(LIBRARY_INCLUDES "./" "${CMAKE_BINARY_DIR}/configured_files/include")
+
 qt_add_resources(PROJECT_SOURCES resource.qrc)
 
 qt_add_executable(${EXECUTABLE_NAME}
@@ -130,3 +134,22 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     Qt6::PrintSupport
     Qt6::Network
 )
+
+target_include_directories(${EXECUTABLE_NAME} PUBLIC ${LIBRARY_INCLUDES})
+
+target_compile_definitions(${EXECUTABLE_NAME} PUBLIC "USE_CONFIG_H")
+
+#Setting the Application Icon
+if (WIN32)
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/pixmaps/qualx.rc")
+    target_sources(${EXECUTABLE_NAME} PRIVATE ${app_icon_resource_windows})
+elseif (APPLE)
+    set(MACOSX_BUNDLE_ICON_FILE Expo.icns)
+    set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/pixmaps/qualx.icns")
+    set_source_files_properties(${app_icon_macos} PROPERTIES
+           MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(${EXECUTABLE_NAME} PRIVATE ${app_icon_macos})
+else()
+
+endif()
+

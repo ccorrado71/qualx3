@@ -1,0 +1,12 @@
+#pragma once
+
+#include <QString>
+
+static const QString APP_NAME = "@EXECUTABLE_NAME@";
+static const QString APP_VERSION = "@PROJECT_VERSION@";
+static const QString BUILD_TYPE = "@CMAKE_BUILD_TYPE@";
+static const QString CPP_COMPILER = "@CMAKE_CXX_COMPILER@";
+static const QString FORTRAN_COMPILER = "@CMAKE_Fortran_COMPILER@";
+static const int  APP_VERSION_MAJOR{ @PROJECT_VERSION_MAJOR@ };
+static const int  APP_VERSION_MINOR{ @PROJECT_VERSION_MINOR@ };
+static const int  APP_VERSION_PATCH{ @PROJECT_VERSION_PATCH@ };

@@ -23,6 +23,7 @@ endif()
 # Add our local modules to the module path
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+add_subdirectory(configured)
 add_subdirectory(src)
 
 INCLUDE(${CMAKE_MODULE_PATH}/SetFortranFlags.cmake)
@@ -30,18 +31,6 @@ INCLUDE(${CMAKE_MODULE_PATH}/SetFortranFlags.cmake)
 # Print compilers name
 get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 message("Fortran compiler is: ${Fortran_COMPILER_NAME}")
-
-#file(GLOB INDEXING_FILES "${CMAKE_CURRENT_SOURCE_DIR}/indexing/*")
-#if(WIN32)
-#    file(COPY ${INDEXING_FILES} DESTINATION "${CMAKE_BINARY_DIR}")
-#    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION ${CMAKE_BINARY_DIR})
-#elseif(UNIX AND NOT APPLE)
-#    file(COPY ${INDEXING_FILES} DESTINATION "${CMAKE_BINARY_DIR}/src")
-#    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION ${CMAKE_BINARY_DIR})
-#elseif(APPLE)
-#    file(COPY ${INDEXING_FILES} DESTINATION "${CMAKE_BINARY_DIR}/src/${EXECUTABLE_NAME}.app/Contents/MacOS/")
-#    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION "${CMAKE_BINARY_DIR}/src/${EXECUTABLE_NAME}.app/Contents/")
-#endif()
 
 # Install the executable into "${CMAKE_INSTALL_PREFIX}/bin
 set(COMPONENT_NAME_MAIN "QualX")
