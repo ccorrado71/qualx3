@@ -21,7 +21,7 @@
     <item>
      <widget class="QScrollBar" name="horizontalScrollBar">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -36,10 +36,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -55,10 +55,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -74,10 +74,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -112,7 +112,22 @@
     <addaction name="actionImportDiffractionPattern"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuPattern">
+    <property name="title">
+     <string>Pattern</string>
+    </property>
+    <widget class="QMenu" name="menuBackground">
+     <property name="title">
+      <string>Background</string>
+     </property>
+     <addaction name="actionGenerate_Background"/>
+     <addaction name="actionAdd_Background_Point"/>
+     <addaction name="actionDelete_Background_Point"/>
+    </widget>
+    <addaction name="menuBackground"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuPattern"/>
    <addaction name="menuDatabase"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -155,6 +170,29 @@
   <action name="actionImportDiffractionPattern">
    <property name="text">
     <string>Import Diffraction Pattern</string>
+   </property>
+  </action>
+  <action name="actionGenerate_Background">
+   <property name="text">
+    <string>Generate Background</string>
+   </property>
+  </action>
+  <action name="actionAdd_Background_Point">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/addpoint.png</normaloff>:/images/images/addpoint.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add Background Point</string>
+   </property>
+  </action>
+  <action name="actionDelete_Background_Point">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/deletepoint.xpm</normaloff>images/deletepoint.xpm</iconset>
+   </property>
+   <property name="text">
+    <string>Delete Background Point</string>
    </property>
   </action>
  </widget>

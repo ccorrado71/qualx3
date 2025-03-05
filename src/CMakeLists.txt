@@ -139,6 +139,40 @@ target_include_directories(${EXECUTABLE_NAME} PUBLIC ${LIBRARY_INCLUDES})
 
 target_compile_definitions(${EXECUTABLE_NAME} PUBLIC "USE_CONFIG_H")
 
+if (WIN32)
+    if (IFORT_LIB_DIR)
+        target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+        "${IFORT_LIB_DIR}/ifmodintr.lib"
+        "${IFORT_LIB_DIR}/ifwin.lib"
+        "${IFORT_LIB_DIR}/ifconsol.lib"
+        "${IFORT_LIB_DIR}/libifportmd.lib"
+        "${IFORT_LIB_DIR}/libirc.lib"
+	"${IFORT_LIB_DIR}/svml_dispmd.lib"
+        "${IFORT_LIB_DIR}/libircmt.lib"
+        "${IFORT_LIB_DIR}/libmmd.lib"
+        )
+
+        STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILDTYPE)
+        IF(BUILDTYPE STREQUAL "RELEASE")
+           target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+#"${IFORT_LIB_DIR}/libmmd.lib"
+           "${IFORT_LIB_DIR}/libifcoremd.lib"
+           )
+        else()
+           target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+		   #           "${IFORT_LIB_DIR}/libmmdd.lib"
+           "${IFORT_LIB_DIR}/libifcoremdd.lib"
+           )
+        endif()
+    endif()
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE opengl32)
+endif()
+
+set_target_properties(${EXECUTABLE_NAME} PROPERTIES
+    WIN32_EXECUTABLE TRUE
+    MACOSX_BUNDLE TRUE
+)
+
 #Setting the Application Icon
 if (WIN32)
     set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/pixmaps/qualx.rc")

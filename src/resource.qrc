@@ -2,5 +2,7 @@
     <qresource prefix="/images">
         <file>images/quit.png</file>
         <file>images/qualx.png</file>
+        <file>images/addpoint.png</file>
+        <file>images/deletepoint.xpm</file>
     </qresource>
 </RCC>

@@ -29,7 +29,9 @@ contains
    ifAutomatic = param_opt%auto          !Set automatic mode by command line
    if (param_opt%nogui == 1) jscreen = 0 !Disable GUI if required by command line
 
-   call mainloop(filein,ier)
+   if (len_trim(filein) /= 0) then
+       call mainloop(filein,ier)
+   endif
 
    end subroutine qualxmain
 
