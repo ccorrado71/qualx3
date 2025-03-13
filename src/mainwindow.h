@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 //#include "dbmanager.h"
+#include "backgrounddialog.h"
 #include "qualxdbmanager.h"
 #include "xpdviewwidget.h"
 
@@ -41,23 +42,34 @@ public:
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
     void enableActions(MainWindow::EnabledActions action, bool state=false);
+    void saveEnabledActions();
+    void restoreEnabledActions();
 
 private slots:
 
     //File
     void onActionImportDiffractionPatternTriggered();
 
+    //Pattern
+    void onActionBackgroundTriggered();
+
     void on_actionGet_Card_triggered();
     void on_actionQueryName_triggered();
     void on_actionDatabaseInfo_triggered();
 
 private:
+    void createDialogs();
     void actionsSetup();
 
-    Ui::MainWindow *ui;    
+    Ui::MainWindow *ui;
+    QMap<QAction *, bool> stateActions;
+    void enumerateEnabledActionsMenu(QMenu *menu);
+
+    //Dialog Windows
+    BackgroundDialog *backgroundDialog;
+
     QString currentDatabase;
     QualxDbManager qualxDb;
-    //DbManager db, dbInfo, dbInfoStat;
     void testSelection(DbQueryBuilder &builder, int testCase);
 };
 #endif // MAINWINDOW_H

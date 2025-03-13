@@ -40,6 +40,57 @@ void MainWindow::enableActions(EnabledActions action, bool state)
     qInfo() << "FIX LATER enableActions";
 }
 
+void MainWindow::enumerateEnabledActionsMenu(QMenu *menu)
+{
+    foreach (QAction *action, menu->actions()) {
+        if (action->isSeparator()) {
+
+        } else if (action->menu()) {
+            stateActions[action] = action->isEnabled();
+            if (action->isEnabled()) enumerateEnabledActionsMenu(action->menu());
+        } else {
+            stateActions[action] = action->isEnabled();
+        }
+    }
+}
+
+void MainWindow::saveEnabledActions()
+{
+    stateActions.clear();
+    const QList<QAction *> actions = ui->menubar->actions();  //QMenuBar::actions();
+    foreach (auto action, actions) {
+        stateActions[action] = action->isEnabled();
+        if (action->isEnabled()) enumerateEnabledActionsMenu(action->menu());
+    }
+}
+
+void MainWindow::restoreEnabledActions()
+{
+    QMutableMapIterator<QAction *, bool> i(stateActions);
+    while (i.hasNext()) {
+        i.next();
+        if(i.key()->menu()) {
+            i.key()->menu()->setEnabled(i.value());
+        } else {
+            i.key()->setEnabled(i.value());
+        }
+    }
+}
+
+void MainWindow::createDialogs()
+{
+    backgroundDialog = new BackgroundDialog(this);
+}
+
+void MainWindow::actionsSetup()
+{
+    //File menu
+    connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
+
+    //Pattern menu
+    connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
+}
+
 void MainWindow::onActionImportDiffractionPatternTriggered()
 {
     QSettings settings;
@@ -91,6 +142,12 @@ void MainWindow::onActionImportDiffractionPatternTriggered()
     }
 }
 
+void MainWindow::onActionBackgroundTriggered()
+{
+    backgroundDialog->setBackground();
+    backgroundDialog->show();
+}
+
 void MainWindow::on_actionDatabaseInfo_triggered()
 {
     int ncard;
@@ -107,12 +164,6 @@ void MainWindow::on_actionGet_Card_triggered()
     //FIX LATER
     // db.getCardInfo(idCard);
     // dbInfo.getCardAdditionalInfo(idCard);
-}
-
-void MainWindow::actionsSetup()
-{
-    //File menu
-    connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)

@@ -120,7 +120,7 @@
      <property name="title">
       <string>Background</string>
      </property>
-     <addaction name="actionGenerate_Background"/>
+     <addaction name="actionBackground"/>
      <addaction name="actionAdd_Background_Point"/>
      <addaction name="actionDelete_Background_Point"/>
     </widget>
@@ -172,7 +172,7 @@
     <string>Import Diffraction Pattern</string>
    </property>
   </action>
-  <action name="actionGenerate_Background">
+  <action name="actionBackground">
    <property name="text">
     <string>Generate Background</string>
    </property>

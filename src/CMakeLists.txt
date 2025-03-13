@@ -1,4 +1,10 @@
 set(PROJECT_SOURCES
+    backgroundcoefwidget.cpp
+    backgroundcoefwidget.h
+    backgroundcoefwidget.ui
+    backgrounddialog.cpp
+    backgrounddialog.h
+    backgrounddialog.ui
     colorbutton.cpp
     colorbutton.h
     colorwidget.cpp         
@@ -8,6 +14,7 @@ set(PROJECT_SOURCES
     commandline.h
     customplotzoom.cpp
     customplotzoom.h
+    dataset.h
     dbmanager.h
     dbmanager.cpp
     dbquerybuilder.h
@@ -61,6 +68,7 @@ set(FORTRAN_SOURCES
     arrayutil.f90
     atombasic.f90
     atomsutil.F90
+    back_interop.f90
     background.f90
     bond2014.f90
     bondsutil.f90

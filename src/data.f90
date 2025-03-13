@@ -93,7 +93,6 @@ END MODULE datamod
 !
 !   if(add_data == 0) call dataset_to_expo(datas)
 
-   write(*,*) 'work_on_pattern: ',jscreen
    if (jscreen > 0) then
 !       call init_messages()
 !       call write_message_pattern(datas%fname)
