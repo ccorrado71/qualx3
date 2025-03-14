@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     actionsSetup();
+    createDialogs();
 
     currentDatabase = "/home/corrado/temp/cod/cod2205";
     qualxDb.openDatabases(currentDatabase);

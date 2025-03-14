@@ -72,11 +72,11 @@ module background_interop
    !USE proginterface
    USE variables, only: dataset
    USE arrayutil
-   interface
-     subroutine run_peaksearch(gui)
-     logical, intent(in), optional :: gui
-     end subroutine run_peaksearch
-   end interface
+   !interface
+   !  subroutine run_peaksearch(gui)
+   !  logical, intent(in), optional :: gui
+   !  end subroutine run_peaksearch
+   !end interface
 !
    type (c_back_condition_type) :: backc
    integer(c_int), value        :: kaction
