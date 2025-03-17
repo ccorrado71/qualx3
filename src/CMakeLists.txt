@@ -36,6 +36,9 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.ui
     nr.h
+    peaksearchdialog.cpp
+    peaksearchdialog.h
+    peaksearchdialog.ui
     plotsettings.h
     plotsettings.cpp
     progkeysettings.h

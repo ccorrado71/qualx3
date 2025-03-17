@@ -36,6 +36,12 @@ XpdViewWidget *MainWindow::xpdViewer() const
     return ui->xpdWidget;
 }
 
+void MainWindow::setZoomAction()
+{
+    if (mAction != savedZoomAction)
+        checkAction(savedZoomAction);
+}
+
 void MainWindow::enableActions(EnabledActions action, bool state)
 {
     qInfo() << "FIX LATER enableActions";

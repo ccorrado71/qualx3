@@ -94,17 +94,15 @@ module background_interop
         dataset(1)%cond%minf = dataset(1)%xminc0()
         dataset(1)%cond%maxf = dataset(1)%xmaxc0()
         backc = cast_to_c(dataset(1)%cond)
+        call dataset(1)%make_background()
+        style(STYLE_BACK)%vis = 1
+        style(STYLE_BACKP)%vis = 1
+        call vedinew()
 
       case (1,2)    ! Apply / Cancel
         dataset(1)%cond = cast_to_f(backc)
-        !!!!!FIX THIS FOR QUALX
-        !call UserBack()                  ! aggiorna il background
+        call dataset(1)%make_background()
         backc = cast_to_c(dataset(1)%cond)
-        !if (allocated(funcls)) then      ! calcola Rwp se funcls e' allocato
-        !    call erreacc(dataset(1)%cond%ncoef)
-        !    write(strmess,'(" Rp = ",f0.3," Rwp = ",f0.3)') rinfo%rp,rinfo%rwp
-        !    call PrintMess(strmess)
-        !endif
 !
 !       Peaksearch attivo: rigenera i picchi
         !if (style(STYLE_PEAKS)%vis == 1) then 

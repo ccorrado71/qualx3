@@ -41,6 +41,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
+    void setZoomAction();
     void enableActions(MainWindow::EnabledActions action, bool state=false);
     void saveEnabledActions();
     void restoreEnabledActions();
