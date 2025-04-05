@@ -133,7 +133,8 @@ void PeakSearchDialog::onButtonBoxClicked(QAbstractButton *button)
 void PeakSearchDialog::updatePeakListTable()
 {
     MainWindow *mw = qobject_cast<MainWindow *>(this->parent());
-    mw->updatePeakListTable();
+    //FIX THIS LATER
+    //mw->updatePeakListTable();
 }
 
 void PeakSearchDialog::onIntensitySpinBoxValueChanged(double arg1)

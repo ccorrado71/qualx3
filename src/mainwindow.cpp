@@ -14,6 +14,8 @@ extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , mAction(NoAction)
+    , savedZoomAction(mAction)
 {
     ui->setupUi(this);
 
@@ -34,6 +36,43 @@ MainWindow::~MainWindow()
 XpdViewWidget *MainWindow::xpdViewer() const
 {
     return ui->xpdWidget;
+}
+
+void MainWindow::setAction(const MouseAction &action, bool writeConfig)
+{
+    XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
+    xpdViewer()->setAction(xpdAction);
+
+    // FIX THIS LATER
+    // if (writeConfig) {
+    //     QSettings settings;
+    //     QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
+    //     const char *key = metaEnum.valueToKey(action);
+    //     settings.setValue(EXPO_ACTION_KEY,key);
+    // }
+}
+
+void MainWindow::checkAction(MouseAction action)
+{
+    if (action == mAction) return;
+    // FIX THIS LATER
+    // switch (action) {
+    // case NoZoom:
+    //     ui->actionSelection_Mode->setChecked(true);
+    //     break;
+    // case RectangleZoom:
+    //     ui->actionRectangle_Zoom->setChecked(true);
+    //     break;
+    // case HorizontalZoom:
+    //     ui->actionHorizontal_Zoom->setChecked(true);
+    //     break;
+    // case Pan:
+    //     ui->actionPan->setChecked(true);
+    //     break;
+    // default:
+    //     break;
+    // }
+    setAction(action, false);
 }
 
 void MainWindow::setZoomAction()
@@ -86,6 +125,7 @@ void MainWindow::restoreEnabledActions()
 
 void MainWindow::createDialogs()
 {
+    peakSearchDialog = new PeakSearchDialog(this);
     backgroundDialog = new BackgroundDialog(this);
 }
 
@@ -98,70 +138,13 @@ void MainWindow::actionsSetup()
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
 }
 
-void MainWindow::onActionImportDiffractionPatternTriggered()
-{
-    QSettings settings;
-    QString selectedFilter = "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow)";
-    QString exts = "All files (*.*);;"
-                   "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow);;"
-                   "ASCII profile [start,step,end,intensities] (*.dat *.pow);;"
-                   "XY profile [2theta and intensities in two colomuns] (*.xy *.pow);;"
-                   "GSAS data (*.gda);;"
-                   "CIF powder data (*.rtv *.cif);;"
-                   "CCDC Mercury data (*.xye);;"
-                   "Siemens data (*.uxd);;"
-                   "Sietronics Sieray data (*.cpi);;"
-                   "XDD data (*.xdd);;"
-                   "DBWS data (*.dbw);;"
-                   "XDA data (*.xda);;"
-                   "Philips UDF data (*.udf);;"
-                   "PANalytical XRDML data (*.xrdml)";
-
-    qInfo() << "Import Diffraction Pattern From";
-
-    QStringList files = QFileDialog::getOpenFileNames(this,
-                                                      tr("Import Diffraction Pattern From"),
-                                                      settings.value(DEFAULT_DIR_KEY).toString(),
-                                                      exts, &selectedFilter);
-
-    if (!files.isEmpty()) {
-        QFileInfo info(files.at(0));
-        QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
-        outFile = QDir::toNativeSeparators(outFile);
-        int nerr = 0;
-        fileutils::setCurrentDirFromFile(files.at(0));
-        for (int i = 0; i < files.size(); i++) {
-            int err;
-            QString filename = QDir::toNativeSeparators(files.at(i));
-            open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
-                               outFile.toStdString().c_str(), outFile.length(),
-                                   i, &err);
-            if (err) {
-                nerr++;
-            }
-        }
-    //     if (nerr < files.size()) {
-    //         QString filename = QDir::toNativeSeparators(files.at(0));
-    //         settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
-    //         outputFileName = outFile;
-    //         setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
-    //     }
-    }
-}
-
-void MainWindow::onActionBackgroundTriggered()
-{
-    backgroundDialog->setBackground();
-    backgroundDialog->show();
-}
-
 void MainWindow::on_actionDatabaseInfo_triggered()
 {
     int ncard;
     QString type;
     //FIX LATER
-//    db.getInfo(ncard, type);
-//    qInfo() << "Ncard: " << ncard << "Type: " << type;
+    //    db.getInfo(ncard, type);
+    //    qInfo() << "Ncard: " << ncard << "Type: " << type;
 }
 
 void MainWindow::on_actionGet_Card_triggered()
@@ -305,4 +288,75 @@ void MainWindow::on_actionQueryName_triggered()
 
     builder.buildQuery();
     qualxDb.makeQuery(builder);
+}
+
+//
+//  File Menu
+//
+
+void MainWindow::onActionImportDiffractionPatternTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow)";
+    QString exts = "All files (*.*);;"
+                   "All Powder Diffraction Data (*.dat *.xy *.rtv *.gda *.xye *.xrdml *.pow);;"
+                   "ASCII profile [start,step,end,intensities] (*.dat *.pow);;"
+                   "XY profile [2theta and intensities in two colomuns] (*.xy *.pow);;"
+                   "GSAS data (*.gda);;"
+                   "CIF powder data (*.rtv *.cif);;"
+                   "CCDC Mercury data (*.xye);;"
+                   "Siemens data (*.uxd);;"
+                   "Sietronics Sieray data (*.cpi);;"
+                   "XDD data (*.xdd);;"
+                   "DBWS data (*.dbw);;"
+                   "XDA data (*.xda);;"
+                   "Philips UDF data (*.udf);;"
+                   "PANalytical XRDML data (*.xrdml)";
+
+    qInfo() << "Import Diffraction Pattern From";
+
+    QStringList files = QFileDialog::getOpenFileNames(this,
+                                                      tr("Import Diffraction Pattern From"),
+                                                      settings.value(DEFAULT_DIR_KEY).toString(),
+                                                      exts, &selectedFilter);
+
+    if (!files.isEmpty()) {
+        QFileInfo info(files.at(0));
+        QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
+        outFile = QDir::toNativeSeparators(outFile);
+        int nerr = 0;
+        fileutils::setCurrentDirFromFile(files.at(0));
+        for (int i = 0; i < files.size(); i++) {
+            int err;
+            QString filename = QDir::toNativeSeparators(files.at(i));
+            open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
+                               outFile.toStdString().c_str(), outFile.length(),
+                                   i, &err);
+            if (err) {
+                nerr++;
+            }
+        }
+    //     if (nerr < files.size()) {
+    //         QString filename = QDir::toNativeSeparators(files.at(0));
+    //         settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
+    //         outputFileName = outFile;
+    //         setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
+    //     }
+    }
+}
+
+//
+//  Pattern Menu
+//
+
+void MainWindow::onActionBackgroundTriggered()
+{
+    backgroundDialog->setBackground();
+    backgroundDialog->show();
+}
+
+void MainWindow::on_actionPeak_Search_Conditions_triggered()
+{
+    peakSearchDialog->setOptions();
+    peakSearchDialog->show();
 }

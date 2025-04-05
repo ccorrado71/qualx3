@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 //#include "dbmanager.h"
+#include "peaksearchdialog.h"
 #include "backgrounddialog.h"
 #include "qualxdbmanager.h"
 #include "xpdviewwidget.h"
@@ -17,6 +18,19 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum MouseAction {
+        NoZoom,
+        HorizontalZoom,
+        RectangleZoom,
+        Pan,
+        AddBackgroundPoint,
+        DeleteBackgroundPoint,
+        AddPeak,
+        DeletePeak,
+        NoAction
+    };
+    Q_ENUM(MouseAction)
+
     enum EnabledActions {
         InitAction,
         PatternAction,
@@ -41,6 +55,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
+    void setAction(const MouseAction &action, bool writeConfig = true);
+    void checkAction(MouseAction action);
     void setZoomAction();
     void enableActions(MainWindow::EnabledActions action, bool state=false);
     void saveEnabledActions();
@@ -53,6 +69,7 @@ private slots:
 
     //Pattern
     void onActionBackgroundTriggered();
+    void on_actionPeak_Search_Conditions_triggered();
 
     void on_actionGet_Card_triggered();
     void on_actionQueryName_triggered();
@@ -63,10 +80,13 @@ private:
     void actionsSetup();
 
     Ui::MainWindow *ui;
+    MouseAction mAction;
+    MouseAction savedZoomAction;
     QMap<QAction *, bool> stateActions;
     void enumerateEnabledActionsMenu(QMenu *menu);
 
     //Dialog Windows
+    PeakSearchDialog *peakSearchDialog;
     BackgroundDialog *backgroundDialog;
 
     QString currentDatabase;

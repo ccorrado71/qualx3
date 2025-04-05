@@ -46,12 +46,8 @@ set(PROJECT_SOURCES
     qcustomplot.cpp
     qt_utils.h
     qt_utils.cpp
-    qualx.f90
     qualxdbmanager.h
     qualxdbmanager.cpp
-    util.f
-    variables.f90
-    vedi2005.f90
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui
@@ -107,11 +103,13 @@ set(FORTRAN_SOURCES
     mpi_util.F90
     nist_table.f90
     nl2sol.f90
+    peak_interop.f90
     peakutil.f90
     pfunction.f90
     plotstyle.f90
     prog_names.F90
     progtype.F90
+    qualx.f90
     recipes.f90
     reflectionsutil.f90
     restraints.f90
@@ -127,7 +125,10 @@ set(FORTRAN_SOURCES
     symm_table.f90
     symmgrid.f90
     unit_cell.f90
+    util.f
     utiln.f90
+    variables.f90
+    vedi2005.f90
 )
 
 set(LIBRARY_INCLUDES "./" "${CMAKE_BINARY_DIR}/configured_files/include")

@@ -124,7 +124,18 @@
      <addaction name="actionAdd_Background_Point"/>
      <addaction name="actionDelete_Background_Point"/>
     </widget>
+    <widget class="QMenu" name="menuPeaks">
+     <property name="title">
+      <string>Peaks</string>
+     </property>
+     <addaction name="actionPeak_Search"/>
+     <addaction name="actionPeak_Search_Conditions"/>
+     <addaction name="actionAdd_Del_Peaks"/>
+     <addaction name="actionLoad_Peaks"/>
+     <addaction name="actionSave_Peaks"/>
+    </widget>
     <addaction name="menuBackground"/>
+    <addaction name="menuPeaks"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPattern"/>
@@ -193,6 +204,31 @@
    </property>
    <property name="text">
     <string>Delete Background Point</string>
+   </property>
+  </action>
+  <action name="actionPeak_Search">
+   <property name="text">
+    <string>Peak Search</string>
+   </property>
+  </action>
+  <action name="actionPeak_Search_Conditions">
+   <property name="text">
+    <string>Peak Search Conditions</string>
+   </property>
+  </action>
+  <action name="actionAdd_Del_Peaks">
+   <property name="text">
+    <string>Add/Del Peaks</string>
+   </property>
+  </action>
+  <action name="actionLoad_Peaks">
+   <property name="text">
+    <string>Load Peaks</string>
+   </property>
+  </action>
+  <action name="actionSave_Peaks">
+   <property name="text">
+    <string>Save Peaks</string>
    </property>
   </action>
  </widget>
