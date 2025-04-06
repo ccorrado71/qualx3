@@ -69,7 +69,10 @@ private slots:
 
     //Pattern
     void onActionBackgroundTriggered();
-    void on_actionPeak_Search_Conditions_triggered();
+    void onActionPeakSearchTriggered();
+    void onActionPeakSearchConditionsTriggered();
+    void onActionLoadPeaksTriggered();
+    void onActionSavePeaksTriggered();
 
     void on_actionGet_Card_triggered();
     void on_actionQueryName_triggered();

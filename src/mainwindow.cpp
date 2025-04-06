@@ -136,6 +136,10 @@ void MainWindow::actionsSetup()
 
     //Pattern menu
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
+    connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
+    connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
+    connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
+    connect(ui->actionPeak_Search_Conditions, &QAction::triggered, this, &MainWindow::onActionPeakSearchConditionsTriggered);
 }
 
 void MainWindow::on_actionDatabaseInfo_triggered()
@@ -355,8 +359,24 @@ void MainWindow::onActionBackgroundTriggered()
     backgroundDialog->show();
 }
 
-void MainWindow::on_actionPeak_Search_Conditions_triggered()
+void MainWindow::onActionPeakSearchTriggered()
+{
+    run_peaksearchwin();
+}
+
+void MainWindow::onActionPeakSearchConditionsTriggered()
 {
     peakSearchDialog->setOptions();
     peakSearchDialog->show();
 }
+
+void MainWindow::onActionLoadPeaksTriggered()
+{
+
+}
+
+void MainWindow::onActionSavePeaksTriggered()
+{
+
+}
+
