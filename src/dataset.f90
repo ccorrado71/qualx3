@@ -75,6 +75,7 @@ MODULE datasetmod
      procedure          :: xminc0 => get_xminc0
      procedure          :: xmaxc0 => get_xmaxc0
      procedure          :: resolution
+     procedure          :: has_back
 
      ! Data modification methods
      procedure          :: set_wave
@@ -761,6 +762,16 @@ CONTAINS
    endif
 !
    end function resolution
+
+!----------------------------------------------------------------------------------------------------
+
+   logical function has_back(datas)
+   use background, only: BK_NONE
+   class(dataset_type), intent(in) :: datas
+!
+   has_back = datas%npoints_back() > 0  .and. datas%cond%btype /= BK_NONE
+!
+   end function has_back
 
 !----------------------------------------------------------------------------------------------------
 

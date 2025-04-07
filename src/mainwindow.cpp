@@ -10,6 +10,7 @@
 MainWindow *mMainWindow;
 
 extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
+extern "C" void run_peaksearchwin();
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

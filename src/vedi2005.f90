@@ -118,7 +118,7 @@ MODULE view
          call enable_rescale(1)
      endif
 !     
-     select case (pd_action)
+!c    select case (pd_action)
 !c       case (1)
 !c         if (allocated(dataset(1)%yb) .and. dataset(1)%npoints_back() > 0) then
 !c             call dataset(1)%get_points(backpur)
@@ -165,8 +165,8 @@ MODULE view
 !c         call plottanew(xzleft,xzright,pinicalc1,pfincalc1,theta_int(:,7),theta_int(:,2),      &
 !c         scala(1)*theta_int(pinicalc1:pfincalc1,3),ybac=back_int(pinicalc1:pfincalc1,1),tthr=TThet,  &   
 !c         bacp=backp(:nback,:))
-
-       case (8)
+!c
+!c       case (8)
          allocate(inid(ndataset(dataset)))
          allocate(ifid(ndataset(dataset)))
          do i=1,ndataset(dataset)
@@ -175,7 +175,7 @@ MODULE view
          enddo
          call plottanew2(inid,ifid)   !!!!,pinicalc1,pfincalc1)
 
-     end select
+!c     end select
 !
 !    salva limiti per redraw
      pinioss_sav = xzleft

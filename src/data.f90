@@ -107,9 +107,7 @@ END MODULE datamod
 !---------------------------------------------------------------------------
 
    subroutine run_peaksearch(gui)
-!FIX LATER   USE Conteggi, only: npunti, theta_int
    USE peak_mod
-!FIX LATER   USE General, only:alambda
    USE variables, only: dataset
    USE arrayutil
    implicit none
@@ -123,28 +121,23 @@ END MODULE datamod
    else
        guivar = .true.
    endif
-!FIX LATER
-!!
-!!  Subtract background
-!   if (size_array(dataset(1)%yb) /= npunti) then
-!       call back_for_peaksearch(.true.)
-!   endif
-!   allocate(yc(npunti))
-!   !where (backgr(:) > theta_int(:,2)) 
-!   !       yc(:) = 0
-!   !elsewhere
-!           yc(:) = theta_int(:,2) - dataset(1)%yb(:)
-!   !endwhere
-!!
-!!  compute srange
-!   pkcond%srange = init_peak_range(theta_int(:,1),yc,alambda)
-!   !write(0,*)'SRANGE =',pkcond%srange
-!!
-!   call peak_create(theta_int(:,1),yc,pkind,pkcond,alambda,pkindtot)
-!   pkcond%maxpk = -1 ! unset max number of peaks for GUI
-!   pkcond%minpk = -1 ! unset min number of peaks for GUI
-!!
-!   if (guivar) call update_peak_graph()
+!
+!  Subtract background
+   if (.not.dataset(1)%has_back()) then
+       call dataset(1)%make_background()
+   endif
+   allocate(yc(dataset(1)%npoints()))
+   yc(:) = dataset(1)%y(:) - dataset(1)%yb(:)
+!
+!  compute srange
+   pkcond%srange = init_peak_range(dataset(1)%x,yc,dataset(1)%wave(1))
+   !write(0,*)'SRANGE =',pkcond%srange
+!
+   call peak_create(dataset(1)%x,yc,pkind,pkcond,dataset(1)%wave(1),pkindtot)
+   pkcond%maxpk = -1 ! unset max number of peaks for GUI
+   pkcond%minpk = -1 ! unset min number of peaks for GUI
+!
+   if (guivar) call update_peak_graph()
    !call write_column('picchi.txt',xcol1=pkind%getx(),metad='#2theta values')
 !
    end subroutine run_peaksearch

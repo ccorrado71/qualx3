@@ -32,11 +32,8 @@
    subroutine peak_search_action(iAction, pSettings) bind(C,name="peak_search_action")
    use iso_c_binding
    USE VIEW, only: vedinew
-!FIX LATER   USE General, only: alambda
-!FIX LATER   USE PatternRef, only: thmin,thmax
    USE peak_mod
 !FIX LATER   USE messagemod
-!FIX LATER   USE conteggi, only: theta_int
    USE variables, only: dataset
    implicit none
    interface
@@ -66,23 +63,24 @@
             if (.not.allocated(pkind)) then ! Peak search has been not performed
                 call run_peaksearch()
             else                            ! Peaks from external file: create only array pkindtot
-!FIX LATER                pkcond%srange = init_peak_range(theta_int(:,1),theta_int(:,2),alambda)
-!FIX LATER                call peak_create(theta_int(:,1),theta_int(:,2)-dataset(1)%yb(:),pksav,pkcond,alambda,pkindtot)
+                pkcond%srange = init_peak_range(dataset(1)%x,dataset(1)%y,dataset(1)%wave(1))
+                call peak_create(dataset(1)%x,dataset(1)%y(:) - dataset(1)%yb(:),  &
+                                 pksav,pkcond,dataset(1)%wave(1),pkindtot)
             endif
         endif
         pkconds = pkcond
         call peak_copy(pksav,pkind)
-!FIX LATER        pSettings%minRange = thmin
-!FIX LATER        pSettings%maxRange = thmax
+        pSettings%minRange = dataset(1)%xminc()
+        pSettings%maxRange = dataset(1)%xmaxc()
         if (pkcond%minp > 0) then
             pSettings%minSearch = pkcond%minp
         else
-!FIX LATER            pSettings%minSearch = thmin
+            pSettings%minSearch = dataset(1)%xminc()
         endif
         if (pkcond%maxp > 0) then
             pSettings%maxSearch = pkcond%maxp
         else
-!FIX LATER            pSettings%maxSearch = thmax
+            pSettings%maxSearch = dataset(1)%xmaxc()
         endif
         pSettings%threshold = pkcond%amp
         pSettings%numPeaks = numpeaks(pkind)
@@ -116,8 +114,8 @@
         call update_peak_graph1(peak_pos_message)
 
      case (6)     ! Default
-!FIX LATER        pSettings%minSearch = max(pkcond_def%minp,thmin)
-!FIX LATER        pSettings%maxSearch = max(pkcond_def%maxp,thmax)
+        pSettings%minSearch = max(pkcond_def%minp,dataset(1)%xminc())
+        pSettings%maxSearch = max(pkcond_def%maxp,dataset(1)%xmaxc())
         pSettings%threshold = pkcond_def%amp
         pSettings%sensitivity = sensitivity(pkcond_def%smcond(2),pkcond_def%smcond(1))
         pSettings%append = .false.
@@ -196,8 +194,8 @@
 !
 !  When the user press the button 'Pattern' > 'Peak search'
 !
-!FIX LATER   USE patternref, only: thmin,thmax
    USE peak_mod
+   USE variables, only: dataset
    interface
      subroutine run_peaksearch(gui)
      logical, intent(in), optional :: gui
@@ -205,8 +203,8 @@
    end interface
 !
 !  Reset the range to create the array pkindtot
-!FIX LATER   pkcond%minp = thmin
-!FIX LATER   pkcond%maxp = thmax
+   pkcond%minp = dataset(1)%xminc()
+   pkcond%maxp = dataset(1)%xmaxc()
 !
    call run_peaksearch()
    end subroutine run_peaksearchwin
