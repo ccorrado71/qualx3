@@ -92,6 +92,10 @@ private:
     PeakSearchDialog *peakSearchDialog;
     BackgroundDialog *backgroundDialog;
 
+    //Files
+    QString currentFile;
+
+    //Database
     QString currentDatabase;
     QualxDbManager qualxDb;
     void testSelection(DbQueryBuilder &builder, int testCase);

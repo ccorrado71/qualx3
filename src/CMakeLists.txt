@@ -48,6 +48,8 @@ set(PROJECT_SOURCES
     qt_utils.cpp
     qualxdbmanager.h
     qualxdbmanager.cpp
+    savedialog.cpp
+    savedialog.h
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui
@@ -91,6 +93,7 @@ set(FORTRAN_SOURCES
     fragments.F90
     genlsq.f90
     goptutil.F90	
+    indexing.f90
     kspecmod.f90
     lib_array.f90
     lsqnew.f90

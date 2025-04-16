@@ -1,0 +1,66 @@
+/* XPM */
+
+static char * addpeak_xpm[] = {
+
+/* width height ncolors cpp [x_hot y_hot] */
+
+"24 24 3 1 2 22",
+
+/* colors */
+
+" 	s none	m none	c none",
+
+".	s iconColor5	m black	c blue",
+
+"X	s iconColor3	m black	c red",
+
+/* pixels */
+
+"                        ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"          ...           ",
+
+"                        ",
+
+"           X            ",
+
+"          XXX           ",
+
+"          XXX           ",
+
+"         XXXXX          ",
+
+"         XXXXX          ",
+
+"         XXXXX          ",
+
+"        XXXXXXX         ",
+
+"        XXXXXXX         ",
+
+"       XXXXXXXXX        ",
+
+"     XXXXXXXXXXXXX      ",
+
+"   XXXXXXXXXXXXXXXXX    ",
+
+"                        "};
+

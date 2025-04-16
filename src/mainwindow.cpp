@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "dbquerybuilder.h"
 #include "progkeysettings.h"
+#include "savedialog.h"
 #include "fileutils.h"
 
 #include <QDebug>
@@ -11,6 +12,8 @@ MainWindow *mMainWindow;
 
 extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
 extern "C" void run_peaksearchwin();
+extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier);
+extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -373,11 +376,37 @@ void MainWindow::onActionPeakSearchConditionsTriggered()
 
 void MainWindow::onActionLoadPeaksTriggered()
 {
+    QSettings settings;
+    QString selectedFilter = "2 theta values (*.dat *.txt *.pea)";
+    QString exts = "2 theta values (*.dat *.txt *.pea);;"
+                   "d values (*.dat *.txt *.pea)";
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Load File"), settings.value(DEFAULT_DIR_KEY).toString(),
+                                                    exts, &selectedFilter);
 
+    if (!fileName.isEmpty()) {
+        int tipo = (selectedFilter.startsWith("2 theta")) ? 1 : 2;
+        int ier;
+        LoadPeaksC(fileName.toStdString().c_str(), fileName.length(), tipo, &ier);
+    }
 }
 
 void MainWindow::onActionSavePeaksTriggered()
 {
-
+    QSettings settings;
+    QString selectedFilter = "2 theta values (*.dat *.txt *.pea)";
+    QString exts = "2 theta values (*.dat *.txt *.pea);;"
+                   "d values (*.dat *.txt *.pea);;"
+                   "Input File for DICVOL (*.dat);;"
+                   "Input File for McMaille (*.dat);;"
+                   "Peak list (*.txt)";
+    QString fileName = SaveDialog::run(this,tr("Save Peaks As"),
+                                       settings.value(DEFAULT_DIR_KEY).toString(),
+                                       QFileInfo(currentFile).baseName(),exts,
+                                       "txt",selectedFilter);
+    if (!fileName.isEmpty()) {
+        QStringList list = exts.split(";;");
+        int tipo = list.lastIndexOf(selectedFilter) + 1;
+        SavePeaksC(fileName.toStdString().c_str(), fileName.length(),tipo);
+    }
 }
-

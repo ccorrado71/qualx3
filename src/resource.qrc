@@ -4,5 +4,7 @@
         <file>images/qualx.png</file>
         <file>images/addpoint.png</file>
         <file>images/deletepoint.xpm</file>
+        <file>images/addpeak.xpm</file>
+        <file>images/delpeak.xpm</file>
     </qresource>
 </RCC>

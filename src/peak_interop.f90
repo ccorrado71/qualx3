@@ -316,14 +316,14 @@
 !FIX LATER   USE conteggi, only:theta_int
    USE view
 !FIX LATER   USE messagemod
-   USE variables, only: dataset
+   !USE variables, only: dataset
 !FIX LATER   USE General, only: alambda
    implicit none
    type(c_peak_type), intent(inout)  :: c_peak ! modified peak
    integer(c_int), intent(in), value :: irow  ! row 
    integer(c_int), intent(in), value :: icol  ! 1 = 2theta was changed, 2 d was changed
    integer(c_int), intent(out)       :: ier
-   real                              :: tthval
+   !real                              :: tthval
    integer                           :: npeak
    type(peak_type)                   :: peak
    logical                           :: addpeak
@@ -387,5 +387,37 @@
    !call peak_print(pkind,kpr=0)
 !
    end subroutine peak_list_change
+
+!-------------------------------------------------------------------------------------------------------  
+
+   subroutine LoadPeaksC(filename, length, tipo, ier) bind(C,name="LoadPeaksC")
+   use strutil
+   use iso_c_binding, only: c_char, c_int
+   character(c_char), intent(in)      :: filename(*)
+   integer(c_int), intent(in), value  :: length
+   integer(c_int), intent(in), value  :: tipo
+   integer(c_int), intent(out)        :: ier
+   character(len=:), allocatable      :: filenam
+
+   filenam = toFortranString(filename,length)
+   call LoadPeaks(filenam,tipo,ier)
+
+   end subroutine LoadPeaksC
+
+!-------------------------------------------------------------------------------------------------------  
+
+   subroutine SavePeaksC(filename, length, tipo) bind(C,name="SavePeaksC")
+   use strutil
+   use iso_c_binding, only: c_char, c_int
+   character(c_char), intent(in)      :: filename(*)
+   integer(c_int), intent(in), value  :: length
+   integer(c_int), intent(in), value  :: tipo
+   character(len=:), allocatable      :: filenam
+
+   filenam = toFortranString(filename,length)
+
+   call SavePeaks(filenam,tipo)
+ 
+   end subroutine SavePeaksC 
 
  end module peak_search_interop 
