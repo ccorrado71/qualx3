@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
     dbquerybuilder.cpp
     fileutils.cpp
     fileutils.h
+    floatdelegate.cpp
+    floatdelegate.h
     graphitem.cpp
     graphitem.h
     libcomune.cpp
@@ -36,6 +38,9 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.ui
     nr.h
+    peaklistwidget.cpp
+    peaklistwidget.h
+    peaklistwidget.ui
     peaksearchdialog.cpp
     peaksearchdialog.h
     peaksearchdialog.ui

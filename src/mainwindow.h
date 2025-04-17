@@ -56,6 +56,7 @@ public:
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
     void setAction(const MouseAction &action, bool writeConfig = true);
+    void updatePeakListTable();
     void checkAction(MouseAction action);
     void setZoomAction();
     void enableActions(MainWindow::EnabledActions action, bool state=false);

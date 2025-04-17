@@ -295,9 +295,9 @@ extern "C" void openwave(int *radtype, int *nwave, float wave[], float ratio[]) 
 //     mMainWindow->openFourierPeakDialog(fPeaks, nPeaks, nOldPeaks);
 // }
 
-// extern "C" void update_peak_list() {
-//     mMainWindow->updatePeakListTable();
-// }
+extern "C" void update_peak_list() {
+    mMainWindow->updatePeakListTable();
+}
 
 // extern "C" void openHklList(c_hkl_info hklInfo[], int nHkl, int vis[]) {
 //     mMainWindow->openHklListDialog(hklInfo, nHkl, vis);

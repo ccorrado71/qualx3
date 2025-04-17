@@ -21,7 +21,7 @@
     <item>
      <widget class="QScrollBar" name="horizontalScrollBar">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -36,10 +36,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -55,10 +55,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -74,10 +74,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
+         <enum>QFrame::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -149,11 +149,17 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents"/>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_2">
+  <widget class="QDockWidget" name="peakDockWidget">
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2"/>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="PeakListWidget" name="peakListWidget" native="true"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QToolBar" name="toolBarPattern">
    <property name="windowTitle">
@@ -262,6 +268,12 @@
   </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>PeakListWidget</class>
+   <extends>QWidget</extends>
+   <header>peaklistwidget.h</header>
+   <container>1</container>
+  </customwidget>
   <customwidget>
    <class>XpdViewWidget</class>
    <extends>QWidget</extends>

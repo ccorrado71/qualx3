@@ -410,3 +410,10 @@ void MainWindow::onActionSavePeaksTriggered()
         SavePeaksC(fileName.toStdString().c_str(), fileName.length(),tipo);
     }
 }
+
+void MainWindow::updatePeakListTable()
+{
+    if (ui->peakListWidget->isVisible())
+        ui->peakListWidget->updatePeakListTable();
+}
+
