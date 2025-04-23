@@ -14,6 +14,7 @@ extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char 
 extern "C" void run_peaksearchwin();
 extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier);
 extern "C" void SavePeaksC(const char *filename, int length, int tipo);
+extern "C" void apply_background_subtraction();
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -140,6 +141,7 @@ void MainWindow::actionsSetup()
 
     //Pattern menu
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
+    connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
     connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
     connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
     connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
@@ -361,6 +363,11 @@ void MainWindow::onActionBackgroundTriggered()
 {
     backgroundDialog->setBackground();
     backgroundDialog->show();
+}
+
+void MainWindow::onActionSubtractBackgroundTriggered()
+{
+    apply_background_subtraction();
 }
 
 void MainWindow::onActionPeakSearchTriggered()

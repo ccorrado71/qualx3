@@ -121,4 +121,15 @@ module background_interop
 !
    end subroutine modify_background
 
+! -----------------------------------------------------------------------------------------------------
+
+   subroutine apply_background_subtraction() bind(C,name="apply_background_subtraction")
+   USE variables, only: dataset
+   USE VIEW
+!
+   call dataset(1)%subtract_background()
+   call vedinew()
+!
+   end subroutine apply_background_subtraction
+
 end module background_interop

@@ -34,6 +34,8 @@ MODULE datasetmod
      real                                        :: sdisp=0.0,sdsd=0.0
      real                                        :: stran=0.0,stsd=0.0
      integer                                     :: zcode=0,sdcode=0,stcode=0
+     logical                                     :: data_scaled = .false.
+     logical                                     :: back_subtracted = .false.
 !
 !    background variables
      real, dimension(:), allocatable             :: yb          ! background
@@ -83,6 +85,7 @@ MODULE datasetmod
      procedure          :: resize
      procedure          :: set_points
      procedure          :: make_background
+     procedure          :: subtract_background
      procedure          :: set_cond
      procedure          :: smooth_calculate
      procedure          :: smooth_apply
@@ -212,6 +215,7 @@ CONTAINS
        scald = 1000.
    endif
    this%y = scald * this%y / maxval(this%y)
+   this%data_scaled = .true.
    end subroutine scale_data
 
 !-------------------------------------------------------------------------
@@ -621,6 +625,21 @@ CONTAINS
    call compute_background(datas%x0(datas%nc1:datas%nc2),datas%y(datas%nc1:datas%nc2),datas%yb,   &
                           datas%points,datas%coef,datas%thzerob,datas%cond,datas%wave(1))
    end subroutine make_background
+
+!----------------------------------------------------------------------------------------
+
+   subroutine subtract_background(datas)
+   class(dataset_type), intent(inout) :: datas
+!
+   if (datas%has_back()) then
+       datas%y = datas%y - datas%yb
+       where (datas%y < 0.0) datas%y = 0.0
+       datas%back_subtracted = .true.
+
+       if (datas%data_scaled) call scale_data(datas)
+   endif
+!
+   end subroutine subtract_background
 
 !----------------------------------------------------------------------------------------
 

@@ -70,6 +70,7 @@ CONTAINS
            call clear_dataset(dataset)
        endif
        call push_back_dataset(dataset,datas)
+       call dataset(1)%scale_data()
        call work_on_pattern(dataset(1),add_data)
    endif
 !
@@ -159,7 +160,7 @@ END MODULE datamod
    if (jscreen > 0) then
        !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
 !FIX LATER       call write_message_peak()
-!FIX LATER       call update_peak_list()
+       call update_peak_list()
 !qt       call abilita_tasti('peaks',state=1)
        call vedinew(5, rescale=0)
    endif

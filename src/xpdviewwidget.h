@@ -84,6 +84,7 @@ public:
 signals:
     void deleteSelectedPeaksSignal(const QVector<int> &selected);
     void addDeletePointSignal(int action, double xp, double yp, int &ier);
+    void fileDropped(const QStringList &fileList);
 
 private slots:
     void myMoveEvent(QMouseEvent *event);
@@ -91,6 +92,10 @@ private slots:
     void horzScrollBarChanged(int value);
     void addDeletePoint(QPoint mousePos);
     void selectionChanged();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     QVector<graphItem> profCurves;
@@ -119,7 +124,7 @@ private:
     void drawReflections(const QVector<double>& x, double y, double length, QPen pen, int &itemStart, int &itemEnd);
     void drawReflections(const QVector<refInfo> &ref, double y, double length, QPen pen, int &itemStart, int &itemEnd);
     void drawIntervals();
-    void reDrawReflections(graphItem &ref, double y, double length);
+    void reDrawReflections(const QVector<refInfo> &refSet, const graphItem &ref, double y, double length);
     void drawGraphicItem_old(graphItem &item);
     bool rescalePlotEnabled() const;
     void makeReflections(const QVector<double> &xvet);

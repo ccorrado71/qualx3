@@ -77,6 +77,8 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     intervalLimit.setGtype(graphItem::Intervals);
     intervalLimit.setName();
 
+    setAcceptDrops(true);
+
     plotSettings.read();
 }
 
@@ -102,6 +104,8 @@ void XpdViewWidget::setGraphicArea()
 
     nObserved = 0;
     nReflections = 0;
+    refl.clear();
+    refSet.clear();
     nProfCurves = 0;
     yLowerRange = DBL_MAX;
     yUpperRange = -DBL_MIN;
@@ -112,7 +116,7 @@ void XpdViewWidget::setGraphicArea()
     calc.setGraphIndex(-1);
     diff.setGraphIndex(-1);
     cdiff.setGraphIndex(-1);
-    for (int i = 0; i < refl.count(); i++) refl[i].setGraphIndex(-1);
+    //for (int i = 0; i < refl.count(); i++) refl[i].setGraphIndex(-1);
     peaks.setGraphIndex(-1);
     smooth.setGraphIndex(-1);
     undpeaks.setGraphIndex(-1);
@@ -416,7 +420,7 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
         if (refl.at(i).isVisible()) {
             ++iVis;
             double ypos = yLowerRange + (nVisibleRef-iVis-1)*spaceRef;
-            reDrawReflections(refl[i],ypos,lengthRef);
+            reDrawReflections(refSet[i].ref,refl[i],ypos,lengthRef);
             refl[i].setYPos(ypos);
             refl[i].setLengthRef(lengthRef);
         }
@@ -915,6 +919,32 @@ void XpdViewWidget::selectionChanged()
     }
 }
 
+void XpdViewWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void XpdViewWidget::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (mimeData->hasUrls()) {
+        QList<QUrl> urlList = mimeData->urls();
+        if (!urlList.isEmpty()) {
+            QStringList fileList;
+            fileList.reserve(urlList.size());
+
+            for (auto it = urlList.cbegin(); it != urlList.cend(); ++it) {
+                fileList.append(it->toLocalFile());
+            }
+
+            //QTimer allows Qt's event loop to complete the drop operation and make the file icon disappear
+            QTimer::singleShot(0, this, [this, fileList]() { emit fileDropped(fileList); });
+        }
+    }
+}
+
 void XpdViewWidget::setPlotSettings(const PlotSettings &newPlotSettings)
 {
     plotSettings = newPlotSettings;
@@ -1039,16 +1069,27 @@ void XpdViewWidget::drawIntervals()
     }
 }
 
-void XpdViewWidget::reDrawReflections(graphItem &ref, double y, double length)
+void XpdViewWidget::reDrawReflections(const QVector<refInfo> &refSet, const graphItem &ref, double y, double length)
 {
     for (int ind = ref.itemIndexStart; ind <= ref.itemIndexEnd; ind++) {
         QCPItemLine *line = dynamic_cast<QCPItemLine *> (this->item(ind));
         int posRef = ref.itemIndexEnd - ind;
         //qInfo() << "Line: " << posRef << ref.getX().at(posRef) << y << y + length;
-        line->start->setCoords(ref.getX().at(posRef), y);
-        line->end->setCoords(ref.getX().at(posRef), y+length);
+        line->start->setCoords(refSet[posRef].x, y);
+        line->end->setCoords(refSet[posRef].x, y+length);
     }
 }
+
+// void XpdViewWidget::reDrawReflections(graphItem &ref, double y, double length)
+// {
+//     for (int ind = ref.itemIndexStart; ind <= ref.itemIndexEnd; ind++) {
+//         QCPItemLine *line = dynamic_cast<QCPItemLine *> (this->item(ind));
+//         int posRef = ref.itemIndexEnd - ind;
+//         //qInfo() << "Line: " << posRef << ref.getX().at(posRef) << y << y + length;
+//         line->start->setCoords(ref.getX().at(posRef), y);
+//         line->end->setCoords(ref.getX().at(posRef), y+length);
+//     }
+// }
 
 void XpdViewWidget::clearGraphSelection(graphItem &item)
 {

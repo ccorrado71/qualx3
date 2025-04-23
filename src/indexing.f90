@@ -132,7 +132,7 @@
 !
            call peak_print(pkind,kpr=lo,title='Peak positions from external file '//trim(file_get_name(filnam))//':')
            if (jscreen > 0) then
-!FIX LATER               call update_peak_list()
+               call update_peak_list()
                call vedinew(5,1,dataset(1)%npoints())  ! disegna
 !FIX LATER               call clear_messages(ipos=3)
 !FIX LATER               call write_message('Number of peaks: ',inum=npeaks,pos=2)

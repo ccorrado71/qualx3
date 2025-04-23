@@ -417,9 +417,10 @@ MODULE view
      endif
 !
 !    Disegna il background
-     if (style(STYLE_BACK)%vis == 1 .and.      &
-         allocated(dataset(1)%yb)   .and.      &
-         dataset(1)%cond%btype /= BK_NONE) then
+     if (style(STYLE_BACK)%vis == 1 .and.        &
+         allocated(dataset(1)%yb)   .and.        &
+         dataset(1)%cond%btype /= BK_NONE .and.  &
+         .not.dataset(1)%back_subtracted) then
          call add_plot(dataset(1)%x0(inic1:ific1),  &
               dataset(1)%yb(inic1:ific1),ific1-inic1+1,BBackground,1,dataset(1)%wave(1),c_null_char)
          if (style(STYLE_BACKP)%vis == 1 .and. dataset(1)%npoints_back() > 0) then

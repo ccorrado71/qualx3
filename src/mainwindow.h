@@ -70,6 +70,7 @@ private slots:
 
     //Pattern
     void onActionBackgroundTriggered();
+    void onActionSubtractBackgroundTriggered();
     void onActionPeakSearchTriggered();
     void onActionPeakSearchConditionsTriggered();
     void onActionLoadPeaksTriggered();

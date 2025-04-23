@@ -21,7 +21,7 @@
     <item>
      <widget class="QScrollBar" name="horizontalScrollBar">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -36,10 +36,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -55,10 +55,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -74,10 +74,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -121,6 +121,7 @@
       <string>Background</string>
      </property>
      <addaction name="actionBackground"/>
+     <addaction name="actionSubtract_Background"/>
      <addaction name="actionAdd_Background_Point"/>
      <addaction name="actionDelete_Background_Point"/>
     </widget>
@@ -264,6 +265,11 @@
    </property>
    <property name="text">
     <string>Delete Peak</string>
+   </property>
+  </action>
+  <action name="actionSubtract_Background">
+   <property name="text">
+    <string>Subtract Background</string>
    </property>
   </action>
  </widget>
