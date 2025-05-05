@@ -20,6 +20,7 @@ public:
 private:
     QSqlDatabase m_db;
     QString queryElementString(const QString &elString);
+    void debugDatabaseInfo();
 };
 
 #endif // DBMANAGER_H
