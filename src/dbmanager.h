@@ -1,7 +1,7 @@
 #ifndef DBMANAGER_H
 #define DBMANAGER_H
 
-#include <QtSql>
+#include <QSqlDatabase>
 
 class DbManager
 {
@@ -14,7 +14,6 @@ public:
     void closeDb();
     bool isOpen() const;
     int queryForCount(const QString &queryString);
-    void getInfo(int &ncard, QString &type);
     QSqlDatabase db() const;
 
 private:

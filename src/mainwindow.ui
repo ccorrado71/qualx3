@@ -99,11 +99,12 @@
    </property>
    <widget class="QMenu" name="menuDatabase">
     <property name="title">
-     <string>Database</string>
+     <string>Search</string>
     </property>
+    <addaction name="actionSearch_Match"/>
     <addaction name="actionDatabaseInfo"/>
-    <addaction name="actionQueryName"/>
-    <addaction name="actionGet_Card"/>
+    <addaction name="actionTestDatabase"/>
+    <addaction name="actionGetCard"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -182,12 +183,12 @@
     <string>Database Info</string>
    </property>
   </action>
-  <action name="actionQueryName">
+  <action name="actionTestDatabase">
    <property name="text">
-    <string>Query Name</string>
+    <string>Test Database</string>
    </property>
   </action>
-  <action name="actionGet_Card">
+  <action name="actionGetCard">
    <property name="text">
     <string>Get Card</string>
    </property>
@@ -270,6 +271,11 @@
   <action name="actionSubtract_Background">
    <property name="text">
     <string>Subtract Background</string>
+   </property>
+  </action>
+  <action name="actionSearch_Match">
+   <property name="text">
+    <string>Search-Match</string>
    </property>
   </action>
  </widget>

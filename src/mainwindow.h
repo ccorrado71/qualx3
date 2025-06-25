@@ -76,9 +76,10 @@ private slots:
     void onActionLoadPeaksTriggered();
     void onActionSavePeaksTriggered();
 
-    void on_actionGet_Card_triggered();
-    void on_actionQueryName_triggered();
-    void on_actionDatabaseInfo_triggered();
+    void onActionSearchMatchTriggered();
+    void onActionTestDatabaseTriggered();
+    void onActionDatabaseInfoTriggered();
+    void onActionGetCardTriggered();
 
 private:
     void createDialogs();

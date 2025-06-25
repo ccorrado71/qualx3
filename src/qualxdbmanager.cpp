@@ -226,6 +226,31 @@ int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList 
     return result.size();
 }
 
+QVector<double> QualxDbManager::extractNumbers(const QString &input, int n, int m)
+{
+    // n: Number of numbers in the string
+    // m: How many numbers you want to extract
+
+    QVector<double> result;
+    // Split the string into a list using comma as separator
+    QStringList numberStrings = input.split(',', Qt::SkipEmptyParts);
+
+    // Check: if n does not match the actual number of elements, adjust n
+    //if (n > numberStrings.size())
+    //    n = numberStrings.size();
+
+    // Extract up to m numbers, but not more than those available
+    int count = qMin(m, n);
+
+    for (int i = 0; i < count; ++i) {
+        bool ok;
+        double number = numberStrings[i].toDouble(&ok);
+        if (ok)
+            result.append(number);
+    }
+    return result;
+}
+
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
     // QString resultSearch;
@@ -298,6 +323,43 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 
     } else if (nCountQuery > 0) {
         makeQueryInfoIds(queryResult, builder.deletedEnabled(), nCountQuery);
+    }
+}
+
+void QualxDbManager::makeQueryStrongest()
+{
+    QSqlQuery query(dbSearch.db());
+    query.prepare("SELECT id, n, dval FROM top");
+    if (query.exec()) {
+        int nq = 0;
+        while (query.next()) {
+            if (nq++ < 100) {
+                QString id = query.value(0).toString();
+                int n = query.value(1).toInt();
+                QString dvalStr = query.value(2).toString();
+
+                QVector<double> extracted = extractNumbers(dvalStr, n, 3);
+
+                qInfo() << "Strongest query: " << id << " - " << n << " - " << dvalStr;
+                qInfo() << "Extracted numbers:";
+                for (double num : extracted)
+                    qInfo() << num;
+            }
+        }
+    } else {
+        qCritical() << "Failed to execute strongest query:" << query.lastError().text();
+    }
+}
+
+void QualxDbManager::getInfo(int &ncard, QString &type)
+{
+    QSqlQuery queryInfo(dbMain.db());
+    queryInfo.prepare("SELECT ncard, type FROM infodb");
+
+    if (queryInfo.exec()) {
+        queryInfo.first();
+        ncard = queryInfo.value(0).toInt();
+        type = queryInfo.value(1).toString();
     }
 }
 

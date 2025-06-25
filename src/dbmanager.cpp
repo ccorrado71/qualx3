@@ -1,6 +1,9 @@
 #include "dbmanager.h"
 
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QSqlError>
+#include <QSqlQuery>
 
 DbManager::DbManager()
 {
@@ -48,18 +51,6 @@ bool DbManager::openDb(const QString &path)
 bool DbManager::isOpen() const
 {
     return m_db.isOpen();
-}
-
-void DbManager::getInfo(int &ncard, QString &type)
-{
-    QSqlQuery queryInfo(m_db);
-    queryInfo.prepare("SELECT ncard, type FROM infodb");
-
-    if (queryInfo.exec()) {
-        queryInfo.first();
-        ncard = queryInfo.value(0).toInt();
-        type = queryInfo.value(1).toString();        
-    }
 }
 
 QSqlDatabase DbManager::db() const

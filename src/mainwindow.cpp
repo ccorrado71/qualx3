@@ -148,24 +148,12 @@ void MainWindow::actionsSetup()
     connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
     connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
     connect(ui->actionPeak_Search_Conditions, &QAction::triggered, this, &MainWindow::onActionPeakSearchConditionsTriggered);
-}
 
-void MainWindow::on_actionDatabaseInfo_triggered()
-{
-    int ncard;
-    QString type;
-    //FIX LATER
-    //    db.getInfo(ncard, type);
-    //    qInfo() << "Ncard: " << ncard << "Type: " << type;
-}
-
-void MainWindow::on_actionGet_Card_triggered()
-{
-    QString idCard = "2300375";
-    //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
-    //FIX LATER
-    // db.getCardInfo(idCard);
-    // dbInfo.getCardAdditionalInfo(idCard);
+    //Search menu
+    connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
+    connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
+    connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
+    connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
@@ -288,18 +276,6 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setCsysString({"Monoclinic"});
         break;
     }
-}
-
-void MainWindow::on_actionQueryName_triggered()
-{
-    DbQueryBuilder builder;
-
-    builder.setPrintEnabled(true);
-
-    testSelection(builder, 1);
-
-    builder.buildQuery();
-    qualxDb.makeQuery(builder);
 }
 
 //
@@ -426,3 +402,40 @@ void MainWindow::updatePeakListTable()
         ui->peakListWidget->updatePeakListTable();
 }
 
+//
+//  Search Menu
+//
+
+void MainWindow::onActionSearchMatchTriggered()
+{
+    qInfo() << "FIX LATER onActionSearchMatchTriggered";
+    qualxDb.makeQueryStrongest();
+}
+
+void MainWindow::onActionDatabaseInfoTriggered()
+{
+    int ncard;
+    QString type;
+    qualxDb.getInfo(ncard, type);
+    qInfo() << "Ncard: " << ncard << "Type: " << type;
+}
+
+void MainWindow::onActionTestDatabaseTriggered()
+{
+    DbQueryBuilder builder;
+
+    builder.setPrintEnabled(true);
+
+    testSelection(builder, 1);
+
+    builder.buildQuery();
+    qualxDb.makeQuery(builder);
+}
+
+void MainWindow::onActionGetCardTriggered()
+{
+    QString idCard = "2300375";
+    //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
+    qualxDb.getCardInfo(idCard);
+    qualxDb.getCardAdditionalInfo(idCard);
+}
