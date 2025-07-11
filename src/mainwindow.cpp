@@ -15,6 +15,8 @@ extern "C" void run_peaksearchwin();
 extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier);
 extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 extern "C" void apply_background_subtraction();
+extern "C" int peak_number();
+extern "C" void get_d_delta_values(float dval[], float deltadval[]);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -408,8 +410,35 @@ void MainWindow::updatePeakListTable()
 
 void MainWindow::onActionSearchMatchTriggered()
 {
-    qInfo() << "FIX LATER onActionSearchMatchTriggered";
-    qualxDb.makeQueryStrongest();
+    int npeaks = peak_number();
+    if (npeaks == 0) {
+        run_peaksearchwin();
+    }
+    npeaks = peak_number();
+    if (npeaks == 0) {
+        QMessageBox::warning(this, tr("No Peaks Found"), tr("Please run Peak Search first."));
+        return;
+    }
+
+    float *dval = new float[npeaks];
+    float *deltadval = new float[npeaks];
+    get_d_delta_values(dval, deltadval);
+
+    QVector<double> dValues(npeaks);
+    QVector<double> deltaValues(npeaks);
+    for (int i = 0; i < npeaks; i++) {
+        dValues[i] = dval[i];
+        deltaValues[i] = deltadval[i];
+    }
+
+    delete [] dval;
+    delete [] deltadval;
+
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+    builder.setDValues(dValues, deltaValues);
+
+    qualxDb.makeQueryStrongest(builder);
 }
 
 void MainWindow::onActionDatabaseInfoTriggered()

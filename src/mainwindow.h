@@ -98,6 +98,9 @@ private:
     //Files
     QString currentFile;
 
+    //Search-match
+    //QVector<float> dValues, deltaValues;
+
     //Database
     QString currentDatabase;
     QualxDbManager qualxDb;

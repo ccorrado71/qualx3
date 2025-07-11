@@ -55,6 +55,9 @@ set(PROJECT_SOURCES
     qualxdbmanager.cpp
     savedialog.cpp
     savedialog.h
+    searchutil.cpp
+    searchutil.h
+    scopedtimer.h
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui
@@ -118,6 +121,7 @@ set(FORTRAN_SOURCES
     prog_names.F90
     progtype.F90
     qualx.f90
+    qualx_interop.f90
     recipes.f90
     reflectionsutil.f90
     restraints.f90

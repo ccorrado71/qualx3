@@ -21,6 +21,7 @@ public:
     void setPrintEnabled(bool newPrintEnabled);
     void setBOperator(boolOperator newBOperator);
     void enableDeleted(bool newAddDeleted);
+    void setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol);
 
     void buildQuery();
     QString getChemicalQueryString() const;
@@ -28,6 +29,9 @@ public:
     QStringList getQueryCellPar() const;
     QString getQueryIdEntry() const;
     bool deletedEnabled() const;
+    QVector<double> getDValues() const;
+
+    QVector<double> getDTol() const;
 
 private:
     QString queryChemical;
@@ -45,6 +49,7 @@ private:
     bool printEnabled;
     boolOperator bOperator;
     bool addDeleted;
+    QVector<double> dValues, dTol;
 
     QString buildQueryNameString();
     QString buildQuerySubfilesString();

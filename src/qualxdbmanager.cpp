@@ -1,8 +1,13 @@
 #include "qualxdbmanager.h"
+#include "searchutil.h"
+#include "scopedtimer.h"
 
-#include <QtSql>
+#include <QSqlQuery>
+#include <QSqlError>
 
-QualxDbManager::QualxDbManager() {
+QualxDbManager::QualxDbManager()
+    : nStrongest(3)
+{
 
 }
 
@@ -226,30 +231,30 @@ int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList 
     return result.size();
 }
 
-QVector<double> QualxDbManager::extractNumbers(const QString &input, int n, int m)
-{
-    // n: Number of numbers in the string
-    // m: How many numbers you want to extract
+// QVector<double> QualxDbManager::extractNumbers(const QString &input, int n, int m)
+// {
+//     // n: Number of numbers in the string
+//     // m: How many numbers you want to extract
 
-    QVector<double> result;
-    // Split the string into a list using comma as separator
-    QStringList numberStrings = input.split(',', Qt::SkipEmptyParts);
+//     QVector<double> result;
+//     // Split the string into a list using comma as separator
+//     QStringList numberStrings = input.split(',', Qt::SkipEmptyParts);
 
-    // Check: if n does not match the actual number of elements, adjust n
-    //if (n > numberStrings.size())
-    //    n = numberStrings.size();
+//     // Check: if n does not match the actual number of elements, adjust n
+//     //if (n > numberStrings.size())
+//     //    n = numberStrings.size();
 
-    // Extract up to m numbers, but not more than those available
-    int count = qMin(m, n);
+//     // Extract up to m numbers, but not more than those available
+//     int count = qMin(m, n);
 
-    for (int i = 0; i < count; ++i) {
-        bool ok;
-        double number = numberStrings[i].toDouble(&ok);
-        if (ok)
-            result.append(number);
-    }
-    return result;
-}
+//     for (int i = 0; i < count; ++i) {
+//         bool ok;
+//         double number = numberStrings[i].toDouble(&ok);
+//         if (ok)
+//             result.append(number);
+//     }
+//     return result;
+// }
 
 void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 {
@@ -326,26 +331,28 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
     }
 }
 
-void QualxDbManager::makeQueryStrongest()
+void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
 {
+    ScopedTimer timer("QualxDbManager::makeQueryStrongest");
+
     QSqlQuery query(dbSearch.db());
     query.prepare("SELECT id, n, dval FROM top");
     if (query.exec()) {
         int nq = 0;
         while (query.next()) {
-            if (nq++ < 100) {
-                QString id = query.value(0).toString();
-                int n = query.value(1).toInt();
-                QString dvalStr = query.value(2).toString();
+            QString id = query.value(0).toString();
+            int n = query.value(1).toInt();
+            QString dvalStr = query.value(2).toString();
 
-                QVector<double> extracted = extractNumbers(dvalStr, n, 3);
-
-                qInfo() << "Strongest query: " << id << " - " << n << " - " << dvalStr;
-                qInfo() << "Extracted numbers:";
-                for (double num : extracted)
-                    qInfo() << num;
-            }
+            QVector<double> dStrong = SearchUtil::extractNumbers(dvalStr, n, 3);
+            bool result = SearchUtil::checkStrongValuesWithTolerance(builder.getDValues(), builder.getDTol(), dStrong);
+            if (result) nq++;
+            //if (nq++ < 100) {
+                //if (result)
+                //    qInfo() << "Strongest query: " << id << " - " << n << " - " << dStrong << " - Result: " << result;
+            //}
         }
+        qInfo() << "Number of strongest matches: " << nq;
     } else {
         qCritical() << "Failed to execute strongest query:" << query.lastError().text();
     }

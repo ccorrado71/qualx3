@@ -57,6 +57,28 @@ bool DbQueryBuilder::deletedEnabled() const
     return addDeleted;
 }
 
+QVector<double> DbQueryBuilder::getDValues() const
+{
+    return dValues;
+}
+
+QVector<double> DbQueryBuilder::getDTol() const
+{
+    return dTol;
+}
+
+void DbQueryBuilder::setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol)
+{
+    dValues = newDValues;
+    dTol = newDTol;
+
+    if (printEnabled) {
+        //Print d and delta values
+        qInfo() << "d values: " << dValues;
+        qInfo() << "delta values: " << dTol;
+    }
+}
+
 void DbQueryBuilder::enableDeleted(bool newAddDeleted)
 {
     addDeleted = newAddDeleted;

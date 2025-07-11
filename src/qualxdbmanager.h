@@ -12,7 +12,7 @@ public:
     bool openDatabases(const QString &path);
     void closeDatabeses();
     void makeQuery(const DbQueryBuilder &builder);
-    void makeQueryStrongest();
+    void makeQueryStrongest(const DbQueryBuilder &builder);
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
@@ -22,6 +22,7 @@ private:
     DbManager dbInfo;
     DbManager dbInfoStat;
     DbManager dbSearch;
+    int nStrongest;
 
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
@@ -30,7 +31,7 @@ private:
     void makeQuerySearch(bool addDeleted, QString &result);
     void makeQuerySearchStrongest(QString &result);
     int stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result);
-    QVector<double> extractNumbers(const QString& input, int n, int m);
+    //QVector<double> extractNumbers(const QString& input, int n, int m);
 };
 
 #endif // QUALXDBMANAGER_H
