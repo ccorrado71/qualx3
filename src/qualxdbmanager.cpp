@@ -154,6 +154,8 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
 
 void QualxDbManager::makeQueryInfoIds(const QString &idsString, bool addDeleted, int count)
 {
+    ScopedTimer timer("QualxDbManager::makeQueryInfoIds");
+
     qInfo() << "Start queryIds";
     QSqlQuery queryIds(dbMain.db());
     QString queryString;
@@ -337,6 +339,8 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
 
     QSqlQuery query(dbSearch.db());
     query.prepare("SELECT id, n, dval FROM top");
+
+    QString idsString;
     if (query.exec()) {
         int nq = 0;
         while (query.next()) {
@@ -346,13 +350,15 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
 
             QVector<double> dStrong = SearchUtil::extractNumbers(dvalStr, n, 3);
             bool result = SearchUtil::checkStrongValuesWithTolerance(builder.getDValues(), builder.getDTol(), dStrong);
-            if (result) nq++;
-            //if (nq++ < 100) {
-                //if (result)
-                //    qInfo() << "Strongest query: " << id << " - " << n << " - " << dStrong << " - Result: " << result;
-            //}
+            if (result) {
+                nq++;
+                idsString.append("'"+id+"',");
+            }
         }
+        idsString.chop(1); // Remove last ','
+        qInfo() << "idsString: " << idsString.length();
         qInfo() << "Number of strongest matches: " << nq;
+        makeQueryInfoIds(idsString, builder.deletedEnabled(), nq);
     } else {
         qCritical() << "Failed to execute strongest query:" << query.lastError().text();
     }

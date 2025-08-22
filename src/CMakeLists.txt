@@ -150,6 +150,7 @@ qt_add_resources(PROJECT_SOURCES resource.qrc)
 qt_add_executable(${EXECUTABLE_NAME}
 	${PROJECT_SOURCES}
         ${FORTRAN_SOURCES}
+        cardtype.h cardtype.cpp
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE
