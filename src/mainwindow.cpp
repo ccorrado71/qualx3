@@ -16,7 +16,7 @@ extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier)
 extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 extern "C" void apply_background_subtraction();
 extern "C" int peak_number();
-extern "C" void get_d_delta_values(float dval[], float deltadval[]);
+extern "C" void get_d_delta_values(float dval[], float deltadval[], double *wave);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -422,7 +422,9 @@ void MainWindow::onActionSearchMatchTriggered()
 
     float *dval = new float[npeaks];
     float *deltadval = new float[npeaks];
-    get_d_delta_values(dval, deltadval);
+    double wave;
+    get_d_delta_values(dval, deltadval, &wave);
+    qInfo() << "wave:" << wave;
 
     QVector<double> dValues(npeaks);
     QVector<double> deltaValues(npeaks);
@@ -437,6 +439,7 @@ void MainWindow::onActionSearchMatchTriggered()
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
     builder.setDValues(dValues, deltaValues);
+    builder.setWave(wave);
 
     qualxDb.makeQueryStrongest(builder);
 }

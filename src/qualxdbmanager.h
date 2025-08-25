@@ -24,10 +24,12 @@ private:
     DbManager dbSearch;
     int nStrongest;
 
+    static QVector<double> blobToDoubleVector(const QByteArray &blob);
+
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);
-    void makeQueryInfoIds(const QString &idsString, bool addDeleted, int count);
+    void makeQueryInfoIds(const QString &idsString, bool addDeleted, int count, bool calcFom);
     void makeQuerySearch(bool addDeleted, QString &result);
     void makeQuerySearchStrongest(QString &result);
     int stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result);

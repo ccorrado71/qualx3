@@ -71,6 +71,19 @@ void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
     }
 }
 
+QVector<double> QualxDbManager::blobToDoubleVector(const QByteArray &blob)
+{
+    QVector<double> result;
+    QString str = QString::fromUtf8(blob);
+    QStringList list = str.split(',', Qt::SkipEmptyParts);
+    for (int i = 0; i < list.size(); ++i) {
+        bool ok = false;
+        double val = list.at(i).toDouble(&ok);
+        if (ok) result.append(val);
+    }
+    return result;
+}
+
 int QualxDbManager::makeQueryCellPar(const QString &qString, QString &result)
 {
     //qInfo() << "Start query cell parameter";
@@ -152,7 +165,7 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
     return ndata;
 }
 
-void QualxDbManager::makeQueryInfoIds(const QString &idsString, bool addDeleted, int count)
+void QualxDbManager::makeQueryInfoIds(const QString &idsString, bool addDeleted, int count, bool calcFom)
 {
     ScopedTimer timer("QualxDbManager::makeQueryInfoIds");
 
@@ -167,21 +180,33 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, bool addDeleted,
         queryString = queryString + " where id in ("+idsString+")";
     }
     queryIds.prepare(queryString);
-    // if (addDeleted) {
-    //     queryIds.prepare("Select id, name, mineralname, chemical_formula, spacegroup, "
-    //                      "quality, rir, nrec, intensita, dvalue,n from id where trim(quality)!='D' where id in ("+idsString+")");
-    // } else {
-    //     queryIds.prepare("Select id, name, mineralname, chemical_formula, spacegroup, "
-    //                      "quality, rir, nrec, intensita, dvalue,n from id where id in ("+idsString+")");
-    // }
+
     int nId = 0;
     if (queryIds.exec()) {
-        while (queryIds.next()) {
-            nId++;
-            float perc = 100.0f*nId/count;
-            if (fmod(perc,10) == 0) qInfo() << perc << "%";
-            qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
-                    << queryIds.value(4).toString();
+        if (calcFom) {
+            while (queryIds.next()) {
+                nId++;
+                float perc = 100.0f*nId/count;
+                if (fmod(perc,10) == 0) qInfo() << perc << "%";
+                if (nId <= 100) {
+                qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
+                        << queryIds.value(4).toString();
+                QByteArray dByte = queryIds.value(9).toByteArray();
+                QVector<double> dvalues = blobToDoubleVector(dByte);
+                qInfo() << "dvalues: " << dvalues;
+                //1- istanzia cardtype
+                //2- fai una setd(dvalues, wave) che fa un set anche dei tth
+                //3- calcola FOM
+                }
+            }
+        } else {
+            while (queryIds.next()) {
+                nId++;
+                float perc = 100.0f*nId/count;
+                if (fmod(perc,10) == 0) qInfo() << perc << "%";
+                qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
+                        << queryIds.value(4).toString();
+            }
         }
     }
     qInfo() << "End queryIds";
@@ -325,11 +350,11 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             qInfo() << "End query for idsString";
 
             //qInfo() << "idsString: " << idsString;
-            makeQueryInfoIds(idsString, builder.deletedEnabled(), nCountChemical);
+            makeQueryInfoIds(idsString, builder.deletedEnabled(), nCountChemical, false);
         }
 
     } else if (nCountQuery > 0) {
-        makeQueryInfoIds(queryResult, builder.deletedEnabled(), nCountQuery);
+        makeQueryInfoIds(queryResult, builder.deletedEnabled(), nCountQuery, false);
     }
 }
 
@@ -358,7 +383,7 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
         idsString.chop(1); // Remove last ','
         qInfo() << "idsString: " << idsString.length();
         qInfo() << "Number of strongest matches: " << nq;
-        makeQueryInfoIds(idsString, builder.deletedEnabled(), nq);
+        makeQueryInfoIds(idsString, builder.deletedEnabled(), nq, true);
     } else {
         qCritical() << "Failed to execute strongest query:" << query.lastError().text();
     }

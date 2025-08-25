@@ -30,8 +30,8 @@ public:
     QString getQueryIdEntry() const;
     bool deletedEnabled() const;
     QVector<double> getDValues() const;
-
     QVector<double> getDTol() const;
+    void setWave(double newWave);
 
 private:
     QString queryChemical;
@@ -50,6 +50,7 @@ private:
     boolOperator bOperator;
     bool addDeleted;
     QVector<double> dValues, dTol;
+    double wave;
 
     QString buildQueryNameString();
     QString buildQuerySubfilesString();
