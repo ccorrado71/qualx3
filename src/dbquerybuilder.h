@@ -33,6 +33,8 @@ public:
     QVector<double> getDTol() const;
     void setWave(double newWave);
 
+    double getWave() const;
+
 private:
     QString queryChemical;
     QString queryCrySys;

@@ -72,6 +72,11 @@ void DbQueryBuilder::setWave(double newWave)
     wave = newWave;
 }
 
+double DbQueryBuilder::getWave() const
+{
+    return wave;
+}
+
 void DbQueryBuilder::setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol)
 {
     dValues = newDValues;

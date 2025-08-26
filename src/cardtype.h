@@ -9,9 +9,9 @@ public:
     CardType();
 
     QVector<double> getD() const;
-    void setD(const QVector<double> &newD);
-
+    void setD(const QVector<double> &newD, double wave = -1.0);
     QVector<double> getTth() const;
+    void printDandTth() const;
 
 private:
     QVector<double> d;      // d-spacing

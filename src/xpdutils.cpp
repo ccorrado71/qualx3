@@ -39,6 +39,15 @@ QVector<double> dvalue(const QVector<double> &ttheta, double wave) {
     return dvector;
 }
 
+QVector<double> tthvalue(const QVector<double> &d, double wave)
+{
+    QVector<double> tthvector(d.size());
+    for (int i = 0; i < d.size(); i++) {
+        tthvector[i] = tthvalue(d.at(i), wave);
+    }
+    return tthvector;
+}
+
 void tthetaToD(QVector<double> &xvet, QVector<double> &yvet, double wave) {
     QVector<double> xvetc = xvet;
     QVector<double> yvetc = yvet;
