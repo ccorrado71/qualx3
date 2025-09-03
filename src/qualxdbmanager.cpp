@@ -6,6 +6,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+extern "C" void computeFOM(double tth[], int tsize, double *fomd);
+
 QualxDbManager::QualxDbManager()
     : nStrongest(3)
 {
@@ -183,15 +185,16 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
     queryIds.prepare(queryString);
 
     int nId = 0;
+    double fomLim = 0.70;
     if (queryIds.exec()) {
         if (calcFom) {
             while (queryIds.next()) {
                 nId++;
                 float perc = 100.0f*nId/count;
                 if (fmod(perc,10) == 0) qInfo() << perc << "%";
-                if (nId <= 100) {
-                qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
-                        << queryIds.value(4).toString();
+                //if (nId <= 100) {
+                //qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
+                //        << queryIds.value(4).toString();
                 QByteArray dByte = queryIds.value(9).toByteArray();
                 QVector<double> dvalues = blobToDoubleVector(dByte);
                 //qInfo() << "dvalues: " << dvalues;
@@ -199,9 +202,20 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
                 CardType card;
                 //2- fai una setd(dvalues, wave) che fa un set anche dei tth
                 card.setD(dvalues, builder.getWave());
-                card.printDandTth();
+                //card.printDandTth();
                 //3- calcola FOM
+                int size = card.getTth().size();
+                //qInfo() << "SIZE: " << nId << size;
+                if (size > 0) {
+                    double fomd;
+                    computeFOM(card.getTth().data(), size, &fomd);
+                    if (fomd > fomLim) {
+                        qInfo() << "FOM: " << fomd << queryIds.value(0).toString() << queryIds.value(3).toString()
+                                << queryIds.value(4).toString();
+                        //POPULATE ARRAY FOR TABLE
+                    }
                 }
+                //}
             }
         } else {
             while (queryIds.next()) {

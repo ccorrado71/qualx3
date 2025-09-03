@@ -97,6 +97,7 @@ set(FORTRAN_SOURCES
     error.F90
     filetype.f90
     fileutil.F90
+    fom.f90
     fract.f90
     fragments.F90
     genlsq.f90

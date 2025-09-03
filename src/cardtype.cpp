@@ -12,7 +12,7 @@ void CardType::setD(const QVector<double> &newD, double wave)
 {
     d = newD;
     if (wave > 0.0) {
-        tth = xpdutils::tthvalue(d, wave);
+        tth = xpdutils::tthvalue_safe(d, wave);
     } else {
         tth.clear();
     }

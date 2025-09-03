@@ -48,6 +48,21 @@ QVector<double> tthvalue(const QVector<double> &d, double wave)
     return tthvector;
 }
 
+QVector<double> tthvalue_safe(const QVector<double> &d, double wave)
+{
+    QVector<double> tthvector;
+    tthvector.reserve(d.size()); // opzionale, migliora performance
+
+    for (int i = 0; i < d.size(); i++) {
+        double tth = tthvalue(d.at(i), wave);
+        if (!std::isnan(tth)) {
+            tthvector.append(tth);
+        }
+        // Se è NaN, non viene aggiunto
+    }
+    return tthvector;
+}
+
 void tthetaToD(QVector<double> &xvet, QVector<double> &yvet, double wave) {
     QVector<double> xvetc = xvet;
     QVector<double> yvetc = yvet;
