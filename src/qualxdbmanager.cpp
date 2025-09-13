@@ -188,6 +188,7 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
     double fomLim = 0.70;
     if (queryIds.exec()) {
         if (calcFom) {
+            QVector<CardType> acceptedCards;
             while (queryIds.next()) {
                 nId++;
                 float perc = 100.0f*nId/count;
@@ -210,9 +211,20 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
                     double fomd;
                     computeFOM(card.getTth().data(), size, &fomd);
                     if (fomd > fomLim) {
-                        qInfo() << "FOM: " << fomd << queryIds.value(0).toString() << queryIds.value(3).toString()
-                                << queryIds.value(4).toString();
-                        //POPULATE ARRAY FOR TABLE
+                        //qInfo() << "FOM: " << fomd << queryIds.value(0).toString() << queryIds.value(3).toString()
+                        //        << queryIds.value(4).toString();
+                        card.setId(queryIds.value(0).toString());
+                        card.setChemicalName(queryIds.value(1).toString());
+                        card.setMineralName(queryIds.value(2).toString());
+                        card.setChemicalFormula(queryIds.value(3).toString());
+                        card.setSpaceGroup(queryIds.value(4).toString());
+                        card.setQuality(queryIds.value(5).toString());
+                        card.setRIR(queryIds.value(6).toString());
+                        card.setFomd(fomd);
+                        card.printCard(1);
+
+                        acceptedCards.append(card);
+                        //PASSA come reference acceptedCards QVector<CardType>& all'esterno
                     }
                 }
                 //}
