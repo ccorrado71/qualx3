@@ -19,6 +19,9 @@ set(PROJECT_SOURCES
     dbmanager.cpp
     dbquerybuilder.h
     dbquerybuilder.cpp
+    dbresultswidget.cpp
+    dbresultswidget.h
+    dbresultswidget.ui
     fileutils.cpp
     fileutils.h
     floatdelegate.cpp
@@ -38,6 +41,8 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.ui
     nr.h
+    paginationmodel.cpp
+    paginationmodel.h
     peaklistwidget.cpp
     peaklistwidget.h
     peaklistwidget.ui
@@ -58,6 +63,8 @@ set(PROJECT_SOURCES
     searchutil.cpp
     searchutil.h
     scopedtimer.h
+    textfilterproxymodel.cpp
+    textfilterproxymodel.h
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui

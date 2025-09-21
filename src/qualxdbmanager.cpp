@@ -168,7 +168,7 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
     return ndata;
 }
 
-void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count, bool calcFom)
+void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom)
 {
     ScopedTimer timer("QualxDbManager::makeQueryInfoIds");
 
@@ -188,7 +188,7 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
     double fomLim = 0.70;
     if (queryIds.exec()) {
         if (calcFom) {
-            QVector<CardType> acceptedCards;
+            //QVector<CardType> acceptedCards;
             while (queryIds.next()) {
                 nId++;
                 float perc = 100.0f*nId/count;
@@ -221,7 +221,7 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
                         card.setQuality(queryIds.value(5).toString());
                         card.setRIR(queryIds.value(6).toString());
                         card.setFomd(fomd);
-                        card.printCard(1);
+                        //card.printCard(1);
 
                         acceptedCards.append(card);
                         //PASSA come reference acceptedCards QVector<CardType>& all'esterno
@@ -240,6 +240,12 @@ void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBui
         }
     }
     qInfo() << "End queryIds";
+}
+
+void QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count)
+{
+    QVector<CardType> dummyAcceptedCards;
+    return makeQueryInfoIdsWithFom(idsString, builder, count, dummyAcceptedCards, false);
 }
 
 void QualxDbManager::makeQuerySearch(bool addDeleted, QString &result)
@@ -380,15 +386,15 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
             qInfo() << "End query for idsString";
 
             //qInfo() << "idsString: " << idsString;
-            makeQueryInfoIds(idsString, builder, nCountChemical, false);
+            makeQueryInfoIds(idsString, builder, nCountChemical);
         }
 
     } else if (nCountQuery > 0) {
-        makeQueryInfoIds(queryResult, builder, nCountQuery, false);
+        makeQueryInfoIds(queryResult, builder, nCountQuery);
     }
 }
 
-void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
+void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards)
 {
     ScopedTimer timer("QualxDbManager::makeQueryStrongest");
 
@@ -413,7 +419,8 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder)
         idsString.chop(1); // Remove last ','
         qInfo() << "idsString: " << idsString.length();
         qInfo() << "Number of strongest matches: " << nq;
-        makeQueryInfoIds(idsString, builder, nq, true);
+        //QVector<CardType> acceptedCard;
+        makeQueryInfoIdsWithFom(idsString, builder, nq, acceptedCards,true);
     } else {
         qCritical() << "Failed to execute strongest query:" << query.lastError().text();
     }

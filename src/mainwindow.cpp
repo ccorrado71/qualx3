@@ -440,8 +440,9 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setPrintEnabled(true);
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
-
-    qualxDb.makeQueryStrongest(builder);
+    QVector<CardType> acceptedCards;
+    qualxDb.makeQueryStrongest(builder, acceptedCards);
+    ui->resultsWidget->setResults(acceptedCards);
 }
 
 void MainWindow::onActionDatabaseInfoTriggered()

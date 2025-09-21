@@ -3,6 +3,7 @@
 
 #include "dbmanager.h"
 #include "dbquerybuilder.h"
+#include "cardtype.h"
 
 class QualxDbManager
 {
@@ -12,7 +13,7 @@ public:
     bool openDatabases(const QString &path);
     void closeDatabeses();
     void makeQuery(const DbQueryBuilder &builder);
-    void makeQueryStrongest(const DbQueryBuilder &builder);
+    void makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards);
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
@@ -29,7 +30,8 @@ private:
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);
-    void makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count, bool calcFom);
+    void makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom=true);
+    void makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count);
     void makeQuerySearch(bool addDeleted, QString &result);
     void makeQuerySearchStrongest(QString &result);
     int stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result);
