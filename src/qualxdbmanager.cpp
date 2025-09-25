@@ -170,7 +170,7 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
 
 void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom)
 {
-    ScopedTimer timer("QualxDbManager::makeQueryInfoIds");
+    ScopedTimer timer("QualxDbManager::makeQueryInfoIdsWithFom");
 
     qInfo() << "Start queryIds";
     QSqlQuery queryIds(dbMain.db());
@@ -396,7 +396,7 @@ void QualxDbManager::makeQuery(const DbQueryBuilder &builder)
 
 void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards)
 {
-    ScopedTimer timer("QualxDbManager::makeQueryStrongest");
+    ScopedTimer timer("QualxDbManager::makeQueryStrongest->makeQueryInfoIdsWithFom");
 
     QSqlQuery query(dbSearch.db());
     query.prepare("SELECT id, n, dval FROM top");

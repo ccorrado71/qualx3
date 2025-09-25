@@ -2,6 +2,7 @@
 #include "paginationmodel.h"
 #include "ui_dbresultswidget.h"
 #include "textfilterproxymodel.h"
+#include "scopedtimer.h"
 
 #include <QStandardItemModel>
 #include <QHeaderView>
@@ -82,6 +83,8 @@ DbResultsWidget::~DbResultsWidget()
 
 void DbResultsWidget::setResults(const QVector<CardType>& results)
 {
+    ScopedTimer timer("DbResultsWidget::setResults");
+
     sourceModel->removeRows(0, sourceModel->rowCount());
     sourceModel->setRowCount(results.size());
 

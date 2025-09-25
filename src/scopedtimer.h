@@ -13,11 +13,12 @@ public:
 
     ~ScopedTimer()
     {
-        qint64 elapsed = m_timer.elapsed();
+        qint64 elapsed_ms = m_timer.elapsed();
+        double elapsed_sec = elapsed_ms / 1000.0;
         if (m_label.isEmpty())
-            qInfo() << "Elapsed time:" << elapsed << "ms";
+            qInfo() << "Elapsed time:" << QString::number(elapsed_sec, 'f', 3) << "sec";
         else
-            qInfo() << m_label << "elapsed time:" << elapsed << "ms";
+            qInfo() << m_label << "elapsed time:" << QString::number(elapsed_sec, 'f', 3) << "sec";
     }
 
 private:

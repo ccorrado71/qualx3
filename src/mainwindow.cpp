@@ -442,6 +442,7 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setWave(wave);
     QVector<CardType> acceptedCards;
     qualxDb.makeQueryStrongest(builder, acceptedCards);
+    qInfo() << "Number of accepted cards: " << acceptedCards.size();
     ui->resultsWidget->setResults(acceptedCards);
 }
 
