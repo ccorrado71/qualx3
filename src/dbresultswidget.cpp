@@ -32,7 +32,7 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     filterModel->setSourceModel(sourceModel);
     filterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
-    pageModel = new PaginationModel();
+    pageModel = new PaginationModel(500, this);
     pageModel->setSourceModel(filterModel);
 
     ui->table->setModel(pageModel);
@@ -88,6 +88,7 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
     sourceModel->removeRows(0, sourceModel->rowCount());
     sourceModel->setRowCount(results.size());
 
+    sourceModel->blockSignals(true);
     for (int i = 0; i < results.size(); ++i) {
         const CardType& card = results[i];
         sourceModel->setItem(i, 0, new QStandardItem(card.getId()));
@@ -98,6 +99,7 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
         sourceModel->setItem(i, 5, new QStandardItem(card.getRIR()));
         sourceModel->setItem(i, 6, new QStandardItem(QString::number(card.getFomd(), 'f', 2)));
     }
+    sourceModel->blockSignals(false);
 
     ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
     pageModel->setCurrentPage(0);
