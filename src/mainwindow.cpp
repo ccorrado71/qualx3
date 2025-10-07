@@ -29,7 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
     actionsSetup();
     createDialogs();
 
-    currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
+    //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
+    currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
     if (!qualxDb.openDatabases(currentDatabase)) {
         qCritical() << "Error opening databases";
     }
