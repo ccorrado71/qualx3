@@ -6,7 +6,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-extern "C" void computeFOM(double tth[], int tsize, double *fomd);
+extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd);
 
 QualxDbManager::QualxDbManager()
     : nStrongest(3)
@@ -176,7 +176,7 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
     QSqlQuery queryIds(dbMain.db());
     QString queryString;
     queryString = "Select id, name, mineralname, chemical_formula, spacegroup, "
-                  "quality, rir, nrec, intensita, dvalue,n from id";
+                  "quality, rir, nrec, dvalue, intensita, n from id";
     if (builder.deletedEnabled()) {
         queryString = queryString + " where trim(quality)!='D' and id in ("+idsString+")";
     } else {
@@ -196,20 +196,23 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                 //if (nId <= 100) {
                 //qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
                 //        << queryIds.value(4).toString();
-                QByteArray dByte = queryIds.value(9).toByteArray();
+                QByteArray dByte = queryIds.value(8).toByteArray();
                 QVector<double> dvalues = blobToDoubleVector(dByte);
+                QByteArray iByte = queryIds.value(9).toByteArray();
+                QVector<double> ivalues = blobToDoubleVector(iByte);
                 //qInfo() << "dvalues: " << dvalues;
                 //1- istanzia cardtype
                 CardType card;
                 //2- fai una setd(dvalues, wave) che fa un set anche dei tth
                 card.setD(dvalues, builder.getWave());
+                card.setIntensity(ivalues);
                 //card.printDandTth();
                 //3- calcola FOM
                 int size = card.getTth().size();
                 //qInfo() << "SIZE: " << nId << size;
                 if (size > 0) {
                     double fomd;
-                    computeFOM(card.getTth().data(), size, &fomd);
+                    computeFOM(card.getTth().data(), card.getIntensity().data(), size, &fomd);
                     if (fomd > fomLim) {
                         //qInfo() << "FOM: " << fomd << queryIds.value(0).toString() << queryIds.value(3).toString()
                         //        << queryIds.value(4).toString();
@@ -224,7 +227,6 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                         //card.printCard(1);
 
                         acceptedCards.append(card);
-                        //PASSA come reference acceptedCards QVector<CardType>& all'esterno
                     }
                 }
                 //}

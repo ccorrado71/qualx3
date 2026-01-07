@@ -113,3 +113,13 @@ void CardType::setFomd(double newFomd)
 {
     fomd = newFomd;
 }
+
+QVector<double> CardType::getIntensity() const
+{
+    return intensity;
+}
+
+void CardType::setIntensity(const QVector<double> &newIntensity)
+{
+    intensity = newIntensity;
+}

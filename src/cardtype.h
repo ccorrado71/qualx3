@@ -29,6 +29,9 @@ public:
     double getFomd() const;
     void setFomd(double newFomd);
 
+    QVector<double> getIntensity() const;
+    void setIntensity(const QVector<double> &newIntensity);
+
 private:
     QString id;
     QString chemicalName;
@@ -40,6 +43,7 @@ private:
     double fomd;
     QVector<double> d;       // d-spacing
     QVector<double> tth;     // two-theta
+    QVector<double> intensity; // intensity
 };
 
 #endif // CARDTYPE_H
