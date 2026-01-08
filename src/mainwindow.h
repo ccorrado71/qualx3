@@ -84,6 +84,8 @@ private slots:
 private:
     void createDialogs();
     void actionsSetup();
+    void writeSettings();
+    void readSettings();
 
     Ui::MainWindow *ui;
     MouseAction mAction;

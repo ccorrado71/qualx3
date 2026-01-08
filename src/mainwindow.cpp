@@ -159,6 +159,39 @@ void MainWindow::actionsSetup()
     connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
 }
 
+void MainWindow::writeSettings()
+{
+    /*
+    QSettings settings;
+    settings.setValue(EXPO_GEOMETRY_KEY, saveGeometry());
+    settings.setValue(EXPO_STATE_KEY, saveState());
+    settings.setValue(EXPO_SPLITSIZE_KEY1, ui->splitter1->saveState());
+    //settings.setValue(EXPO_SPLITSIZE_KEY2, ui->splitter2->saveState());
+*/
+}
+
+void MainWindow::readSettings()
+{
+    /*
+    QSettings settings;
+    const QByteArray geometry = settings.value(EXPO_GEOMETRY_KEY, QByteArray()).toByteArray();
+    if (geometry.isEmpty()) {
+        const QRect availableGeometry = QGuiApplication::primaryScreen()->availableGeometry();
+        resize(availableGeometry.width() * 0.80, availableGeometry.height() * 0.80);
+        move((availableGeometry.width() - width()) / 2,
+             (availableGeometry.height() - height()) / 2);
+        //resizeMyDocks();
+
+    } else {
+        restoreGeometry(geometry);
+    }
+
+    restoreState(settings.value(EXPO_STATE_KEY).toByteArray());
+    ui->splitter1->restoreState(settings.value(EXPO_SPLITSIZE_KEY1).toByteArray());
+    //ui->splitter2->restoreState(settings.value(EXPO_SPLITSIZE_KEY2).toByteArray());
+*/
+}
+
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
 {
     switch (testCase) {
