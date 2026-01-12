@@ -111,7 +111,7 @@
      <string>File</string>
     </property>
     <addaction name="actionImportDiffractionPattern"/>
-    <addaction name="actionQuit"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuPattern">
     <property name="title">
@@ -199,7 +199,7 @@
     <string>Get Card</string>
    </property>
   </action>
-  <action name="actionQuit">
+  <action name="actionExit">
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/quit.png</normaloff>:/images/images/quit.png</iconset>

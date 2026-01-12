@@ -64,6 +64,7 @@ public:
     void restoreEnabledActions();
 
 private slots:
+    void closeEvent(QCloseEvent *event);
 
     //File
     void onActionImportDiffractionPatternTriggered();

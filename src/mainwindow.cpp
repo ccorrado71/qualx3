@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
         qCritical() << "Error opening databases";
     }
 
+    readSettings();
     mMainWindow = this;
 }
 
@@ -143,6 +144,7 @@ void MainWindow::actionsSetup()
 {
     //File menu
     connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
+    connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
 
     //Pattern menu
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
@@ -159,22 +161,42 @@ void MainWindow::actionsSetup()
     connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    QString titolo = "Exit " + qApp->applicationName();
+    QString testo = QString("Do you really want \nstop the program %1?").arg(qApp->applicationName());
+    if(QMessageBox::No == QMessageBox::question(this, titolo, testo,
+                                                 QMessageBox::Yes | QMessageBox::No))
+    {
+        event->ignore();
+        return;
+    }
+
+    writeSettings();
+
+    //std::cout << "\nThanks for using " << qPrintable(qApp->applicationName()) << "\nBye!\n\n";
+
+    QApplication::quit();
+
+    //Force close of dialog windows in a loop, kill the fortran computation
+#ifndef Q_OS_WIN
+    exit(EXIT_SUCCESS);
+#endif
+}
+
 void MainWindow::writeSettings()
 {
-    /*
     QSettings settings;
-    settings.setValue(EXPO_GEOMETRY_KEY, saveGeometry());
-    settings.setValue(EXPO_STATE_KEY, saveState());
-    settings.setValue(EXPO_SPLITSIZE_KEY1, ui->splitter1->saveState());
+    settings.setValue(QUALX_GEOMETRY_KEY, saveGeometry());
+    settings.setValue(QUALX_STATE_KEY, saveState());
+    //settings.setValue(QUALX_SPLITSIZE_KEY1, ui->splitter1->saveState());
     //settings.setValue(EXPO_SPLITSIZE_KEY2, ui->splitter2->saveState());
-*/
 }
 
 void MainWindow::readSettings()
 {
-    /*
     QSettings settings;
-    const QByteArray geometry = settings.value(EXPO_GEOMETRY_KEY, QByteArray()).toByteArray();
+    const QByteArray geometry = settings.value(QUALX_GEOMETRY_KEY, QByteArray()).toByteArray();
     if (geometry.isEmpty()) {
         const QRect availableGeometry = QGuiApplication::primaryScreen()->availableGeometry();
         resize(availableGeometry.width() * 0.80, availableGeometry.height() * 0.80);
@@ -186,10 +208,9 @@ void MainWindow::readSettings()
         restoreGeometry(geometry);
     }
 
-    restoreState(settings.value(EXPO_STATE_KEY).toByteArray());
-    ui->splitter1->restoreState(settings.value(EXPO_SPLITSIZE_KEY1).toByteArray());
+    restoreState(settings.value(QUALX_STATE_KEY).toByteArray());
+    //ui->splitter1->restoreState(settings.value(EXPO_SPLITSIZE_KEY1).toByteArray());
     //ui->splitter2->restoreState(settings.value(EXPO_SPLITSIZE_KEY2).toByteArray());
-*/
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)

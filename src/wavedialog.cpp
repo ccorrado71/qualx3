@@ -15,12 +15,12 @@ WaveDialog::WaveDialog(QWidget *parent, int startIndex) :
 //    ui->radiationLabel->setMinimumSize(ui->waveLWidget->columnSize());
 
     QSettings settings;
-    if (settings.contains(EXPO_USER_WAVE)) {
-        double userWave = settings.value(EXPO_USER_WAVE,-1.0).toDouble();
+    if (settings.contains(QUALX_USER_WAVE)) {
+        double userWave = settings.value(QUALX_USER_WAVE,-1.0).toDouble();
         if (userWave > 0) ui->waveLWidget->setUserWave(userWave);
     }
-    if (settings.contains(EXPO_WAVE_INDEX)) {
-        startIndex = settings.value(EXPO_WAVE_INDEX,startIndex).toInt();
+    if (settings.contains(QUALX_WAVE_INDEX)) {
+        startIndex = settings.value(QUALX_WAVE_INDEX,startIndex).toInt();
     }
     ui->waveLWidget->setComboIndex(startIndex);
 
@@ -61,9 +61,9 @@ void WaveDialog::done(int result)
         }
         QSettings settings;
         if (ui->waveLWidget->isUserDefined()) {
-            settings.setValue(EXPO_USER_WAVE, wave1());
+            settings.setValue(QUALX_USER_WAVE, wave1());
         }
-        settings.setValue(EXPO_WAVE_INDEX,ui->waveLWidget->currentIndex());
+        settings.setValue(QUALX_WAVE_INDEX,ui->waveLWidget->currentIndex());
     }
     QDialog::done(result);
 }
