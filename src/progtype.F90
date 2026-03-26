@@ -1,6 +1,22 @@
  MODULE progtype
   use type_constants, only: DP
 
+  integer, parameter  :: ALLOCA   = 1
+  integer, parameter  :: DEALLOCA = 0
+
+  type refine_condition_type
+     integer              :: algo           ! tipo di algoritmo di l.sq.
+     logical              :: auto_coefb     ! selezione automatica del numero di coeff. di backgr.?
+     logical              :: auto_prof      ! affinamento automatico profilo
+     logical              :: auto_stru      ! affinamento automatico struttura
+     integer              :: ncauto         ! num. di cicli di affinamento automatico
+     integer              :: typewei        ! schema di pesaggio
+     real                 :: eps            ! criterio di convergenza
+     integer              :: maxcy          ! numero massimo di cicli di affinamento
+     integer              :: raction = 0    ! 0=Rietveld 1=Le Bail 2=Pawley
+     character(len=6)     :: sprint         ! V=verbose,S=small,C=correlation,E=st.dev.,M=lsq matrices,W=window per chi,B=statusbar
+  end type refine_condition_type
+  
   type refine_info_type
      logical :: refine_profile
      real    :: dw                 ! Durbin Watson

@@ -18,6 +18,10 @@ MODULE fileutil
 !F ignore_lines(aunit,nlines)  result(ier)        Ignore lines in a file
 !F get_homepath()                                 Get path of home
 !F get_cwd()                                      Get current working directory
+!F is_file_open(filename) result(open_flag)       Check if file is open
+!F is_file_writable(filename) result(open_flag)   Check if file is writable
+
+   !USE strutil
 
 implicit none
 
@@ -87,7 +91,6 @@ CONTAINS
 
    subroutine file_close(fileh)
    type(file_handle), intent(inout) :: fileh
-   write(*,*)'file_close'
    call fileh%fclose()
    end subroutine file_close
 
@@ -466,8 +469,7 @@ CONTAINS
 !
    pos = index(line,scomm) 
    if (pos > 0) then
-       str = line(1:pos-1)
-       !write(0,*)'line=',trim(str)
+       str = trim(line(1:pos-1))
    else
        str = line
    endif
@@ -665,7 +667,7 @@ CONTAINS
    if (present(InLine)) then
        if (present(filter)) then
            if (filter) then
-               call s_filter(InLine)
+               !call s_filter(InLine)
                call s_tab_blank(InLine)
            endif
        endif
@@ -780,5 +782,55 @@ CONTAINS
    get_cwd = trim(cwd)
 !
    end function get_cwd
+
+ !---------------------------------------------------------------------------------------------
+
+   function is_file_open(filename) result(status)
+   implicit none
+   character(len=*), intent(in) :: filename
+   logical :: status
+   integer :: unit, io_status
+
+   ! Inquire a new unit number to use for opening the file
+   !inquire(newunit=unit)
+   call get_unit(unit)
+
+   ! Attempt to open the file in read mode
+   open(unit, file=filename, status='old', action='read', iostat=io_status)
+
+   if (io_status /= 0) then
+       ! If an error occurs, assume the file is open by another program
+       status = .true.
+   else
+       ! If opened successfully, close the file and indicate it's not open elsewhere
+       close(unit)
+       status = .false.
+   end if
+   end function is_file_open
+
+ !---------------------------------------------------------------------------------------------
+
+    function is_file_writable(filename) result(status)
+    implicit none
+    character(len=*), intent(in) :: filename
+    logical :: status
+    integer :: unit, io_status
+
+    ! Inquire a new unit number to safely open the file
+    !inquire(newunit=unit,file=filename)
+    call get_unit(unit)
+
+    ! Attempt to open the file in write mode with status 'unknown'
+    open(unit, file=filename, action='write', status='unknown', iostat=io_status)
+
+    if (io_status /= 0) then
+        ! If an error occurs, assume the file is not writable
+        status = .false.
+    else
+        ! If opened successfully, close the file and indicate it's writable
+        close(unit)
+        status = .true.
+    end if
+    end function is_file_writable
 
 END MODULE fileutil

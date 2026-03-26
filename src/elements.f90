@@ -89,6 +89,7 @@ MODULE elements
 ! F real function ma_coeff(z,wave)                      Mass attenuation coefficients
 ! S elem_set_mac(elem,wave)                             Set mac for element_type array
 ! F H_is_excluded(radtype)                              Evaluete if H is excluded from radiation type
+! S remove_charge(elem)                                 Remove charge from elements in array
 
 !
 !  Average volumes of elements (Act Cryst. (2002). B57, 489-493)
@@ -804,7 +805,7 @@ CONTAINS
           case (SCATT_PAR_DOYLE_TURNER)
             write(kpr,'(20x,a/,10x,a//,10x,a)') &
                       'f = sum (  a(i) * exp(-b(i)*s2)  )  i=1,4', &
-                      '(P. A. Doyle and P. S. Turner, Acta Cryst. (1968). A24, 390)', &
+                      '(P. A. Doyle and P. S. Turner, Acta Cryst. (1968). A24, 390-397)', &
                       'a(1)      b(1)      a(2)      b(2)      a(3)      b(3)      a(4)      b(4)'
             do n=1,nelem
                write(kpr,'(1x,a,8f10.5)')elem(n)%lab(1:4),elem(n)%factE(1:8)
@@ -2850,5 +2851,24 @@ CONTAINS
    if (radtype == NEUTRON_SOURCE) excl = .false.
 !
    end function H_is_excluded
+
+!--------------------------------------------------------------------------------------------------
+ 
+   subroutine remove_charge(elem)
+!
+!  Remove charge from elements in array
+!
+   type(element_type), dimension(:), allocatable, intent(inout) :: elem
+   integer                                                      :: i
+!
+   do i=1,numelem(elem)
+      if (elem(i)%charge /= 0) then
+          elem(i)%charge = 0
+          elem(i)%lab = eleminfo(elem(i)%z)%lab
+          elem(i)%ptab = pxen_from_z(elem(i)%z)
+      endif
+   enddo
+!
+   end subroutine remove_charge
 
 END MODULE elements

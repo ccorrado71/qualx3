@@ -2,7 +2,7 @@
 #include "wavedialog.h"
 //#include "fourierpeaklistdialog.h"
 #include "qt_utils.h"
-//#include "stringlistdialog.h"
+#include "stringlistdialog.h"
 #include "graphitem.h"
 
 #include <QStandardPaths>
@@ -14,7 +14,7 @@
 extern MainWindow *mMainWindow;
 extern "C" void wlist_get_title(int col, char *title);
 extern "C" void wlist_get_item(int row, int col, char *item);
-extern "C" void rammfunc(int isel);
+//extern "C" void rammfunc(int isel);
 
 int jscreen = 0;
 bool single_it = true;
@@ -440,49 +440,45 @@ extern "C" void MsgWinErrC1(char *inte, char *msg, int tipo, int *exitC) {
 //     plot2->replot();
 // }
 
-// extern "C" void open_string_list_dlg(char *title, char *label, int nrow, int ncol, int connect, int *selection) {
-// #if defined(JAV_WIDGET)
-//     auto listDlg = new StringListDialog(mMainWindow);
-// #else
-//     auto listDlg = new StringListDialog(mMainWindow->getJav());
-// #endif
-//     listDlg->setWindowTitle(QString::fromUtf8(title));
-//     listDlg->setLabel(label);
-//     listDlg->setTableSize(nrow,ncol);
-//     listDlg->setSelection(*selection - 1);
+extern "C" void open_string_list_dlg(char *title, char *label, int nrow, int ncol, int connect, int *selection) {
+    auto listDlg = new StringListDialog(mMainWindow);
+    listDlg->setWindowTitle(QString::fromUtf8(title));
+    listDlg->setLabel(label);
+    listDlg->setTableSize(nrow,ncol);
+    listDlg->setSelection(*selection - 1);
 
-//     //Set column titles
-//     char coltitle[80];
-//     QStringList columTitle;
-//     for (int i = 0; i < ncol; i++) {
-//         wlist_get_title(i+1, coltitle);
-//         columTitle.append(QString::fromUtf8(coltitle));
-//     }
-//     listDlg->setColumTitle(columTitle);
+    //Set column titles
+    char coltitle[80];
+    QStringList columTitle;
+    for (int i = 0; i < ncol; i++) {
+        wlist_get_title(i+1, coltitle);
+        columTitle.append(QString::fromUtf8(coltitle));
+    }
+    listDlg->setColumTitle(columTitle);
 
-//     //Set items for the table
-//     char sitem[80];
-//     for (int i = 0; i < nrow; i++) {
-//         for (int j = 0; j < ncol; j++) {
-//             wlist_get_item(i+1, j+1, sitem);
-//             listDlg->setTableItem(i, j, QString::fromUtf8(sitem));
-//         }
-//     }
+    //Set items for the table
+    char sitem[80];
+    for (int i = 0; i < nrow; i++) {
+        for (int j = 0; j < ncol; j++) {
+            wlist_get_item(i+1, j+1, sitem);
+            listDlg->setTableItem(i, j, QString::fromUtf8(sitem));
+        }
+    }
 
-//     //Connect signal for RAMM procedure
-//     if (connect == 1) {
-//         QObject::connect(listDlg, &StringListDialog::newRowSelected, [](int row) {
-//             rammfunc(row+1);
-//         });
-//     }
+    //Connect signal for RAMM procedure
+//    if (connect == 1) {
+//        QObject::connect(listDlg, &StringListDialog::newRowSelected, [](int row) {
+//            rammfunc(row+1);
+//        });
+//    }
 
-//     int ret = listDlg->exec();
-//     if (ret == QDialog::Accepted) {
-//         *selection = listDlg->getSelection() + 1;
-//     } else {
-//         *selection = 0;
-//     }
-// }
+    int ret = listDlg->exec();
+    if (ret == QDialog::Accepted) {
+        *selection = listDlg->getSelection() + 1;
+    } else {
+        *selection = 0;
+    }
+}
 
 extern "C" void WaitCursorOn() {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));

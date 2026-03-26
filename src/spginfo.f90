@@ -65,6 +65,8 @@ MODULE spginfom
         real, dimension(3)   :: trn   ! translation part
    end type symop_type
 
+   integer, parameter, private :: NSLEN=40
+
    type spaceg_type
         integer                          :: num                  ! spacegroup number
         character(len=40)                :: symbol_hall = ''     ! Hall symbol
@@ -78,7 +80,7 @@ MODULE spginfom
         integer                          :: nsymop_prim          ! Number of primitive symmetry operators (inversion included)
         integer                          :: nsym                 ! Number of primitive symmetry operators (inversion excluded)
         type(symop_type), dimension(192) :: symop                ! symmetry matrices
-        character(40), dimension(192)    :: symopstr             ! symmetry matrix symbols
+        character(NSLEN), dimension(192) :: symopstr             ! symmetry matrix symbols
         integer                          :: ncoper               ! number of centering operators
         real, dimension(3,4)             :: coper                ! centering operators
         character(len=1)                 :: lattyp               ! lattice type
@@ -107,6 +109,7 @@ MODULE spginfom
         real                             :: freq_perc=0.         ! Frequency as percentage
         integer                          :: freq_rank=0          ! Rank
         logical                          :: standard = .false.   ! True for standard choice of origin
+        integer                          :: standard_id = 0      ! pointer to spg_data for standard space group
         character(len=46)                :: pmat = ' '           ! Transformation matrix to non-conventional setting
         character(len=17)                :: pmat1 = ' '          ! Transformation matrix to standard setting
      
@@ -119,6 +122,7 @@ MODULE spginfom
         procedure :: laue_class
         procedure :: point_group
         procedure :: prn_symop
+        procedure :: prn_symop_formatted
         procedure :: set_p1
         procedure :: set_from_symop
         generic   :: polar => polar3, polar1
@@ -131,6 +135,7 @@ MODULE spginfom
         procedure :: get_pmat
         procedure :: get_pmat1
         procedure :: get_id
+        procedure :: id_setting
 
         procedure, private :: polar3
         procedure, private :: polar1
@@ -243,18 +248,19 @@ CONTAINS
    integer                                              :: nsym
    integer                                              :: lens
    logical                                              :: find_hall,find_hm
-   integer                                              :: i
+   integer                                              :: i, ids
 !
    sfound = .false.
    if (present(spgnum)) then    ! cerca g.s. a partire dal numero
        if (spgnum > 0 .and. spgnum <= NUMSPGMAX) then
            if (present(code)) then
-               if (code <= spg_index(spgnum)%nat) then
+               if (code <= spg_index(spgnum)%nat .and. code > 0) then
                    spaceg = spg_data(spg_index(spgnum)%pos(code))
                    sfound = .true.
                endif
            else
-               spaceg = spg_data(spg_index(spgnum)%pos(1))
+               ids = spg_data(spg_index(spgnum)%pos(1))%standard_id
+               spaceg = spg_data(ids)
                sfound = .true.
            endif
        endif
@@ -473,6 +479,7 @@ CONTAINS
    integer                        :: jfile,pos,numspg,i,j,num,spos
    character(len=:), allocatable  :: line
    type(sg_info_type)             :: info
+   integer                        :: std_id
 
    call fspg%fopen(spg_filename,'r')
    if (fspg%fail()) then
@@ -515,19 +522,28 @@ CONTAINS
       if (spg_index(i)%nat == 1) then
           num = spg_index(i)%pos(1) 
           spg_data(num)%standard = .true.
+          spg_data(num)%standard_id = num
       else
           ! The standard has pmat = identity matrix
+          std_id = 0
           do j=1,spg_index(i)%nat
              num = spg_index(i)%pos(j) 
              if (s_eqi(spg_data(num)%pmat,'a,b,c')) then
                  spg_data(num)%standard = .true.
-                 if (j /= 1) then
-!                    Put the standard at 1 in the pos array
-                     call swap(spg_index(i)%pos(1),spg_index(i)%pos(j))
-                 endif
+                 std_id = num
+                 !if (j /= 1) then
+!                !    Put the standard at 1 in the pos array
+                 !    call swap(spg_index(i)%pos(1),spg_index(i)%pos(j))
+                 !endif
                  exit
              endif
           enddo
+          if (std_id > 0) then
+              do j=1,spg_index(i)%nat
+                 num = spg_index(i)%pos(j) 
+                 spg_data(num)%standard_id = std_id
+              enddo
+          endif
       endif
    enddo
 
@@ -636,7 +652,8 @@ CONTAINS
    write(kpr,'(a,i0,a,i0)') &
                          ' Frequency(no. in CSD):  ',this%freq_no,'('//r_to_s(this%freq_perc,2)//'%), rank:',this%freq_rank
    if (.not.this%standard) then
-       num = spg_index(this%num)%pos(1)
+       !num = spg_index(this%num)%pos(1)
+       num = this%standard_id
        !write(kpr,'(a)') ' Non-standard space group setting ('//trim(spg_data(num)%symbol_xhm)//')'
        write(kpr,'(a,i0,a)')' The standard setting of the space group ',this%num,' is '//trim(spg_data(num)%symbol_xhm)
    endif
@@ -790,6 +807,28 @@ CONTAINS
    enddo
 !
    end subroutine prn_symop
+
+!---------------------------------------------------------------------------
+
+   subroutine prn_symop_formatted(this,kpr)
+!
+!  Print symmetry operators in formatted way
+!
+   use strutil
+   class(spaceg_type), intent(in) :: this
+   integer, intent(in)            :: kpr
+   integer                        :: i
+   character(len=NSLEN)           :: strsym
+   character(len=14), dimension(3) :: vsym
+   integer                        :: nsym
+!
+   do i=1,this%nsymop_prim
+      strsym = s_replace_by_blanks(this%symopstr(i),',')
+      call get_words(strsym,vsym,nsym)
+      write(kpr,'(a14,a14,a14)')adjustr(vsym(1)),adjustr(vsym(2)),adjustr(vsym(3))
+   enddo
+!
+   end subroutine prn_symop_formatted
 
 !---------------------------------------------------------------------------
 
@@ -3972,13 +4011,16 @@ CONTAINS
    function standard_spg(spg) result(std_spg)
    type(spaceg_type), intent(in) :: spg
    type(spaceg_type)             :: std_spg
-   integer                       :: num
+   !integer                       :: num
 !
-   call std_spg%init()
-   if (spg%num == 0) return
+   if (spg%num == 0 .or. spg%standard_id <= 0) then
+       call std_spg%init()
+       return
+   endif
 
-   num = spg_index(spg%num)%pos(1)
-   std_spg = spg_data(num)
+   !num = spg_index(spg%num)%pos(1)
+   !std_spg = spg_data(num)
+   std_spg = spg_data(spg%standard_id)
 !
    end function standard_spg
 
@@ -4011,14 +4053,40 @@ CONTAINS
 
 !--------------------------------------------------------------------------------------
 
+   integer function id_setting(spg)
+!
+!  Get setting id of spacegroup
+!
+   class(spaceg_type), intent(in) :: spg
+   integer                        :: i
+!
+   id_setting = 0
+   if (spg%id >= 0) then
+       do i=1,spg_index(spg%num)%nat
+          if (spg_index(spg%num)%pos(i) == spg%id+1) then
+              id_setting = i
+              exit
+          endif
+       enddo
+   endif
+!
+   end function id_setting
+
+!--------------------------------------------------------------------------------------
+
    subroutine spg_database_print()
    use strutil
    integer :: i
-   integer :: irep
-   character(len=40) :: spg_alternative
+   !integer :: irep
+   !character(len=40) :: spg_alternative
+   !type(spaceg_type) :: std_spg
 
    do i=1,NSPGTOT
       call spg_data(i)%prn()
+      !std_spg = standard_spg(spg_data(i))
+      !write(6,'(i4,") ",a,l5,l5,2x,i5,i5,3x,a)')spg_data(i)%num, spg_data(i)%symbol_xhm, spg_data(i)%standard,   &
+      !                                  spg_data(i)%id + 1 == spg_data(i)%standard_id,                           &
+      !                                  spg_data(i)%id_setting(), spg_data(i)%standard_id,std_spg%symbol_xhm
       write(6,'(1x,100("="))')
    enddo
 
@@ -4036,22 +4104,22 @@ CONTAINS
    !   enddo
    !enddo
 
-   do i=1,NSPGTOT
-      if (spg_data(i)%symbol_xhm /= 'Unknown') then
-          if (spg_data(i)%csys_code == CS_Monoclinic) then
+   !do i=1,NSPGTOT
+   !   if (spg_data(i)%symbol_xhm /= 'Unknown') then
+   !       if (spg_data(i)%csys_code == CS_Monoclinic) then
 !
-!             Strip ' 1' for space groups with 2 along b
-              if (spg_data(i)%axis_direction() == 'b') then
-                  spg_alternative = spg_data(i)%symbol_xhm 
-                  call s_s_delete(spg_alternative,' 1',irep)
-                  write(70,'(a,i4,a)')'{',spg_data(i)%num,', "'//trim(adjustl(spg_alternative))//'" },'
-                  cycle
-              endif
-          endif
-          write(70,'(a,i4,a)')'{',spg_data(i)%num,', "'//trim(adjustl(spg_data(i)%symbol_xhm))//'" },'
-      endif
-      if (spg_data(i)%num == 230) exit
-   enddo
+!  !           Strip ' 1' for space groups with 2 along b
+   !           if (spg_data(i)%axis_direction() == 'b') then
+   !               spg_alternative = spg_data(i)%symbol_xhm 
+   !               call s_s_delete(spg_alternative,' 1',irep)
+   !               write(70,'(a,i4,a)')'{',spg_data(i)%num,', "'//trim(adjustl(spg_alternative))//'" },'
+   !               cycle
+   !           endif
+   !       endif
+   !       write(70,'(a,i4,a)')'{',spg_data(i)%num,', "'//trim(adjustl(spg_data(i)%symbol_xhm))//'" },'
+   !   endif
+   !   if (spg_data(i)%num == 230) exit
+   !enddo
 
    end subroutine spg_database_print
 

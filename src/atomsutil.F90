@@ -545,7 +545,7 @@ CONTAINS
    integer, dimension(size(atom)), intent(out)               :: vat   ! array of atoms of pxen
    integer, intent(out)                                      :: natom ! number of atoms in vat
    type(error_type), intent(out)                             :: err
-   integer :: posb,lens,ival
+   integer :: posb,posb2,lens,ival
 !
    kpar = 0
    natom = 0
@@ -553,6 +553,8 @@ CONTAINS
    if (lens < 4 .or. numatoms(atom) == 0) go to 10
    posb = index(str,'(')
    if (posb < 1 .or. posb > lens-2) go to 10
+   posb2 = index(str,')')
+   if (posb2 < posb) go to 10
 !
 !  Read parameter
    select case(lower(str(:posb-1)))
@@ -927,7 +929,7 @@ CONTAINS
    real, dimension(:), intent(in), optional                  :: inte  ! intensita di picco
    integer, dimension(:), intent(in), optional               :: nz    ! nz
    character(len=*), dimension(:), optional                  :: lab   ! label
-   type(element_type), dimension(:), allocatable             :: elem
+   type(element_type), dimension(:), allocatable, optional   :: elem
    integer                                                   :: i
    integer                                                   :: num_atoms
 !
@@ -951,7 +953,7 @@ CONTAINS
       if (present(occr)) atom(i)%ocry = occr(i)
 !
 !     specie
-      if (present(nz)) call atom(i)%set_specie(nz(i),elem)
+      if (present(nz) .and. present(elem)) call atom(i)%set_specie(nz(i),elem)
 !
 !     intensita di picco
       if (present(inte)) atom(i)%inte = inte(i)
@@ -2356,10 +2358,23 @@ CONTAINS
            enddo
        endif
 !
+!      Remove angle with duplicate bonds (angle < 0.05)
+       do i=1,numang
+          if (angle(i)%val < 0.05) then
+              if (kpra > 0) write(kpra,*)'REMOVE ANGLE=',  &
+                  atom(angle(i)%n1)%glab(),atom(angle(i)%n2)%glab(),atom(angle(i)%n3)%glab()
+              if (angle(i)%n1 > angle(i)%n3) then
+                  call remove_bond_from_atoms(legm,angle(i)%n1,angle(i)%n2)
+              else
+                  call remove_bond_from_atoms(legm,angle(i)%n2,angle(i)%n3)
+              endif
+              angle(i)%n1 = 0
+          endif
+       enddo
+!
 !      Rimuovi i legami in comune a piu' angoli
        do i=1,numang-1         
           n1i = angle(i)%n1
-!corr          if (n1i < 0) cycle ! angolo da non considerare
           if (n1i == 0) cycle ! angolo da non considerare
           n2i = angle(i)%n2
           n3i = angle(i)%n3
@@ -2367,7 +2382,6 @@ CONTAINS
           del23 = 0
           do j=i+1,numang
              n1j = angle(j)%n1
-!corr             if (n1j < 0) cycle 
              if (n1j == 0) cycle 
              n2j = angle(j)%n2
              n3j = angle(j)%n3
@@ -2380,12 +2394,10 @@ CONTAINS
                  delang = .true.
              endif
              if (delang) then
-!corr                 angle(j)%n1 = -angle(j)%n1
                  angle(j)%n1 = 0
              endif
           enddo
           if (del12 == 1 .or. del23 == 1) then
-!corr              angle(i)%n1 = -angle(i)%n1
               if (del12 == 1) then
                   call remove_bond_from_atoms(legm,n1i,n2i)
                   if (kpra > 0) call print_del_bond(n1i,n2i,angle(i),kpra)
@@ -2401,7 +2413,6 @@ CONTAINS
 !      Rimuovi legame a piu' bassa connettivita'
        do i=1,numang
           n1i = angle(i)%n1
-!corr          if (angle(i)%n1 < 0) cycle
           if (angle(i)%n1 == 0) cycle
           n2i = angle(i)%n2
           n3i = angle(i)%n3
@@ -3325,14 +3336,13 @@ CONTAINS
 
    integer function is_organic_z(zval,nzval)
 !
-!  is_organic = 1 -> organica
-!             = 2 -> metallorganica                
-!             = 0 -> inorganica
+!  is_organic = 1 -> organic
+!             = 2 -> organometallic                
+!             = 0 -> inorganic
 !
    USE elements
-   integer, dimension(:), intent(in) :: zval   ! Z delle specie atomiche
-   integer, dimension(:), intent(in) :: nzval  ! numero di specie atomiche
-!corr   integer, dimension(11), parameter :: vetorg = (/C_at,H_at,B_at,N_at,O_at,P_at,S_at,F_at,Cl_at,Br_at,I_at/)
+   integer, dimension(:), intent(in) :: zval   ! Z of atomic species
+   integer, dimension(:), intent(in) :: nzval  ! number of atomic species
    integer, dimension(size(zval))    :: inorg
    integer                           :: i
    integer                           :: nsp
@@ -3340,12 +3350,12 @@ CONTAINS
    integer                           :: sinorg
    integer                           :: numO,numOi
 !
-!  Una specie, organica o mettallorg. deve contenere C (Z=6)
+!  A species, organic or organometallic, must contain C (Z=6)
    if (any(zval(:) == C_at)) then
        nsp = size(zval)
 !
-!      le altre specie devono essere H(1),N(7),O(8),P(15),S(16),F(9),Cl(17),Br(35),I(53)
-!      memorizza nel vettore inorg le specie inorganiche, cioe' diverse da vetorg
+!      the other species must be H(1),N(7),O(8),P(15),S(16),F(9),Cl(17),Br(35),I(53)
+!      store in the inorg vector the inorganic species, i.e. different from vetorg
        do i=1,nsp
           !if (any(org_elements(:) == zval(i))) then
           if (is_organic_el(zval(i))) then
@@ -3355,20 +3365,20 @@ CONTAINS
           endif
        enddo
 !
-       sinorg = sum(inorg(:)) ! somma delle specie inorganiche
+       sinorg = sum(inorg(:)) ! sum of inorganic species
        if (sinorg == 0) then
 !           
-!          non ci sono specie inorganiche
+!          there are no inorganic species
            is_organic_z = 1
        else
 !
-!          Ma O potrebbero appartenere anche alla parte inorganica (es. zeoliti)
-           numO = number_for_specie(O_at,zval,nzval)  ! numero di O
+!          But O could also belong to the inorganic part (e.g. zeolites)
+           numO = number_for_specie(O_at,zval,nzval)  ! number of O
            if (numO > 0) then
                numOi = 0
                do i=1,nsp
                   if (inorg(i) > 0 .or. zval(i) == P_at) then   ! P is also inorganic if O are present
-!                     oxygen for inorganic atom = 0.7*num. di ossidazione 
+!                     oxygen for inorganic atom = 0.7*oxidation number 
                       numOi = numOi + nint(0.7*oxidation_number(zval(i))) * nzval(i)
                   endif
                enddo
@@ -3378,14 +3388,14 @@ CONTAINS
            perci=100*sinorg/sum(nzval(:))
 !
            if (perci <= 20) then
-               is_organic_z = 2    ! metallorganica
+               is_organic_z = 2    ! organometallic
            else
-               is_organic_z = 0    ! inorganica
+               is_organic_z = 0    ! inorganic
            endif
        endif
    else  
 !
-!      se non contiene C e' inorganica
+!      if it doesn't contain C it's inorganic
        is_organic_z = 0
    endif
 !
@@ -7660,7 +7670,8 @@ CONTAINS
 
    subroutine make_specie(atom,spg,elem,radtype)
 !
-!  Assign specie from peak intensity
+!  Assign specie from peak intensity and occupancy
+!  occupancy atom%ocry must be already assigned, call make_occupancy before
 !
    USE elements
    USE nr
@@ -7696,7 +7707,6 @@ CONTAINS
 !  Sort elements in array el from the most intense
    allocate(el(nelem),source=elem)
    call ordina_elements(el,radtype,sort=-1)
-!   write(0,*)'SPEC=',el%lab
 !
    select case (radtype)
       case (RX_SOURCE)          ! raggi X

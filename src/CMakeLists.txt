@@ -22,6 +22,7 @@ set(PROJECT_SOURCES
     dbresultswidget.cpp
     dbresultswidget.h
     dbresultswidget.ui
+    exportqualx.F90
     fileutils.cpp
     fileutils.h
     floatdelegate.cpp
@@ -60,6 +61,9 @@ set(PROJECT_SOURCES
     qualxdbmanager.cpp
     savedialog.cpp
     savedialog.h
+    stringlistdialog.cpp
+    stringlistdialog.h
+    stringlistdialog.ui
     searchutil.cpp
     searchutil.h
     scopedtimer.h
@@ -102,11 +106,34 @@ set(FORTRAN_SOURCES
     datautil.f90
     elements.f90
     error.F90
+#    exportexpon.F90
     filetype.f90
     fileutil.F90
     fom.f90
     fract.f90
+    abinit_form.f90
+    asymfunc.f90
+    calcpdp.f90
+    chem_files.f90
+    commands.f90
+    crystal_form.f90
+    cryutil.f90
+    fra_form.f90
     fragments.F90
+    gamess_form.f90
+    gen_form.F90
+    import_data_structure.f90
+    mol2_form.f90
+    mop_form.f90
+    nwchem_form.f90
+    obmodule.f90
+    pdf.f90
+    pearsonfunc.f90
+    povray_form.f90
+    psvoigtfunc.f90
+    qe_form.F90
+    tchzfunc.f90
+    winlist.f90
     genlsq.f90
     goptutil.F90	
     indexing.f90
@@ -119,9 +146,11 @@ set(FORTRAN_SOURCES
     modeltype.f90
     moduli.f90
     molgraph.f90
+    molpnew.f90
     mpi_util.F90
     nist_table.f90
     nl2sol.f90
+    pdb_form.f90
     peak_interop.f90
     peakutil.f90
     pfunction.f90
@@ -136,6 +165,7 @@ set(FORTRAN_SOURCES
     rigidb.f90
     scatt_params.F90
     screen_new.f90
+    shelx_form.f90
     smooth.f90
     specif.f90
     spginfo.f90
@@ -145,10 +175,13 @@ set(FORTRAN_SOURCES
     symm_table.f90
     symmgrid.f90
     unit_cell.f90
+    mmpsi.f
     util.f
     utiln.f90
     variables.f90
     vedi2005.f90
+    xyz_form.f90
+    zmt_form.f90
 )
 
 set(LIBRARY_INCLUDES "./" "${CMAKE_BINARY_DIR}/configured_files/include")

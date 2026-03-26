@@ -63,6 +63,9 @@ public:
     void saveEnabledActions();
     void restoreEnabledActions();
 
+    static QString getPathDataFiles();
+    static void setPathDataFiles(const QString &newPathDataFiles);
+
 private slots:
     void closeEvent(QCloseEvent *event);
 
@@ -100,9 +103,7 @@ private:
 
     //Files
     QString currentFile;
-
-    //Search-match
-    //QVector<float> dValues, deltaValues;
+    static QString pathDataFiles;
 
     //Database
     QString currentDatabase;

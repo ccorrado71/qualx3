@@ -9,6 +9,7 @@
 #include <QMessageBox>
 
 MainWindow *mMainWindow;
+QString MainWindow::pathDataFiles = "";
 
 extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
 extern "C" void run_peaksearchwin();
@@ -109,6 +110,16 @@ void MainWindow::enumerateEnabledActionsMenu(QMenu *menu)
             stateActions[action] = action->isEnabled();
         }
     }
+}
+
+QString MainWindow::getPathDataFiles()
+{
+    return pathDataFiles;
+}
+
+void MainWindow::setPathDataFiles(const QString &newPathDataFiles)
+{
+    pathDataFiles = newPathDataFiles;
 }
 
 void MainWindow::saveEnabledActions()

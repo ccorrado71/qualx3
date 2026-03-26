@@ -12,26 +12,41 @@ module qualx_main
 
 contains
 
-   subroutine qualxmain(param_opt,fileinc,len_in,fileoutc,len_out,ier) bind(C,name="qualxmain")
-   use strutil
+   subroutine qualxmain(param_opt,fileinc,len_in,fileoutc,len_out,exepathcc,len_path,ier) bind(C,name="qualxmain")
    use general, only: ifAutomatic
    use molcom, only: jscreen
+   use strutil
+   use gen_frm
+   use errormod
+   use import_data_struct
    type(param_options_type)      :: param_opt
-   character(c_char), intent(in) :: fileinc(*),fileoutc(*)
-   integer(c_int), value         :: len_in, len_out
+   character(c_char), intent(in) :: fileinc(*),fileoutc(*),exepathcc(*)
+   integer(c_int), value         :: len_in, len_out, len_path
    integer(c_int)                :: ier
-   character(len=:), allocatable :: filein,fileout
+   character(len=:), allocatable :: filein,fileout,exepath
+   type(error_type)              :: err
 !
    filein = toFortranString(fileinc,len_in)
    fileout = toFortranString(fileoutc,len_out)
+   exepath = toFortranString(exepathcc,len_path)
 
    call init_qualx()
    ifAutomatic = param_opt%auto          !Set automatic mode by command line
    if (param_opt%nogui == 1) jscreen = 0 !Disable GUI if required by command line
-
+!   
+   call load_chemical_tables(exepath,err)
+   if (err%signal) then
+       ier = 1
+       go to 10
+   endif
+!
    if (len_trim(filein) /= 0) then
        call mainloop(filein,ier)
    endif
+
+   call test_import()
+
+10 continue
 
    end subroutine qualxmain
 

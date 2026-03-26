@@ -1,4 +1,4 @@
-!#define NOGTK 1
+!#define NOGUI 1
 MODULE errormod
 
 implicit none
@@ -125,9 +125,8 @@ CONTAINS
 
 !----------------------------------------------------------------------------------------------------   
 
-   !subroutine print_error_message(err,parent)
    subroutine print_error_message(err)
-#if NOGTK
+#if NOGUI
    USE iso_fortran_env
 #else
    USE prog_constants
@@ -142,7 +141,7 @@ CONTAINS
    else
        errtype = 'ERROR'
    endif
-#if NOGTK
+#if NOGUI
    write(ERROR_UNIT,'(a)')trim(err%message)
 #else
    call MsgWinErr(errtype,err%message,WARN_WINDOW,nExitCode)

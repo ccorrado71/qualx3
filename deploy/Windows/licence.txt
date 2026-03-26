@@ -1,0 +1,27 @@
+LICENSE AGREEMENT
+
+The present LICENSE AGREEMENT is made between the Istituto di Cristallografia, CNR, Bari, Italy (hereinafter the "IC"), representative also of Prof. Carmelo Giacovazzo, co-author, Professor in the Dipartimento Geomineralogico, Università di Bari and the user of this software (hereinafter the "USER").
+
+The USER agrees to the following conditions:
+
+   1. The program is free of charge to academic and non-profit researchers for non-commercial use only, subject to the condition that their use is acknowledged in all publications which report structures solved using them.
+   2. The program uses the GTK libraries which are distributed under the GPL (GNU General Public License).
+   3. The program will normally be distributed via the present web site. Should a physical distribution medium be requested, the program will be supplied to the USER by the IC or by an authorized distributor at the USER expense, with the USER paying all postage and shipping costs.
+   4. Any modification to program supplied by or in behalf of IC will be covered by the terms of the present AGREEMENT.
+   5. IC declines any responsibility for limitations of the program and of its documentation or for any liabilities or claims arising from its use.
+   6. IC is under no obligation whatsoever to correct errors nor to notify the USER of errors in the program. Whenever practicable such errors will be corrected or the USER notified.
+   7. The USER may on his own initiative make modifications to the program subject to the following conditions:
+
+      - The USER will notify IC of the modifications where practicable;
+
+      - The USER will provide IC with full details of the modifications if so requested;
+
+      - IC will clearly show in the distribution of such modifications the authorship of the modification itself;
+
+      - The intellectual property of the modification will remain to the IC, whom will have the right to distribute it to other institutions under the same terms of the original program.
+      
+   8. The program will not be distributed to any third party without written permission of the IC.
+   9. The user's guides may be copied and freely distributed to the coworkers of the USER.
+  10. Published reference to the program is:
+    
+    A. Altomare, C. Cuocci, C. Giacovazzo, A. Moliterni, R. Rizzi, N. Corriero and A. Falcicchio, "EXPO2013: a kit of tools for phasing crystal structures from powder data", J. Appl. Cryst. (2013). 46, 1231-1235

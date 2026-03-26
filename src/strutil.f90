@@ -105,6 +105,9 @@ MODULE STRUTIL
 !  S s_trim_zeros ( s )                                 ! Removes trailing zeros from a string.
 !  F find_string_in_array(string, array) result(pos)    ! Find string in array of string. Return 0 if string is absent
 !  S write_formatted_message(unt,message_type,msg,ampl) ! Write message in a box splitting at LF o blank
+!  F leftalign(str, width) result(res)                  ! Left align a string in a field of given width
+!  F copy_string_to_c_array_f(fortran_str, c_array, ... !  Function version that returns the actual copied length
+!  S copy_string_to_c_array_f(fortran_str, c_array, ... !  Function version that returns the actual copied length
 
  implicit none
 
@@ -5032,7 +5035,7 @@ end function ch_is_space
       real, intent(in)              :: x
       integer, intent(in), optional :: dec
       character(len=14)             :: str
-      character(len=:), allocatable             :: str1
+      character(len=:), allocatable :: str1
       character(len=20)             :: sform
 !
       if (present(dec)) then
@@ -6412,6 +6415,31 @@ end function ch_is_space
 
 !--------------------------------------------------------------------------------------------------------
 
+   function cstr_to_fstr(cstr) result(fstr)
+!
+!  Copy a null-terminated C string (assumed-size c_char array) into an
+!  allocatable Fortran string.  The result is trimmed at the null terminator.
+!  Unlike c_to_f, the argument is character(kind=c_char),dimension(*) so it
+!  is compatible with bind(C) interface arguments.
+!
+   use iso_c_binding, only: c_char, c_null_char
+   character(kind=c_char), intent(in) :: cstr(*)
+   character(len=:), allocatable      :: fstr
+   integer                            :: n
+!
+   n = 0
+   do while (cstr(n+1) /= c_null_char)
+      n = n + 1
+   end do
+   allocate(character(len=n) :: fstr)
+   do n = 1, len(fstr)
+      fstr(n:n) = cstr(n)
+   end do
+!
+   end function cstr_to_fstr
+
+!--------------------------------------------------------------------------------------------------------
+
    logical function str_set_real(str,rvalue,rmin) result(err)
    character(len=*), intent(in)    :: str
    real, intent(inout)             :: rvalue
@@ -6431,5 +6459,113 @@ end function ch_is_space
    err = .false.
    
    end function str_set_real
+
+!--------------------------------------------------------------------------------------------------------
+
+   logical function str_set_integer(str,ivalue,imin) result(err)
+   character(len=*), intent(in)       :: str
+   integer, intent(inout)             :: ivalue
+   integer, intent(in), optional      :: imin
+   integer, dimension(:), allocatable :: ivet 
+   integer                            :: iv
+!
+   err = .true.
+   call getnum1(str,iv=iv,ivet=ivet)
+   if (iv <= 0) return
+
+   if (present(imin)) then
+       if (ivet(1) < imin) return
+   endif
+
+   ivalue = ivet(1)
+   err = .false.
+
+   end function str_set_integer
+ 
+!--------------------------------------------------------------------------------------------------------
+
+   pure function leftalign(str, width) result(res)
+   character(len=*), intent(in) :: str
+   integer, intent(in) :: width
+   character(len=:), allocatable :: res
+   integer :: trimmed_len, fill_len
+
+   ! Controlla che width sia valido
+   if (width < 1) then
+       allocate(character(len=0) :: res)
+       return
+   end if
+
+   trimmed_len = min(len_trim(str), width)
+   fill_len = width - trimmed_len
+
+   allocate(character(len=width) :: res)
+   if (trimmed_len > 0) then
+       res = str(1:trimmed_len)//repeat(" ", fill_len)
+   else
+       res = repeat(" ", width)
+   end if
+   end function leftalign
+
+!--------------------------------------------------------------------------------------------------------
+   subroutine copy_string_to_c_array(fortran_str, c_array, array_len)
+!  Copy a Fortran string into a C-compatible character array
+   use iso_c_binding, only: c_char, c_null_char
+   character(len=*), intent(in) :: fortran_str
+   integer, intent(in) :: array_len
+   character(kind=c_char, len=1), intent(out) :: c_array(array_len)
+   
+   integer ::  i, str_len
+   
+   ! Determine the effective length to copy
+   str_len = min(len_trim(fortran_str), array_len - 1)
+   
+   ! Copy character by character
+   do i = 1, str_len
+      c_array(i) = fortran_str(i:i)
+   end do
+   
+   !  Add null terminator
+   if (str_len + 1 <= array_len) then
+      c_array(str_len + 1) = c_null_char
+   else
+      c_array(array_len) = c_null_char
+   end if
+   
+   ! Optional: fill the rest with null characters
+   do i = str_len + 2, array_len
+      c_array(i) = c_null_char
+   end do
+   
+   end subroutine copy_string_to_c_array
+   
+!--------------------------------------------------------------------------------------------------------
+
+   function copy_string_to_c_array_f(fortran_str, c_array, array_len) result(copied_len)
+!  Function version that returns the actual copied length
+   use iso_c_binding, only: c_char, c_null_char
+   character(len=*), intent(in) :: fortran_str
+   integer, intent(in) :: array_len
+   character(kind=c_char, len=1), intent(out) :: c_array(array_len)
+   integer :: copied_len
+   
+   integer :: i
+   
+   ! Determine the effective length to copy
+   copied_len = min(len_trim(fortran_str), array_len - 1)
+   
+   ! Copy character by character
+   do i = 1, copied_len
+      c_array(i) = fortran_str(i:i)
+   end do
+   
+   ! Add null terminator
+   if (copied_len + 1 <= array_len) then
+      c_array(copied_len + 1) = c_null_char
+   else
+      c_array(array_len) = c_null_char
+   end if
+   
+   end function copy_string_to_c_array_f
 
 END MODULE STRUTIL

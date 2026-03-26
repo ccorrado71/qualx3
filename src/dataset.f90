@@ -64,6 +64,7 @@ MODULE datasetmod
      procedure          :: data_read => read_data_bin_s
      procedure          :: npoints => get_npoints
      procedure          :: npointsc => get_npointsc
+     procedure          :: dval => get_dvalue
      procedure          :: npoints_back
      procedure, private :: get_points_p
      procedure, private :: get_points_a
@@ -127,6 +128,15 @@ CONTAINS
    class(dataset_type), intent(in) :: datas
    get_npointsc = size_array(datas%yc)
    end function get_npointsc 
+
+!-------------------------------------------------------------------------
+
+   real function get_dvalue(datas,i)
+   use counts, only: dvalue
+   class (dataset_type), intent(in) :: datas
+   integer, intent(in)              :: i
+   get_dvalue = dvalue(datas%x(i),datas%wave(1))
+   end function get_dvalue
 
 !-------------------------------------------------------------------------
 

@@ -1,13 +1,14 @@
 #include "mainwindow.h"
 #include "commandline.h"
 #include "qt_utils.h"
+#include "fileutils.h"
 #if USE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <QApplication>
 
-extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *fileout, int lenOut, int *ier);
+extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *fileout, int lenOut, const char *exepath, int lenPath, int *ier);
 
 int main(int argc, char *argv[])
 {
@@ -59,14 +60,26 @@ int main(int argc, char *argv[])
         Q_UNREACHABLE();
     }
 
+    //Find folder with program files
+    QString errPath;
+    QStringList dataFiles = {"syminfo.lib","AtomProperties.xen"};
+    QString pathDataFiles = fileutils::getDirDataFiles(dataFiles,errPath);
+    MainWindow::setPathDataFiles(pathDataFiles);
+
     int ier;
     if (opt.nogui) {
 
     } else {
         MainWindow w;
         w.show();
-        qualxmain(&opt, filein.toUtf8().constData(), filein.length(), fileout.toUtf8().constData(), fileout.length(), &ier);
-
+        if (pathDataFiles.isEmpty()) {
+            QMessageBox::critical(&w,"Problem Occurred",errPath,QMessageBox::Ok);
+            return EXIT_FAILURE;
+        } else {
+        //qualxmain(&opt,filein.toUtf8().constData(),filein.length(),fileout.toUtf8().constData(),fileout.length(),&ier);
+            qualxmain(&opt,filein.toLocal8Bit().constData(),filein.toLocal8Bit().size(),fileout.toLocal8Bit().constData(),
+                      fileout.toLocal8Bit().size(),pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
+        }
         return a.exec();
     }
 }

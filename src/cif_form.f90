@@ -96,6 +96,7 @@ MODULE cif_frm
    integer, parameter, private    :: ERRCIF_VALUE = -9999
    integer, dimension(7), private :: pos_anisU, pos_anisB
    integer, parameter             :: LENLINE_CIF = 200
+   integer, parameter             :: EXPORT_POWCIF_RIET=1, EXPORT_POWCIF_OBS=2
 
    private :: write_angles
 
@@ -661,8 +662,8 @@ CONTAINS
                enddo
            endif
 !
+           call resize_atoms(atom,nat)
            if (nat > 0) then
-               call resize_atoms(atom,nat)
                nat = 0
                pos_label = string_locate('_atom_site_label',cifword%str)
                pos_symbol = string_locate('_atom_site_type_symbol',cifword%str)
@@ -1209,18 +1210,18 @@ CONTAINS
       adv = 'no'
       write(j_in,sform,advance=adv)atom(i)%specie(),atom(i)%lab
       do k=1,3
-         if (abs(atom(i)%xsd(k)) > 0.0) then
+         if (abs(atom(i)%xsd(k)) > 0.0 .and. stdd) then
              write(j_in,'(a,1x)',advance=adv)string_esd(atom(i)%xc(k),atom(i)%xsd(k))
          else
              write(j_in,'(a,1x)',advance=adv)trim(r_to_s(atom(i)%xc(k),4))
          endif
       enddo
-      if (abs(atom(i)%bsd) > 0.0) then
+      if (abs(atom(i)%bsd) > 0.0 .and. stdd) then
           write(j_in,'(a,1x)',advance=adv)string_esd(u_from_b(atom(i)%biso),u_from_b(atom(i)%bsd))
       else
           write(j_in,'(a,1x)',advance=adv)trim(r_to_s(u_from_b(atom(i)%biso),4))
       endif
-      if (abs(atom(i)%och) > 0.0) then
+      if (abs(atom(i)%och) > 0.0 .and. stdd) then
           write(j_in,'(a,1x)',advance=adv)string_esd(atom(i)%och,atom(i)%osd)
       else
           !write(j_in,'(f10.4,1x)',advance=adv)atom(i)%och
@@ -1318,6 +1319,22 @@ CONTAINS
 
 !------------------------------------------------------------------------------------------
 
+   subroutine write_wavelengths(j_in,datas)
+   use datasetmod
+   integer, intent(in)            :: j_in
+   type(dataset_type), intent(in) :: datas
+!
+   if (datas%nwave > 0) then
+       write(j_in,"(a,f10.6)") '_diffrn_radiation_wavelength   ',datas%wave(1)
+   else
+       write(j_in,"(a)")       '_diffrn_radiation_wavelength    ?'
+   endif
+   write(j_in,"(a)")          '_diffrn_radiation_type          '//diffrn_radiation_string(datas%radtype,datas%wave(1))
+!
+   end subroutine write_wavelengths
+
+!------------------------------------------------------------------------------------------
+
    subroutine write_instrument(j_in,datas)
    use datasetmod
    use elements, only: ELECTRON_SOURCE
@@ -1329,48 +1346,71 @@ CONTAINS
       write(j_in,"(a)")      "_cell_measurement_radiation      "//diffrn_radiation_string(datas%radtype,datas%wave(1))
    endif
    write(j_in,"(a)")           '_diffrn_ambient_temperature     ?'
-   if (datas%nwave > 0) then
-       write(j_in,"(a,f10.6)") '_diffrn_radiation_wavelength   ',datas%wave(1)
-   else
-       write(j_in,"(a)")       '_diffrn_radiation_wavelength    ?'
-   endif
-   write(j_in,"(a)")          '_diffrn_radiation_type          '//diffrn_radiation_string(datas%radtype,datas%wave(1))
+   call write_wavelengths(j_in,datas)
    write(j_in,"(a)")           '_diffrn_measurement_device_type ?'
 !
    end subroutine write_instrument
 
 !------------------------------------------------------------------------------------------
 
-   subroutine write_block_datacif(j_in,datas,rinfo)
+   subroutine write_block_datacif(j_in,datas,code,rinfo)
    USE datasetmod
    use progtype, only: refine_info_type
    integer, intent(in)                          :: j_in
    type(dataset_type), intent(in)               :: datas
+   integer, intent(in)                          :: code
    type(refine_info_type), intent(in), optional :: rinfo
    integer                                      :: i
 !
 ! raw / calculated data loop
-   select case (datas%datatype)
-     case (POW_DATA)
-       write(j_in,'(a/)')'# POWDER PROFILE'
-       write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_min',datas%tmin
-       write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_max',datas%tmax
-       write(j_in,'(a,1x,i10)')   '_pd_proc_number_of_points',datas%npoints()
-       if (present(rinfo)) then
+   if (datas%datatype == POW_DATA) then
+       select case (code)
+         case (EXPORT_POWCIF_RIET)
+           write(j_in,'(a/)')'# POWDER PROFILE'
+           write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_min',datas%tmin
+           write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_max',datas%tmax
+           write(j_in,'(a,1x,i10)')   '_pd_proc_number_of_points',datas%npoints()
+           if (present(rinfo)) then
+               write(j_in,*)
+               call write_block_rinfo(j_in,rinfo)
+           endif
            write(j_in,*)
-           call write_block_rinfo(j_in,rinfo)
-       endif
-       write(j_in,*)
-       write(j_in,'(a)') 'loop_'
-       write(j_in,'(a)') '     _pd_meas_2theta_scan'
-       write(j_in,'(a)') '     _pd_meas_counts_total'
-       write(j_in,'(a)') '     _pd_proc_2theta_corrected'
-       write(j_in,'(a)') '     _pd_calc_intensity_total'
-       write(j_in,'(a/)')'     _pd_proc_intensity_bkg_calc'
-       do i=1,datas%npointsc()
-          write(j_in,'(5(1x,f15.6))') datas%x(i),datas%y(i),datas%x0(i),datas%yc(i),datas%yb(i)
-       enddo
-   end select
+           write(j_in,'(a)') 'loop_'
+           write(j_in,'(a)') '     _pd_meas_2theta_scan'
+           write(j_in,'(a)') '     _pd_meas_counts_total'
+           write(j_in,'(a)') '     _pd_proc_2theta_corrected'
+           write(j_in,'(a)') '     _pd_calc_intensity_total'
+           write(j_in,'(a/)')'     _pd_proc_intensity_bkg_calc'
+           do i=1,datas%npointsc()
+              write(j_in,'(5(1x,f15.6))') datas%x(i),datas%y(i),datas%x0(i),datas%yc(i),datas%yb(i)
+           enddo
+
+         case (EXPORT_POWCIF_OBS)
+           write(j_in,'(a/)')'# POWDER PROFILE'
+           write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_min',datas%tmin
+           write(j_in,'(a,1x,f10.3)') '_pd_meas_2theta_range_max',datas%tmax
+           write(j_in,'(a,1x,i10)')   '_pd_proc_number_of_points',datas%npoints()
+           write(j_in,*)
+           call write_wavelengths(j_in,datas)
+           write(j_in,*)
+           write(j_in,'(a)') 'loop_'
+           write(j_in,'(a)') '     _pd_meas_2theta_scan'
+           write(j_in,'(a)') '     _pd_proc_d_spacing'
+           write(j_in,'(a)') '     _pd_meas_counts_total'
+           if (datas%has_back()) then
+               write(j_in,'(a)')'     _pd_proc_intensity_intensity_net'
+               write(j_in,'(a)')'     _pd_proc_intensity_bkg_calc'
+               do i=1,datas%npoints()
+                  write(j_in,'(5(1x,f15.6))') datas%x(i),datas%dval(i),datas%y(i),  &
+                                              datas%y(i)-datas%yb(i),datas%yb(i)
+               enddo
+           else
+               do i=1,datas%npoints()
+                  write(j_in,'(3(1x,f15.6))') datas%x(i),datas%dval(i),datas%y(i)
+               enddo
+           endif
+         end select
+   endif
 !
    end subroutine write_block_datacif
 
@@ -1396,6 +1436,24 @@ CONTAINS
    write(j_in,'(a,1x,f12.5)')'_refine_ls_restrained_S_all   ',rinfo%sall
 !
    end subroutine write_block_rinfo 
+
+!------------------------------------------------------------------------------------------
+
+   subroutine export_data_cif(filename,datas)
+   USE datasetmod
+   USE fileutil
+   character(len=*), intent(in)   :: filename
+   type(dataset_type), intent(in) :: datas
+   type(file_handle)              :: fpatt
+!
+   call fpatt%fopen(filename,'w')
+!
+   if (fpatt%good()) then
+       call write_block_datacif(fpatt%handle(),datas,EXPORT_POWCIF_OBS)
+       call fpatt%fclose()
+   endif
+!
+   end subroutine export_data_cif
 
 !------------------------------------------------------------------------------------------
 
