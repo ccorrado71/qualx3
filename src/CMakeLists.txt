@@ -10,6 +10,10 @@ set(PROJECT_SOURCES
     colorwidget.cpp         
     colorwidget.h
     colorwidget.ui
+    cifreader.cpp
+    cifreader.h
+    cifdbpopulator.cpp
+    cifdbpopulator.h
     commandline.cpp
     commandline.h
     customplotzoom.cpp
@@ -44,6 +48,8 @@ set(PROJECT_SOURCES
     nr.h
     paginationmodel.cpp
     paginationmodel.h
+    pdf2reader.cpp
+    pdf2reader.h
     peaklistwidget.cpp
     peaklistwidget.h
     peaklistwidget.ui
@@ -57,8 +63,12 @@ set(PROJECT_SOURCES
     qcustomplot.cpp
     qt_utils.h
     qt_utils.cpp
+    qualxdbcreator.h
+    qualxdbcreator.cpp
     qualxdbmanager.h
     qualxdbmanager.cpp
+    qualxdbpopulator.h
+    qualxdbpopulator.cpp
     savedialog.cpp
     savedialog.h
     stringlistdialog.cpp

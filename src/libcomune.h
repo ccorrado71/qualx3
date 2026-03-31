@@ -511,6 +511,47 @@ inline bool Is_Acid(int code)
     return (Is_DnaG(code) || Is_AminoG(code));
 }
 
+// Data extracted from a CIF file via Fortran get_crystal_info_from_cif
+struct CifCrystalInfo {
+    int   nat        = 0;
+    int   zval       = 0;
+    int   nrefl      = 0;
+    int   nrefl_print = 0;
+    float cellpar[6] = {};
+    int   icell[6]   = {};
+    float vol        = 0.f;
+    float dens       = 0.f;
+    float mu         = 0.f;
+    float rir        = 0.f;
+    float wavelen    = 0.f;
+    char  sform[256] = {};
+    char  subfile[32] = {};
+    char  spg_sym[64] = {};
+    char  crysys[64]  = {};
+    int   refl_h[500]    = {};
+    int   refl_k[500]    = {};
+    int   refl_l[500]    = {};
+    int   refl_mult[500] = {};
+    float refl_tth[500]  = {};
+    float refl_d[500]    = {};
+    float refl_lp[500]   = {};
+    float refl_fc2[500]  = {};
+    float refl_inte[500] = {};
+    float refl_ipct[500] = {};
+    int   nelem          = 0;
+    char  specie_label[100][3] = {};  // element symbols, null-terminated (2 chars + '\0')
+};
+
+// Calls Fortran get_crystal_info_from_cif for the given file.
+// Returns true on success (ier == 0), false otherwise.
+bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info);
+
+// Initialises the Fortran chemical tables (load_chemical_tables + init_qualx).
+// Must be called once before any CIF reading outside of qualxmain.
+// Returns true on success.
+bool initQualxTables(const QString &exePath);
+
+void test_crystal_info_from_cif();
 int leggixen(QWidget *w, QString file1);
 bool caseInsCompare(const std::string &s1, const std::string &s2);
 int is_valid_symbol(std::string el, int Ntot=0);

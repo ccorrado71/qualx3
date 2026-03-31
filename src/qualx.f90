@@ -76,4 +76,28 @@ contains
    call new_phases(cryst,1)
 
    end subroutine init_qualx
+
+!-------------------------------------------------------------------------------
+
+   subroutine init_qualx_tables(exepathcc, len_path, ier) bind(C, name="init_qualx_tables")
+   use iso_c_binding
+   use strutil,   only: toFortranString
+   use errormod
+   use gen_frm
+   character(c_char), intent(in) :: exepathcc(*)
+   integer(c_int), value         :: len_path
+   integer(c_int), intent(out)   :: ier
+   character(len=:), allocatable :: exepath
+   type(error_type)              :: err
+
+   exepath = toFortranString(exepathcc, len_path)
+   call load_chemical_tables(exepath, err)
+   if (err%signal) then
+       ier = 1
+   else
+       ier = 0
+   endif
+
+   end subroutine init_qualx_tables
+
 end module qualx_main

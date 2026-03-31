@@ -1,6 +1,7 @@
 MODULE General
-   integer, parameter :: lo = 6
+   integer, parameter :: lo = 70
    integer            :: ifAutomatic = 0
+   logical            :: is_anomalous = .false.
 END MODULE General
 
 MODULE Molcom
