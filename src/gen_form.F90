@@ -1,5 +1,5 @@
 !uncomment this line for powcod generation
-!#define powcod 1
+#define powcod 1
 module gen_frm
 
 USE prog_constants, only: CU_WAVE, CUwave
