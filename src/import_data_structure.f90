@@ -156,7 +156,6 @@ contains
    do i=1,crystal%numelem()
       specie_label(i) = specie_from_pxen(crystal%elem(i)%z)
    enddo
-   write(lo,*)'Species labels: ', specie_label
 !
 !  Fill element species output
    nelem_c = INT(min(crystal%numelem(), 100), C_INT)
