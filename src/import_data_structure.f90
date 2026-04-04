@@ -86,7 +86,7 @@ contains
    use reflection_type_util
    use spginfom,           only: uc_is_rhombohedral, uc_is_hexagonal, cry_sys, CS_Trigonal
    use counts,             only: dvalue
-   use strutil,            only: copy_string_to_c_array
+   use strutil,            only: copy_string_to_c_array, cstr_to_fstr
    use general, only: lo
    use elements, only: specie_from_pxen
    implicit none
@@ -104,9 +104,10 @@ contains
    character(kind=C_CHAR), dimension(64),  intent(out) :: spg_sym_c
    character(kind=C_CHAR), dimension(64),  intent(out) :: crysys_c
    ! --- Output reflection arrays (up to NMAXREFLD=500 entries) ---
-   integer(C_INT), dimension(500), intent(out)        :: refl_h, refl_k, refl_l, refl_mult
-   real(C_FLOAT),  dimension(500), intent(out)        :: refl_tth, refl_d
-   real(C_FLOAT),  dimension(500), intent(out)        :: refl_lp, refl_fc2, refl_inte, refl_ipct
+   integer(C_INT), parameter                          :: NMAXREFLD = 500
+   integer(C_INT), dimension(NMAXREFLD), intent(out)  :: refl_h, refl_k, refl_l, refl_mult
+   real(C_FLOAT),  dimension(NMAXREFLD), intent(out)  :: refl_tth, refl_d
+   real(C_FLOAT),  dimension(NMAXREFLD), intent(out)  :: refl_lp, refl_fc2, refl_inte, refl_ipct
    ! --- Output element species (up to MAXELEM_C=100 elements, 2-char symbol + null) ---
    integer(C_INT),  intent(out)                       :: nelem_c
    character(kind=C_CHAR), dimension(3, 100), intent(out) :: specie_label_c
@@ -126,18 +127,10 @@ contains
    integer                                            :: isorg
    character(len=*), dimension(0:2), parameter        :: subf = &
        ['inorganic    ','organic      ','metallorganic']
-   integer, parameter                                 :: NMAXREFLD = 500
    character(len=2), allocatable                      :: specie_label(:)
 !
 !  Convert null-terminated C string to Fortran string
-   n = 0
-   do while (cif_file(n+1) /= C_NULL_CHAR .and. n < 4096)
-       n = n + 1
-   enddo
-   allocate(character(n) :: filename_f)
-   do i = 1, n
-       filename_f(i:i) = cif_file(i)
-   enddo
+   filename_f = cstr_to_fstr(cif_file)
 !
 !  Import crystal structure from CIF
    call import_structure(filename_f, crystal, err)
