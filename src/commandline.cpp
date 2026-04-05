@@ -26,6 +26,8 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
     parser.addOption(cifDirOption);
     const QCommandLineOption recursiveOption("recursive", "Scan CIF folder recursively");
     parser.addOption(recursiveOption);
+    const QCommandLineOption inorganicOption("inorganic", "Include only inorganic structures (CIF source only)");
+    parser.addOption(inorganicOption);
     const QCommandLineOption dbOutOption("dbout", "Output database base path (without extension)", "dbpath");
     parser.addOption(dbOutOption);
 
@@ -84,6 +86,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
             dbopt.source    = DbBuildOptions::Source::Cif;
             dbopt.cifDir    = parser.value(cifDirOption);
             dbopt.recursive = parser.isSet(recursiveOption);
+            dbopt.inorganic = parser.isSet(inorganicOption);
             if (!QFileInfo(dbopt.cifDir).isDir()) {
                 errorMessage = QString("CIF folder not found: %1").arg(dbopt.cifDir);
                 return CommandLineError;

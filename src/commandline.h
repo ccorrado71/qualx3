@@ -22,6 +22,7 @@ struct DbBuildOptions
     QString pdf2File;           // --pdf2 <path>    : path to pdf2.dat
     QString cifDir;             // --cifdir <folder>: folder with .cif files
     bool    recursive = false;  // --recursive      : scan cifDir recursively
+    bool    inorganic = false;  // --inorganic      : include only inorganic structures
     QString outputDb;           // --dbout <path>   : output database base path
 };
 

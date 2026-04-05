@@ -505,6 +505,7 @@ bool initQualxTables(const QString &exePath)
 
 extern "C" void get_crystal_info_from_cif(
     const char* cif_file,
+    const int*  inorganic_only,
     int*   nat,    float* cellpar, int*   icell,
     float* vol,    float* dens,    int*   zval,
     float* mu,     int*   nrefl,   float* rir,    float* wavelen,
@@ -517,13 +518,14 @@ extern "C" void get_crystal_info_from_cif(
     int*   ier
 );
 
-bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info)
+bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info, bool inorganicOnly)
 {
     QByteArray path = filePath.toLocal8Bit();
-    // Ensure null-terminated C string
     int ier = 0;
+    int inorgFlag = inorganicOnly ? 1 : 0;
     get_crystal_info_from_cif(
         path.constData(),
+        &inorgFlag,
         &info.nat, info.cellpar, info.icell, &info.vol, &info.dens,
         &info.zval, &info.mu, &info.nrefl, &info.rir, &info.wavelen,
         info.sform, info.subfile, info.spg_sym, info.crysys,
@@ -537,67 +539,67 @@ bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info)
     return (ier == 0);
 }
 
-void test_crystal_info_from_cif()
-{
-    const char* cif_file = "/home/corrado/test_expo/1000099.cif";
-
-    int   nat, icell[6], zval, nrefl, nrefl_print, nelem, ier;
-    float cellpar[6], vol, dens, mu, rir, wavelen;
-    char  sform[256], subfile[32], spg_sym[64], crysys[64];
-    char  specie_label[100][3];
-    int   refl_h[500], refl_k[500], refl_l[500], refl_mult[500];
-    float refl_tth[500], refl_d[500], refl_lp[500];
-    float refl_fc2[500], refl_inte[500], refl_ipct[500];
-
-    get_crystal_info_from_cif(
-        cif_file,
-        &nat, cellpar, icell, &vol, &dens, &zval, &mu,
-        &nrefl, &rir, &wavelen,
-        sform, subfile, spg_sym, crysys,
-        refl_h, refl_k, refl_l,
-        refl_tth, refl_d, refl_mult,
-        refl_lp, refl_fc2, refl_inte, refl_ipct,
-        &nrefl_print,
-        &nelem, specie_label,
-        &ier
-    );
-
-    if (ier != 0) {
-        printf("get_crystal_info_from_cif error: ier = %d\n", ier);
-        return;
-    }
-
-    // Header info (same format as write_intensity_file)
-    printf(" FORMULA: %s\n", sform);
-    printf(" SUBFILE: %s\n", subfile);
-    printf(" CELL:    ");
-    for (int i = 0; i < 3; i++) printf(" %.4f", cellpar[i]);
-    for (int i = 3; i < 6; i++) printf(" %.3f", cellpar[i]);
-    printf("\n");
-    printf(" WRITE CELL: %6d%6d%6d%6d%6d%6d\n",
-           icell[0], icell[1], icell[2], icell[3], icell[4], icell[5]);
-    printf(" SPG:     %s\n", spg_sym);
-    printf(" CRY SYS: %s\n", crysys);
-    printf(" VOLUME : %.3f\n", vol);
-    printf(" Density: %.3f g cm-3\n", dens);
-    printf(" Z : %5d\n", zval);
-    printf(" mu(CuKa):%.3f cm-1\n", mu);
-    printf(" NAtoms: %d\n", nat);
-    printf(" NReflections: %d\n", nrefl);
-    printf(" RIR     :%.3f\n", rir);
-    printf(" ----------------------------------------------------------------------------- \n");
-    printf("   Remarks: Diffraction pattern calculated by EXPO from COD database cif file\n");
-    printf("   Remarks: RIR calculated by EXPO     \n");
-    printf(" ----------------------------------------------------------------------------- \n");
-
-    // Reflection table (same format as write_reflections code=5)
-    printf("  h   k  l      2theta    d      mult           LP"
-           "               Fc^2             Intensity                   Intensity(%%)\n");
-    for (int i = 0; i < nrefl_print; i++) {
-        printf("%4d%4d%4d%10.4f%10.4f%4d%20.4f%20.4f%20.4f%20.4f\n",
-               refl_h[i], refl_k[i], refl_l[i],
-               refl_tth[i], refl_d[i], refl_mult[i],
-               refl_lp[i], refl_fc2[i], refl_inte[i], refl_ipct[i]);
-    }
-}
+//void test_crystal_info_from_cif()
+//{
+//    const char* cif_file = "/home/corrado/test_expo/1000099.cif";
+//
+//    int   nat, icell[6], zval, nrefl, nrefl_print, nelem, ier;
+//    float cellpar[6], vol, dens, mu, rir, wavelen;
+//    char  sform[256], subfile[32], spg_sym[64], crysys[64];
+//    char  specie_label[100][3];
+//    int   refl_h[500], refl_k[500], refl_l[500], refl_mult[500];
+//    float refl_tth[500], refl_d[500], refl_lp[500];
+//    float refl_fc2[500], refl_inte[500], refl_ipct[500];
+//
+//    get_crystal_info_from_cif(
+//        cif_file,
+//        &nat, cellpar, icell, &vol, &dens, &zval, &mu,
+//        &nrefl, &rir, &wavelen,
+//        sform, subfile, spg_sym, crysys,
+//        refl_h, refl_k, refl_l,
+//        refl_tth, refl_d, refl_mult,
+//        refl_lp, refl_fc2, refl_inte, refl_ipct,
+//        &nrefl_print,
+//        &nelem, specie_label,
+//        &ier
+//    );
+//
+//    if (ier != 0) {
+//        printf("get_crystal_info_from_cif error: ier = %d\n", ier);
+//        return;
+//    }
+//
+//    // Header info (same format as write_intensity_file)
+//    printf(" FORMULA: %s\n", sform);
+//    printf(" SUBFILE: %s\n", subfile);
+//    printf(" CELL:    ");
+//    for (int i = 0; i < 3; i++) printf(" %.4f", cellpar[i]);
+//    for (int i = 3; i < 6; i++) printf(" %.3f", cellpar[i]);
+//    printf("\n");
+//    printf(" WRITE CELL: %6d%6d%6d%6d%6d%6d\n",
+//           icell[0], icell[1], icell[2], icell[3], icell[4], icell[5]);
+//    printf(" SPG:     %s\n", spg_sym);
+//    printf(" CRY SYS: %s\n", crysys);
+//    printf(" VOLUME : %.3f\n", vol);
+//    printf(" Density: %.3f g cm-3\n", dens);
+//    printf(" Z : %5d\n", zval);
+//    printf(" mu(CuKa):%.3f cm-1\n", mu);
+//    printf(" NAtoms: %d\n", nat);
+//    printf(" NReflections: %d\n", nrefl);
+//    printf(" RIR     :%.3f\n", rir);
+//    printf(" ----------------------------------------------------------------------------- \n");
+//    printf("   Remarks: Diffraction pattern calculated by EXPO from COD database cif file\n");
+//    printf("   Remarks: RIR calculated by EXPO     \n");
+//    printf(" ----------------------------------------------------------------------------- \n");
+//
+//    // Reflection table (same format as write_reflections code=5)
+//    printf("  h   k  l      2theta    d      mult           LP"
+//           "               Fc^2             Intensity                   Intensity(%%)\n");
+//    for (int i = 0; i < nrefl_print; i++) {
+//        printf("%4d%4d%4d%10.4f%10.4f%4d%20.4f%20.4f%20.4f%20.4f\n",
+//               refl_h[i], refl_k[i], refl_l[i],
+//               refl_tth[i], refl_d[i], refl_mult[i],
+//               refl_lp[i], refl_fc2[i], refl_inte[i], refl_ipct[i]);
+//    }
+//}
 

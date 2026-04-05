@@ -1,9 +1,13 @@
 #add -G Ninja  at configure step to change generator
 
 NCPU := 10
-INSTALL_FOLDER := $(HOME)
+INSTALL_FOLDER := $(HOME)/myapps/expo2/
 #QT_FOLDER := "/usr"
+#QT_FOLDER := $(HOME)/Qt/6.8.0/macos
 QT_FOLDER := $(HOME)/Qt/6.8.0/gcc_64
+
+error:
+	@echo "Usage: make <target>"
 
 prepare:
 	rm -rf build_gfor_d
@@ -40,26 +44,26 @@ prepare_ifx:
 prepare_ifxd:
 	rm -rf build_ifx_d
 
-prepare_mpiifort:
-	rm -rf build_mpiifort_r
-
-prepare_mpiifortd:
-	rm -rf build_mpiifort_d
-
 prepare_mpiifx:
 	rm -rf build_mpiifx_r
 
 prepare_mpiifxd:
 	rm -rf build_mpiifx_d
 
+prepare_mpiifort:
+	rm -rf build_mpiifort_r
+
+prepare_mpiifortd:
+	rm -rf build_mpiifort_d
+
 prepare_mpifort:
 	rm -rf build_mpifort_r
 
 config_gford:
-	cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_BUILD_TYPE=Debug -B build_gfor_d -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER) -S .
+	cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_BUILD_TYPE=Debug -B build_gfor_d -S . -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER)
 
 config_gfor:
-	cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_BUILD_TYPE=Release -B build_gfor_r -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER) -S .
+	cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_BUILD_TYPE=Release -B build_gfor_r -S . -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER)
 
 config_ifortd:
 	cmake -DCMAKE_Fortran_COMPILER=ifort -DCMAKE_BUILD_TYPE=Debug -B build_ifort_d -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER) -S .
@@ -93,6 +97,7 @@ config_mpiifx:
 
 config_mpiifxd:
 	cmake -DCMAKE_Fortran_COMPILER=mpiifx -DCMAKE_CXX_COMPILER=mpiicpx -DCMAKE_BUILD_TYPE=Debug -B build_mpiifx_d -DCMAKE_INSTALL_PREFIX=$(INSTALL_FOLDER) -DCMAKE_PREFIX_PATH=$(QT_FOLDER) -S .
+
 build_gford:
 	cmake --build build_gfor_d --parallel $(NCPU) --target install
 

@@ -68,6 +68,7 @@ contains
 !-----------------------------------------------------------------------------------------------------
 
    subroutine get_crystal_info_from_cif(cif_file,                                   &
+                                         inorganic_only_c,                           &
                                          nat_c, cellpar_c, icell_c, vol_c, dens_c,   &
                                          zval_c, mu_c, nrefl_c, rir_c, wavelen_c,    &
                                          sform_c, subfile_c, spg_sym_c, crysys_c,    &
@@ -92,6 +93,7 @@ contains
    implicit none
    ! --- Input ---
    character(kind=C_CHAR), dimension(*), intent(in)   :: cif_file
+   integer(C_INT),  intent(in)                        :: inorganic_only_c
    ! --- Output scalars ---
    integer(C_INT),  intent(out)                       :: nat_c, zval_c
    integer(C_INT),  intent(out)                       :: nrefl_c, nrefl_print_c, ier_c
@@ -137,6 +139,15 @@ contains
    if (err%signal) then
        ier_c = INT(-1, C_INT)
        return
+   endif
+!
+!  Early exit if only inorganic structures are requested and this is not inorganic
+   if (inorganic_only_c /= 0) then
+       isorg = is_organic(crystal%elem%z, nint(crystal%elem%nw))
+       if (isorg /= 0) then
+           ier_c = INT(1, C_INT)
+           return
+       endif
    endif
 !
 !  Compute all crystal data

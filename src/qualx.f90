@@ -44,8 +44,6 @@ contains
        call mainloop(filein,ier)
    endif
 
-   call test_import()
-
 10 continue
 
    end subroutine qualxmain

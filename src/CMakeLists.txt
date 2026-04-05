@@ -45,6 +45,9 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.cpp
     mainwindow.ui
+    managedatabasesdialog.h
+    managedatabasesdialog.cpp
+    managedatabasesdialog.ui
     nr.h
     paginationmodel.cpp
     paginationmodel.h

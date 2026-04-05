@@ -1,0 +1,43 @@
+#list of files to ignore
+
+#building files
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.guess
+config.h.in
+config.sub
+configure
+depcomp
+expodir/Makefile.in
+install-sh
+missing
+Makefile
+CMakeLists.txt.user
+.qtcreator/
+
+#executable and objects files
+expo
+expo_*
+debug/
+debug_gfor/
+release/
+release_gfor/
+build*/
+
+#input and output files
+*.out*
+*.exp
+*.bin
+*.expo
+*.pow
+*.xy
+*.cif
+*.fra
+*.frac
+*.hkl
+*.pdb
+*.csv
+*.fc
+*.pea

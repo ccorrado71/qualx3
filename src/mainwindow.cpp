@@ -31,10 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
     createDialogs();
 
     //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
-    currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
-    if (!qualxDb.openDatabases(currentDatabase)) {
-        qCritical() << "Error opening databases";
-    }
+    // currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
+    // if (!qualxDb.openDatabases(currentDatabase)) {
+    //     qCritical() << "Error opening databases";
+    // }
 
     readSettings();
     mMainWindow = this;
@@ -170,6 +170,7 @@ void MainWindow::actionsSetup()
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
     connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
     connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
+    connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -538,4 +539,10 @@ void MainWindow::onActionGetCardTriggered()
     //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
     qualxDb.getCardInfo(idCard);
     qualxDb.getCardAdditionalInfo(idCard);
+}
+
+void MainWindow::actionManageDatabasesTriggered()
+{
+    ManageDatabasesDialog dlg(this);
+    dlg.exec();
 }

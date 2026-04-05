@@ -105,6 +105,8 @@
     <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
     <addaction name="actionGetCard"/>
+    <addaction name="separator"/>
+    <addaction name="actionManage_Databases"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -282,6 +284,11 @@
   <action name="actionSearch_Match">
    <property name="text">
     <string>Search-Match</string>
+   </property>
+  </action>
+  <action name="actionManage_Databases">
+   <property name="text">
+    <string>Manage Databases</string>
    </property>
   </action>
  </widget>

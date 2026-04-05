@@ -544,7 +544,9 @@ struct CifCrystalInfo {
 
 // Calls Fortran get_crystal_info_from_cif for the given file.
 // Returns true on success (ier == 0), false otherwise.
-bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info);
+// If inorganicOnly is true, returns false when the structure is not inorganic
+// (Fortran sets ier=1 in that case; caller should treat it as a skip, not an error).
+bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info, bool inorganicOnly = false);
 
 // Initialises the Fortran chemical tables (load_chemical_tables + init_qualx).
 // Must be called once before any CIF reading outside of qualxmain.

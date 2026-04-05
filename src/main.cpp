@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     }
 
     QCommandLineParser parser;
-    parser.setApplicationDescription(QCoreApplication::translate("main","Program for structure solution process from powder diffraction data:"));
+    parser.setApplicationDescription(QCoreApplication::translate("main","Software for qualitative phase analysis from powder diffraction data:"));
     QString errorMessage;
     ProgOptions opt;
     DbBuildOptions dbopt;
@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
         } else {
             // CIF source: read each CIF file via Fortran get_crystal_info_from_cif
             int nProcessed = 0;
+            int nSkipped   = 0;
             int nErrors    = 0;
             //constexpr int kMaxCif = 1000;  // TODO: remove limit
             CifReader reader;
@@ -124,13 +125,29 @@ int main(int argc, char *argv[])
                              [&](const QString &cifPath) {
                                  //if (nProcessed + nErrors >= kMaxCif) return;
                                  CifCrystalInfo info;
-                                 if (readCrystalInfoFromCif(cifPath, info)) {
+                                 const int result = [&]() -> int {
+                                     // readCrystalInfoFromCif returns false both on
+                                     // real errors (ier<0) and on inorganic-filter skip (ier=1).
+                                     // We need to distinguish them: call directly via the wrapper
+                                     // which maps ier==0 → true, anything else → false.
+                                     // To tell skip from error we check subfile after the call.
+                                     if (readCrystalInfoFromCif(cifPath, info, dbopt.inorganic))
+                                         return 0;   // success
+                                     // ier != 0: if inorganic filter is on and subfile is empty
+                                     // (info was not filled) it's a skip, otherwise an error.
+                                     if (dbopt.inorganic && info.nat == 0)
+                                         return 1;   // skipped (not inorganic)
+                                     return -1;      // real read error
+                                 }();
+                                 if (result == 0) {
                                      populator.onCifReady(cifPath, info);
                                      ++nProcessed;
-                                     printf("\r  [%d ok / %d err] %s",
-                                            nProcessed, nErrors,
+                                     printf("\r  [%d ok / %d skip / %d err] %s",
+                                            nProcessed, nSkipped, nErrors,
                                             qPrintable(cifPath));
                                      fflush(stdout);
+                                 } else if (result == 1) {
+                                     ++nSkipped;
                                  } else {
                                      ++nErrors;
                                      fprintf(stderr, "\n  Warning: failed to read %s\n",
@@ -140,10 +157,17 @@ int main(int argc, char *argv[])
             QObject::connect(&reader, &CifReader::finished,
                              [&](int n) {
                                  populator.onFinished(nProcessed);
-                                 printf("\nScanned %d CIF files: %d ok, %d errors.\n",
-                                        n, nProcessed, nErrors);
+                                 if (dbopt.inorganic)
+                                     printf("\nScanned %d CIF files: %d ok, %d skipped (not inorganic), %d errors.\n",
+                                            n, nProcessed, nSkipped, nErrors);
+                                 else
+                                     printf("\nScanned %d CIF files: %d ok, %d errors.\n",
+                                            n, nProcessed, nErrors);
                              });
-            printf("Scanning CIF folder: %s\n", qPrintable(dbopt.cifDir));
+            if (dbopt.inorganic)
+                printf("Scanning CIF folder (inorganic only): %s\n", qPrintable(dbopt.cifDir));
+            else
+                printf("Scanning CIF folder: %s\n", qPrintable(dbopt.cifDir));
             reader.scan(dbopt.cifDir, dbopt.recursive);
         }
 

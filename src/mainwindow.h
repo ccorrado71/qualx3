@@ -6,6 +6,7 @@
 #include "backgrounddialog.h"
 #include "qualxdbmanager.h"
 #include "xpdviewwidget.h"
+#include "managedatabasesdialog.h"
 
 #include <QMainWindow>
 
@@ -84,6 +85,9 @@ private slots:
     void onActionTestDatabaseTriggered();
     void onActionDatabaseInfoTriggered();
     void onActionGetCardTriggered();
+
+    //Search
+    void actionManageDatabasesTriggered();
 
 private:
     void createDialogs();
