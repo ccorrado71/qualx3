@@ -31,6 +31,9 @@ set(PROJECT_SOURCES
     fileutils.h
     floatdelegate.cpp
     floatdelegate.h
+    folderselectorwidget.cpp
+    folderselectorwidget.h
+    folderselectorwidget.ui
     graphitem.cpp
     graphitem.h
     libcomune.cpp
@@ -48,6 +51,11 @@ set(PROJECT_SOURCES
     managedatabasesdialog.h
     managedatabasesdialog.cpp
     managedatabasesdialog.ui
+    createdatabasedialog.h
+    createdatabasedialog.cpp
+    createdatabasedialog.ui
+    databasebuilder.h
+    databasebuilder.cpp
     nr.h
     paginationmodel.cpp
     paginationmodel.h

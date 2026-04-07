@@ -2,15 +2,16 @@
 #define MANAGEDATABASESDIALOG_H
 
 #include <QDialog>
+#include <QList>
 
 namespace Ui {
 class ManageDatabasesDialog;
 }
 
 struct DatabaseEntry {
-    bool inUse;
+    bool    inUse   = false;
     QString name;
-    int entries;
+    int     entries = 0;
     QString path;
 };
 
@@ -26,10 +27,14 @@ public:
     QList<DatabaseEntry> databases() const;
     int activeDatabase() const;
 
+    // Persist / restore the database list from QSettings.
+    // loadSettings queries each database for its entry count.
+    static void saveSettings(const QList<DatabaseEntry> &databases);
+    static QList<DatabaseEntry> loadSettings();
+
 signals:
     void renameRequested(int row);
     void addRequested();
-    void createRequested();
     void deleteRequested(int row);
 
 private slots:

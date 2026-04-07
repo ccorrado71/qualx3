@@ -70,16 +70,16 @@ bool Pdf2Reader::parse(const QString &filePath)
     m_current           = {};
     m_hasCurrentCard    = false;
     m_formulaContinues  = false;
+    m_cancelled         = false;
     m_cardsEmitted      = 0;
     m_recordCount       = 0;
     m_cardStartRecord   = 0;
-
-    const qint64 fileSize = file.size();
+    m_fileSize          = file.size();
 
     // The file is a continuous stream of exactly 80-byte records with no line separators.
     QByteArray line(80, '\0');
 
-    while (!file.atEnd()) {
+    while (!file.atEnd() && !m_cancelled) {
         const qint64 bytesRead = file.read(line.data(), 80);
         if (bytesRead < 80) break; // end of file or incomplete record
 
@@ -88,11 +88,11 @@ bool Pdf2Reader::parse(const QString &filePath)
     }
 
     // Flush the last card in case it has no terminating 'K' record
-    if (m_hasCurrentCard)
+    if (m_hasCurrentCard && !m_cancelled)
         finalizeCard();
 
     emit finished(m_cardsEmitted);
-    return true;
+    return !m_cancelled;
 }
 
 // -----------------------------------------------------------------------
@@ -163,7 +163,7 @@ void Pdf2Reader::finalizeCard()
 
     ++m_cardsEmitted;
     if ((m_cardsEmitted % 10000) == 0)
-        emit progress(m_cardsEmitted, 0);
+        emit progress(m_cardsEmitted, m_recordCount * 80LL, m_fileSize);
 
     m_current          = {};
     m_hasCurrentCard   = false;

@@ -2,10 +2,9 @@
 #include "commandline.h"
 #include "qt_utils.h"
 #include "fileutils.h"
+#include "databasebuilder.h"
 #include "qualxdbcreator.h"
-#include "qualxdbpopulator.h"
 #include "cifdbpopulator.h"
-#include "pdf2reader.h"
 #include "cifreader.h"
 #include "libcomune.h"
 #if USE_CONFIG_H
@@ -86,35 +85,27 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        QualxDbCreator::DbType dbType = (dbopt.source == DbBuildOptions::Source::Pdf2)
-                                        ? QualxDbCreator::DbType::Pdf2
-                                        : QualxDbCreator::DbType::CifFiles;
-        QualxDbCreator db;
-        if (!db.create(dbopt.outputDb, dbType)) {
-            fputs("Error: could not create database.\n", stderr);
-            return 1;
-        }
-
         if (dbopt.source == DbBuildOptions::Source::Pdf2) {
-            Pdf2Reader reader;
-            QualxDbPopulator populator(&db);
-            QObject::connect(&reader, &Pdf2Reader::cardReady,
-                             &populator, &QualxDbPopulator::onCardReady);
-            QObject::connect(&reader, &Pdf2Reader::finished,
-                             &populator, &QualxDbPopulator::onFinished);
-            QObject::connect(&reader, &Pdf2Reader::progress,
-                             [](int cards, qint64) {
-                                 printf("\r  %d cards processed...", cards);
-                                 fflush(stdout);
-                             });
             printf("Reading PDF-2 file: %s\n", qPrintable(dbopt.pdf2File));
-            if (!reader.parse(dbopt.pdf2File)) {
-                fputs("Error: could not open PDF-2 file.\n", stderr);
+            if (!DatabaseBuilder::buildPdfDatabase(dbopt.outputDb, dbopt.pdf2File,
+                    [](int cards, qint64, qint64) {
+                        printf("\r  %d cards processed...", cards);
+                        fflush(stdout);
+                    })) {
+                fputs("Error: could not build PDF-2 database.\n", stderr);
                 return 1;
             }
             printf("\nDone.\n");
-        } else {
+            return 0;
+        }
+
+        {
             // CIF source: read each CIF file via Fortran get_crystal_info_from_cif
+            QualxDbCreator db;
+            if (!db.create(dbopt.outputDb, QualxDbCreator::DbType::CifFiles)) {
+                fputs("Error: could not create database.\n", stderr);
+                return 1;
+            }
             int nProcessed = 0;
             int nSkipped   = 0;
             int nErrors    = 0;
@@ -169,9 +160,8 @@ int main(int argc, char *argv[])
             else
                 printf("Scanning CIF folder: %s\n", qPrintable(dbopt.cifDir));
             reader.scan(dbopt.cifDir, dbopt.recursive);
+            db.close();
         }
-
-        db.close();
         return 0;
     } else if (opt.nogui) {
 

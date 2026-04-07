@@ -1,8 +1,15 @@
 #include "managedatabasesdialog.h"
 #include "ui_managedatabasesdialog.h"
+#include "createdatabasedialog.h"
+#include "databasebuilder.h"
+#include "progkeysettings.h"
 
 #include <QCheckBox>
+#include <QDir>
+#include <QFileDialog>
 #include <QHeaderView>
+#include <QMessageBox>
+#include <QSettings>
 #include <QTableWidgetItem>
 
 ManageDatabasesDialog::ManageDatabasesDialog(QWidget *parent)
@@ -87,8 +94,8 @@ void ManageDatabasesDialog::rebuildTable()
         entriesItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         ui->tableWidget->setItem(row, 2, entriesItem);
 
-        // Column 3: Path
-        QTableWidgetItem *pathItem = new QTableWidgetItem(db.path);
+        // Column 3: Path — show the containing directory, not the full base path
+        QTableWidgetItem *pathItem = new QTableWidgetItem(QFileInfo(db.path).path());
         pathItem->setFlags(pathItem->flags() & ~Qt::ItemIsEditable);
         ui->tableWidget->setItem(row, 3, pathItem);
     }
@@ -150,7 +157,82 @@ void ManageDatabasesDialog::onAddClicked()
 
 void ManageDatabasesDialog::onCreateClicked()
 {
-    emit createRequested();
+    CreateDatabaseDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    if (!dlg.isPdfSelected()) {
+        QMessageBox::information(this, tr("Not Implemented"),
+            tr("Only the ICDD PDF source is currently supported."));
+        return;
+    }
+
+    const QString pdf2File = QFileDialog::getOpenFileName(
+        this, tr("Select PDF-2 File"), QString(),
+        tr("PDF-2 files (*.dat);;All files (*)"));
+    if (pdf2File.isEmpty())
+        return;
+
+    const QString dir      = dlg.databaseDirectory();
+    const QString name     = dlg.databaseName();
+    const QString basePath = dir + QDir::separator() + name;
+
+    if (!QDir().mkpath(dir)) {
+        QMessageBox::critical(this, tr("Error"),
+            tr("Could not create directory:\n%1").arg(dir));
+        return;
+    }
+
+    bool cancelled = false;
+    if (!DatabaseBuilder::buildPdfDatabase(basePath, pdf2File, this, &cancelled)) {
+        if (!cancelled)
+            QMessageBox::critical(this, tr("Error"),
+                tr("Failed to build database at:\n%1").arg(basePath));
+        return;
+    }
+
+    DatabaseEntry entry;
+    entry.inUse   = mDatabases.isEmpty();
+    entry.name    = name;
+    entry.entries = DatabaseBuilder::queryEntries(basePath);
+    entry.path    = basePath;
+
+    mDatabases.append(entry);
+    if (entry.inUse)
+        mActiveIndex = mDatabases.size() - 1;
+
+    saveSettings(mDatabases);
+    rebuildTable();
+}
+
+// static
+void ManageDatabasesDialog::saveSettings(const QList<DatabaseEntry> &databases)
+{
+    QSettings s;
+    s.setValue(DB_COUNT_KEY, databases.size());
+    for (int i = 0; i < databases.size(); ++i) {
+        s.setValue(QString(DB_INUSE_KEY).arg(i), databases[i].inUse);
+        s.setValue(QString(DB_NAME_KEY).arg(i),  databases[i].name);
+        s.setValue(QString(DB_PATH_KEY).arg(i),  databases[i].path);
+    }
+}
+
+// static
+QList<DatabaseEntry> ManageDatabasesDialog::loadSettings()
+{
+    QSettings s;
+    const int count = s.value(DB_COUNT_KEY, 0).toInt();
+    QList<DatabaseEntry> list;
+    list.reserve(count);
+    for (int i = 0; i < count; ++i) {
+        DatabaseEntry e;
+        e.inUse   = s.value(QString(DB_INUSE_KEY).arg(i), false).toBool();
+        e.name    = s.value(QString(DB_NAME_KEY).arg(i)).toString();
+        e.path    = s.value(QString(DB_PATH_KEY).arg(i)).toString();
+        e.entries = DatabaseBuilder::queryEntries(e.path);
+        list.append(e);
+    }
+    return list;
 }
 
 void ManageDatabasesDialog::onDeleteClicked()

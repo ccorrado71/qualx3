@@ -72,20 +72,28 @@ class Pdf2Reader : public QObject
 public:
     explicit Pdf2Reader(QObject *parent = nullptr);
 
-    // Reads the file in streaming mode. Returns false if the file cannot be opened.
+    // Reads the file in streaming mode.
+    // Returns false if the file cannot be opened or if parsing was cancelled.
     // Emits cardReady() for each completed card.
     // Emits progress() every ~10000 cards.
     bool parse(const QString &filePath);
+
+    // Request early termination of a running parse() call.
+    // Safe to call from a slot connected to progress().
+    void cancel() { m_cancelled = true; }
 
 signals:
     // Emitted for each completed card. The card is passed by value:
     // the receiver is the sole owner and may move it wherever needed.
     void cardReady(Pdf2Card card);
 
-    // Emitted periodically: cardsEmitted = cards emitted so far, fileSize = total bytes
-    void progress(int cardsEmitted, qint64 fileSize);
+    // Emitted periodically.
+    //   cardsEmitted – cards emitted so far
+    //   bytesRead    – bytes consumed from the file so far (recordCount * 80)
+    //   totalBytes   – total file size in bytes
+    void progress(int cardsEmitted, qint64 bytesRead, qint64 totalBytes);
 
-    // Emitted when parsing is complete
+    // Emitted when parsing completes (or is cancelled).
     void finished(int totalCards);
 
 private:
@@ -108,9 +116,11 @@ private:
     void parseRecordTypeB(const QByteArray &line);
 
     Pdf2Card m_current;
-    bool m_hasCurrentCard   = false;
-    bool m_formulaContinues = false;
-    int  m_cardsEmitted     = 0;
-    int  m_recordCount      = 0;  // total 80-byte records read so far
-    int  m_cardStartRecord  = 0;  // record number when the current card started
+    bool    m_hasCurrentCard   = false;
+    bool    m_formulaContinues = false;
+    bool    m_cancelled        = false;
+    int     m_cardsEmitted     = 0;
+    int     m_recordCount      = 0;  // total 80-byte records read so far
+    int     m_cardStartRecord  = 0;  // record number when the current card started
+    qint64  m_fileSize         = 0;  // total file size in bytes (set at start of parse)
 };
