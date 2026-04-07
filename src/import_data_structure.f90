@@ -143,6 +143,10 @@ contains
 !
 !  Early exit if only inorganic structures are requested and this is not inorganic
    if (inorganic_only_c /= 0) then
+       if (crystal%numelem() == 0) then
+           ier_c = INT(1, C_INT)
+           return
+       endif
        isorg = is_organic(crystal%elem%z, nint(crystal%elem%nw))
        if (isorg /= 0) then
            ier_c = INT(1, C_INT)
