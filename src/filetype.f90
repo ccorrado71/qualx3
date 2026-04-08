@@ -908,7 +908,7 @@ MODULE filereading
                      cycle
                  endif
               enddo
-          elseif (is_xml_tag(line,'intensities')) then
+          elseif (is_xml_tag(line,'intensities') .or. is_xml_tag(line,'counts')) then
               call read_xml_data_block(line,xdata)
               exit
           endif
@@ -1226,8 +1226,8 @@ MODULE filereading
           call error%set('Cannot find intensity measurements in pdCIF file')
       endif
 !
-!     Se non c'e' un ulteriore data block da leggere esci dal loop
-      if (.not.newdata) exit loop_data
+!     Exit if data block is not present or data are already read
+      if (.not.newdata .or. allocated(dati)) exit loop_data
 
    enddo loop_data
 !
@@ -1239,19 +1239,21 @@ MODULE filereading
 
   !---------------------------------------------------------------------------------------------
 
-   subroutine read_reflection_file(filename,refl,numref,stype,error)
+   subroutine read_reflection_file(filename,refl,numref,stype,oksigma,okphase,error)
    USE reflection_type_util
    character(len=*), intent(in)                        :: filename
    type(reflection_type), dimension(:), allocatable    :: refl
    integer, intent(out)                                :: numref
    character(len=*), intent(in)                        :: stype
    type(error_type), intent(out)                       :: error
+   logical, intent(out)                                :: oksigma
+   logical, intent(out)                                :: okphase
 
    select case(stype)
       case ('hkl','shelx','fc')
         call read_reflection_file_hkl(filename,refl,numref,stype,error)
       case ('cif')
-        call read_reflection_file_cif(filename,refl,numref,error)
+        call read_reflection_file_cif(filename,refl,numref,oksigma,okphase,error)
       case default
         call read_reflection_file_hkl(filename,refl,numref,stype,error)
    end select
@@ -1309,6 +1311,7 @@ MODULE filereading
              case default
                call get_words1(line,wordv,iv)
                !call getnum(line,vet,ivet,iv)
+               ierl = 0
                if (iv < 4) then
                    ierl = 1
                else
@@ -1366,7 +1369,7 @@ MODULE filereading
 
   !---------------------------------------------------------------------------------------------
 
-   subroutine read_reflection_file_cif(filename,refl,numref,error)
+   subroutine read_reflection_file_cif(filename,refl,numref,oksigma,okphase,error)
    USE reflection_type_util
    USE cif_frm
    USE fileutil
@@ -1381,7 +1384,8 @@ MODULE filereading
    character(len=100)                               :: dataname
    type(reflection_type), dimension(:), allocatable :: dataref
    logical, dimension(4)                            :: okfield
-   logical                                          :: oksigma
+   logical, intent(out)                             :: oksigma
+   logical, intent(out)                             :: okphase
 !
    numref = 0
 
@@ -1398,12 +1402,15 @@ MODULE filereading
 
    okfield = .false.
    oksigma = .false.
+   okphase = .false.
    do i=1,size(cifword)
       if (cifword(i)%wok) then
           select case (trim(cifword(i)%str))
              case ('_refln_index_h','_refln_index_k','_refln_index_l',  &
                    '_refln_F_squared_meas','_refln_F_squared_sigma',    &
-                   '_refln_F_meas','_refln_F_sigma')   
+                   '_refln_F_meas','_refln_F_sigma',                    &
+                   '_refln_intensity_meas','_refln_intensity_sigma',                    &
+                   '_refln_phase_meas','_refln_phase_calc')   
                if (cifkey_is_ok(cifword(i))) then
                    nc = cifword(i)%nv
                    if (numrefl(dataref) == 0) call new_reflections(dataref,nc)
@@ -1420,15 +1427,27 @@ MODULE filereading
                       case ('_refln_F_squared_meas')
                         dataref(:)%fo = cifword(i)%vet(:nc)
                         okfield(4) = .true.
+                      case ('_refln_intensity_meas')
+                        dataref(:)%fo = cifword(i)%vet(:nc)
+                        okfield(4) = .true.
                       case ('_refln_F_meas')
                         dataref(:)%fo = cifword(i)%vet(:nc)**2
                         okfield(4) = .true.
                       case ('_refln_F_squared_sigma')
                         dataref(:)%fc = cifword(i)%vet(:nc)
                         oksigma = .true.
+                      case ('_refln_intensity_sigma')
+                        dataref(:)%fc = cifword(i)%vet(:nc)
+                        oksigma = .true.
                       case ('_refln_F_sigma')
                         dataref(:)%fc = cifword(i)%vet(:nc)**2
                         oksigma = .true.
+                      case ('_refln_phase_meas')
+                        dataref(:)%ph = cifword(i)%vet(:nc)
+                        okphase = .true.
+                      case ('_refln_phase_calc')
+                        dataref(:)%ph = cifword(i)%vet(:nc)
+                        okphase = .true.
                    end select
                endif
           end select
@@ -1621,10 +1640,10 @@ MODULE filereading
        if (present(string)) write(j_in,'(a)')trim(string)
        if (present(ycalc) .and. present(yback)) then
           vsize(:) = [size(x),size(yoss),size(ycalc),size(yback)]
-          write(j_in,'(f15.3,1x,f15.3,f15.6,1x,f15.6,1x,f15.6)')   &
+          write(j_in,'(f15.3,4(1x,es16.9e2))')   &
                (x(i),yoss(i),ycalc(i),yback(i),yoss(i)-ycalc(i),i=1,minval(vsize))
        else
-          write(j_in,'(f15.3,1x,f15.3)')(x(i),yoss(i),i=1,size(x))
+          write(j_in,'(f16.6,1x,es16.9e2)')(x(i),yoss(i),i=1,size(x))
        endif
        call fpatt%fclose()
    endif
