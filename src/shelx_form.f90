@@ -343,6 +343,12 @@ contains
        enddo
 !
 !      Additional command for refinement
+       write(j_in,'(a)')'ACTA'
+       write(j_in,'(a)')'CONF'
+       if (is_element(ele, H_at) /= 0) then
+           write(j_in,'(a)')'HTAB'
+           write(j_in,'(a)')'BOND $H'
+       endif
        write(j_in,'(a)')'L.S.       5'
        write(j_in,'(a)')'WGHT     0.1'
        write(j_in,'(a)')'FMAP       2'
