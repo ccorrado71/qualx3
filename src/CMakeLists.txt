@@ -1,4 +1,6 @@
 set(PROJECT_SOURCES
+    appstate.cpp
+    appstate.h
     backgroundcoefwidget.cpp
     backgroundcoefwidget.h
     backgroundcoefwidget.ui

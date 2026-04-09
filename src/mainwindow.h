@@ -4,7 +4,7 @@
 //#include "dbmanager.h"
 #include "peaksearchdialog.h"
 #include "backgrounddialog.h"
-#include "qualxdbmanager.h"
+#include "dbquerybuilder.h"
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
 
@@ -109,9 +109,6 @@ private:
     QString currentFile;
     static QString pathDataFiles;
 
-    //Database
-    QString currentDatabase;
-    QualxDbManager qualxDb;
     void testSelection(DbQueryBuilder &builder, int testCase);
 };
 #endif // MAINWINDOW_H

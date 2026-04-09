@@ -7,6 +7,7 @@
 #include "cifdbpopulator.h"
 #include "cifreader.h"
 #include "libcomune.h"
+#include "appstate.h"
 #if USE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,6 +30,8 @@ int main(int argc, char *argv[])
     qApp->setApplicationName(APP_NAME);
     qApp->setOrganizationName("IC");
     qApp->setOrganizationDomain("www.ba.ic.cnr.it/softwareic");
+
+    AppState::load();
 
     QLocale locale = QLocale::system();
     if (locale.decimalPoint() == ',') {

@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "appstate.h"
 #include "dbquerybuilder.h"
+#include "managedatabasesdialog.h"
 #include "progkeysettings.h"
 #include "savedialog.h"
 #include "fileutils.h"
@@ -32,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
     // currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
-    // if (!qualxDb.openDatabases(currentDatabase)) {
+    // if (!AppState::db().openDatabases(currentDatabase)) {
     //     qCritical() << "Error opening databases";
     // }
 
@@ -508,7 +510,7 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
     QVector<CardType> acceptedCards;
-    qualxDb.makeQueryStrongest(builder, acceptedCards);
+    AppState::db().makeQueryStrongest(builder, acceptedCards);
     qInfo() << "Number of accepted cards: " << acceptedCards.size();
     ui->resultsWidget->setResults(acceptedCards);
 }
@@ -517,7 +519,7 @@ void MainWindow::onActionDatabaseInfoTriggered()
 {
     int ncard;
     QString type;
-    qualxDb.getInfo(ncard, type);
+    AppState::db().getInfo(ncard, type);
     qInfo() << "Ncard: " << ncard << "Type: " << type;
 }
 
@@ -530,19 +532,21 @@ void MainWindow::onActionTestDatabaseTriggered()
     testSelection(builder, 1);
 
     builder.buildQuery();
-    qualxDb.makeQuery(builder);
+    AppState::db().makeQuery(builder);
 }
 
 void MainWindow::onActionGetCardTriggered()
 {
     QString idCard = "2300375";
     //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
-    qualxDb.getCardInfo(idCard);
-    qualxDb.getCardAdditionalInfo(idCard);
+    AppState::db().getCardInfo(idCard);
+    AppState::db().getCardAdditionalInfo(idCard);
 }
 
 void MainWindow::actionManageDatabasesTriggered()
 {
     ManageDatabasesDialog dlg(this);
-    dlg.exec();
+    dlg.setDatabases(AppState::databases());
+    if (dlg.exec() == QDialog::Accepted)
+        AppState::setDatabases(dlg.databases());
 }
