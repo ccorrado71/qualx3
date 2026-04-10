@@ -6568,4 +6568,17 @@ end function ch_is_space
    
    end function copy_string_to_c_array_f
 
+!--------------------------------------------------------------------------------------------------------
+
+   logical function is_string_empty(s) result(empty)
+   character(:), allocatable, intent(in) :: s
+
+   if (.not. allocated(s)) then
+     empty = .true.
+   else
+     empty = (len_trim(s) == 0)
+   end if
+
+   end function is_string_empty
+
 END MODULE STRUTIL

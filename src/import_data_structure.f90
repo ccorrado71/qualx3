@@ -2,26 +2,28 @@ module import_data_struct
 
 contains
 
-   subroutine import_structure(filename,crystal,err)
+   subroutine import_structure(filename,crystal,chem_name,mineral_name,err)
    use gen_frm
    use crystal_phase
    use variables, only: dataset
    use errormod
    use datasetmod
-   character(len=*), intent(in)       :: filename
-   type(crystal_phase_t), intent(out) :: crystal
-   type(error_type), intent(out)      :: err
-   type(cell_type)                    :: cell
-   type(spaceg_type)                  :: spg
-   logical                            :: has_symmetry = .false.
-   logical                            :: gui = .false.
-   logical                            :: nowarning = .false.
-   logical                            :: cancel_req
-   logical                            :: mergecont = .false.
+   character(len=*), intent(in)               :: filename
+   type(crystal_phase_t), intent(out)         :: crystal
+   character(len=:), allocatable, intent(out) :: chem_name, mineral_name
+   type(error_type), intent(out)              :: err
+   type(cell_type)                            :: cell
+   type(spaceg_type)                          :: spg
+   logical                                    :: has_symmetry = .false.
+   logical                                    :: gui = .false.
+   logical                                    :: nowarning = .false.
+   logical                                    :: cancel_req
+   logical                                    :: mergecont = .false.
 !
-   call import_crystal(filename,ALL_FILES,crystal%at,crystal%bond,crystal%elem,   &
-                       cell,spg,has_symmetry,get_wave1(dataset),   &
-                       get_radtype(dataset),gui,nowarning,err,cancel_req,mergecont)
+   call import_crystal(filename,ALL_FILES,crystal%at,crystal%bond,crystal%elem,     &
+                       cell,spg,has_symmetry,get_wave1(dataset),                    &
+                       get_radtype(dataset),gui,nowarning,err,cancel_req,mergecont, &
+                       cname=chem_name,mname=mineral_name)
    if (.not.err%signal) then
        call crystal%set_symmetry(spg,cell)
    endif
@@ -35,20 +37,21 @@ contains
    use crystal_phase
    use exportfiles
    use fileutil
-   type(crystal_phase_t)          :: crystal
-   type(error_type)               :: err
-   integer                        :: ier
-   character(len=:), allocatable  :: filename
-   integer                        :: nat, nrefl, zval
-   character(len=:), allocatable  :: sform
-   real, dimension(6)             :: cellpar
-   integer, dimension(6)          :: icell
-   real                           :: vol, dens, mu, rir, wavelen
+   type(crystal_phase_t)           :: crystal
+   type(error_type)                :: err
+   integer                         :: ier
+   character(len=:), allocatable   :: filename
+   integer                         :: nat, nrefl, zval
+   character(len=:), allocatable   :: sform
+   real, dimension(6)              :: cellpar
+   integer, dimension(6)           :: icell
+   real                            :: vol, dens, mu, rir, wavelen
    real, dimension(:), allocatable :: inte
+   character(len=:), allocatable   :: chem_name, mineral_name
 
    !call import_structure('/home/corrado/test_expo/merca_true.cif',crystal,err)
    filename = '/home/corrado/test_expo/1000099.cif'
-   call import_structure(filename,crystal,err)
+   call import_structure(filename,crystal,chem_name,mineral_name,err)
    if (.not.err%signal) then
        call crystal%print(0)
        call intensity_file_for_database(crystal, ier, &
@@ -67,7 +70,7 @@ contains
 
 !-----------------------------------------------------------------------------------------------------
 
-   subroutine get_crystal_info_from_cif(cif_file,                                   &
+   subroutine get_crystal_info_from_cif(cif_file,                                    &
                                          inorganic_only_c,                           &
                                          nat_c, cellpar_c, icell_c, vol_c, dens_c,   &
                                          zval_c, mu_c, nrefl_c, rir_c, wavelen_c,    &
@@ -77,6 +80,7 @@ contains
                                          refl_lp, refl_fc2, refl_inte, refl_ipct,    &
                                          nrefl_print_c,                              &
                                          nelem_c, specie_label_c,                    &
+                                         chem_name_c, mineral_name_c,               &
                                          ier_c)                                      &
        bind(C, name='get_crystal_info_from_cif')
    use iso_c_binding
@@ -87,7 +91,7 @@ contains
    use reflection_type_util
    use spginfom,           only: uc_is_rhombohedral, uc_is_hexagonal, cry_sys, CS_Trigonal
    use counts,             only: dvalue
-   use strutil,            only: copy_string_to_c_array, cstr_to_fstr
+   use strutil,            only: copy_string_to_c_array, cstr_to_fstr, is_string_empty
    use general, only: lo
    use elements, only: specie_from_pxen
    implicit none
@@ -113,6 +117,9 @@ contains
    ! --- Output element species (up to MAXELEM_C=100 elements, 2-char symbol + null) ---
    integer(C_INT),  intent(out)                       :: nelem_c
    character(kind=C_CHAR), dimension(3, 100), intent(out) :: specie_label_c
+   ! --- Output chemical name and mineral name ---
+   character(kind=C_CHAR), dimension(256), intent(out) :: chem_name_c
+   character(kind=C_CHAR), dimension(256), intent(out) :: mineral_name_c
    ! --- Local Fortran variables ---
    type(crystal_phase_t)                              :: crystal
    type(error_type)                                   :: err
@@ -130,12 +137,13 @@ contains
    character(len=*), dimension(0:2), parameter        :: subf = &
        ['inorganic    ','organic      ','metallorganic']
    character(len=2), allocatable                      :: specie_label(:)
+   character(len=:), allocatable                      :: chem_name, mineral_name
 !
 !  Convert null-terminated C string to Fortran string
    filename_f = cstr_to_fstr(cif_file)
 !
 !  Import crystal structure from CIF
-   call import_structure(filename_f, crystal, err)
+   call import_structure(filename_f, crystal, chem_name, mineral_name, err)
    if (err%signal) then
        ier_c = INT(-1, C_INT)
        return
@@ -168,7 +176,7 @@ contains
 !  Fill element species output
    nelem_c = INT(min(crystal%numelem(), 100), C_INT)
    do i = 1, nelem_c
-       call copy_string_to_c_array(trim(specie_label(i)), specie_label_c(:, i), 3)
+      call copy_string_to_c_array(trim(specie_label(i)), specie_label_c(:, i), 3)
    enddo
 !
 !  Fill scalar outputs
@@ -238,6 +246,18 @@ contains
        refl_inte(i) = REAL(inte_c_arr(i),        C_FLOAT)
        refl_ipct(i) = REAL(1000.0*(inte_c_arr(i)/maxinte), C_FLOAT)
    enddo
+!
+!  Fill chemical name and mineral name
+   if (is_string_empty(chem_name)) then
+       chem_name_c(1) = C_NULL_CHAR
+   else
+       call copy_string_to_c_array(trim(chem_name), chem_name_c, size(chem_name_c))
+   endif
+   if (is_string_empty(mineral_name)) then
+       mineral_name_c(1) = C_NULL_CHAR
+   else
+       call copy_string_to_c_array(trim(mineral_name), mineral_name_c, size(mineral_name_c))
+   endif
 !
    end subroutine get_crystal_info_from_cif
 

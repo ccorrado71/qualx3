@@ -45,7 +45,7 @@ end interface
 
 contains
    subroutine import_crystal(filename,ftype,atom,legm,elem,cell,spgin,has_symmetry,wave,radtype,   &
-                             gui_enabled,nowarning,err_read,cancel_required,mergecont)
+                             gui_enabled,nowarning,err_read,cancel_required,mergecont,cname,mname)
 !
 !  If has_symmetry is true structure will be imported in symmetry (cell and spgin) defined in input
 !  If has_symmetry is false cell and spgin will contain the symmetry of the file or default if symmetry is absent in file
@@ -88,6 +88,7 @@ contains
    type(error_type), intent(out)                                :: err_read
    logical, intent(out)                                         :: cancel_required ! if true 'Cancel' button was pressed
    logical, intent(in), optional                                :: mergecont       ! action on content: true for merge, false for complete update
+   character(len=:), allocatable, optional                      :: cname,mname
    type(bond_type), dimension(:), allocatable                   :: legmc
    type(atom_type), dimension(:), allocatable                   :: atomc
    type(spaceg_type)                                            :: spgfile
@@ -179,7 +180,8 @@ contains
 
      case (CIF_FILE)    ! cif file
 #if defined(powcod)
-       call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif,etype='S',dummy=.true.,bisotype=2,checkb=.true.)  ! INT files generation for COD
+       call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif,  &
+            etype='S',dummy=.true.,bisotype=2,checkb=.true.,cname=cname,mname=mname)  ! INT files generation for COD
 #else
        call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif)
 #endif

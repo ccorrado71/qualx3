@@ -290,12 +290,14 @@ CONTAINS
                           cifword(pos)%svet(1) = trim(adjustl(line))
                           cifword(pos)%wok = .true.
                       endif
+              !    else
+              !call manage_semicolon_block(unit,line,ier,strc); if (ier /= 0) return
+              !        write(0,*)'line1:',trim(strc),trim(line)
                   endif
               endif
           else
 !
 !             for unmanaged keys check blocks with semicolon
-!corr              if (manage_semicolon_block(unit,line1) /= 0) return 
               call manage_semicolon_block(unit,line1,ier,strc); if (ier /= 0) return
           endif
       endif
@@ -329,7 +331,7 @@ CONTAINS
 
    subroutine load_cif_dictionary(cifword)
    type(cifword_type), dimension(:), allocatable, intent(inout) :: cifword
-   integer, parameter                                           :: NW = 53
+   integer, parameter                                           :: NW = 56
    integer :: i
    type cifkey_type
      character(len=40) :: str =      ' ' !main name
@@ -389,7 +391,10 @@ CONTAINS
    cifkey_type('_atom_site_adp_type                 ','                                ',2),  &
    cifkey_type('_atom_site_thermal_displace_type    ','                                ',2),  &
    cifkey_type('_atom_site_calc_flag                ','                                ',2),  &
-   cifkey_type('_atom_site_disorder_group           ','                                ',1)   &
+   cifkey_type('_atom_site_disorder_group           ','                                ',1),  &
+   cifkey_type('_chemical_name_common               ','                                ',2),  &
+   cifkey_type('_chemical_name_systematic           ','                                ',2),  &
+   cifkey_type('_chemical_name_mineral              ','                                ',2)   &
    /)
 !
    if (allocated(cifword)) deallocate(cifword)
@@ -520,7 +525,8 @@ CONTAINS
 
   !---------------------------------------------------------------------------------------------
 
-   subroutine read_CIFfile(filename,cif_phase,ndata,is_cell,cella,errcif,etype,dummy,bisotype,checkb)
+   subroutine read_CIFfile(filename,cif_phase,ndata,is_cell,cella,errcif,etype,  &
+                           dummy,bisotype,checkb,cname,mname)
    USE errormod
    USE atom_type_util
    USE strutil
@@ -541,6 +547,7 @@ CONTAINS
    logical, intent(in), optional                              :: dummy    ! if .true. dummy atoms are considered ghost
    integer, intent(in), optional                              :: bisotype ! there are 2 type of assignement for biso
    logical, intent(in), optional                              :: checkb   ! check on adp betaij
+   character(len=:), allocatable, optional                    :: cname,mname
    type(atom_type), dimension(:), allocatable                 :: atom
    type(cifword_type), dimension(:), allocatable              :: cifword
    type(error_type)                                           :: error
@@ -568,6 +575,7 @@ CONTAINS
    integer                                                    :: pos_label, pos_symbol, pos_u_iso
    integer                                                    :: pos_b_iso, pos_occ, pos_adp_type, pos_adp
    integer                                                    :: pos_dum, pos_sitef, pos_disorder
+   integer                                                    :: pos_name
    integer                                                    :: kb
    integer, dimension(7)                                      :: pos_anis
    character(len=4)                                           :: adp_type
@@ -660,6 +668,26 @@ CONTAINS
                       nat = nat + 1
                   endif
                enddo
+           endif
+!
+!          Chemical Names
+           if (present(cname)) then
+               pos_name = string_locate('_chemical_name_systematic',cifword%str)
+               if (cifword(pos_name)%wok) then
+                   cname = trim(cifword(pos_name)%svet(1))
+               endif
+               if (is_string_empty(cname)) then
+                   pos_name = string_locate('_chemical_name_common',cifword%str)
+                   if (cifword(pos_name)%wok) then
+                       cname = trim(cifword(pos_name)%svet(1))
+                   endif
+               endif
+           endif
+           if (present(mname)) then
+               pos_name = string_locate('_chemical_name_mineral',cifword%str)
+               if (cifword(pos_name)%wok) then
+                   mname = trim(cifword(pos_name)%svet(1))
+               endif
            endif
 !
            call resize_atoms(atom,nat)

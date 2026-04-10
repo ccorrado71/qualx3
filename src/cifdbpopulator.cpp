@@ -131,9 +131,12 @@ void CifDbPopulator::insertId(int id, const CifCrystalInfo &info)
     const QString dval = buildDvalString(info, nd);
     const QString ival = buildIvalString(info);
 
+    const QString chemName    = QString::fromLatin1(info.chem_name).trimmed();
+    const QString mineralName = QString::fromLatin1(info.mineral_name).trimmed();
+
     m_idQuery.addBindValue(id);
-    m_idQuery.addBindValue(QVariant());                            // name – not available
-    m_idQuery.addBindValue(QVariant());                            // mineralname – not available
+    m_idQuery.addBindValue(chemName.isEmpty()    ? QVariant() : QVariant(chemName));
+    m_idQuery.addBindValue(mineralName.isEmpty() ? QVariant() : QVariant(mineralName));
     m_idQuery.addBindValue(QString::fromLatin1(info.sform).trimmed());
     m_idQuery.addBindValue(QString::fromLatin1(info.spg_sym).trimmed());
     m_idQuery.addBindValue(QVariant());                            // quality – not available

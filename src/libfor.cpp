@@ -515,6 +515,7 @@ extern "C" void get_crystal_info_from_cif(
     float* refl_lp,  float* refl_fc2, float* refl_inte, float* refl_ipct,
     int*   nrefl_print,
     int*   nelem,  char   specie_label[][3],
+    char*  chem_name, char* mineral_name,
     int*   ier
 );
 
@@ -534,6 +535,7 @@ bool readCrystalInfoFromCif(const QString &filePath, CifCrystalInfo &info, bool 
         info.refl_lp, info.refl_fc2, info.refl_inte, info.refl_ipct,
         &info.nrefl_print,
         &info.nelem, info.specie_label,
+        info.chem_name, info.mineral_name,
         &ier
     );
     return (ier == 0);

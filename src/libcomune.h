@@ -540,6 +540,8 @@ struct CifCrystalInfo {
     float refl_ipct[500] = {};
     int   nelem          = 0;
     char  specie_label[100][3] = {};  // element symbols, null-terminated (2 chars + '\0')
+    char  chem_name[256]    = {};
+    char  mineral_name[256] = {};
 };
 
 // Calls Fortran get_crystal_info_from_cif for the given file.
