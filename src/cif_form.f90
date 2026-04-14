@@ -133,7 +133,7 @@ CONTAINS
    integer                                       :: ndatab
    integer                                       :: posl
    real                                          :: rnum
-   character(len=:), allocatable                 :: strc
+   character(len=:), allocatable                 :: strc,semic_text
 !
    call error%reset()
 !
@@ -290,9 +290,16 @@ CONTAINS
                           cifword(pos)%svet(1) = trim(adjustl(line))
                           cifword(pos)%wok = .true.
                       endif
-              !    else
-              !call manage_semicolon_block(unit,line,ier,strc); if (ier /= 0) return
-              !        write(0,*)'line1:',trim(strc),trim(line)
+                  elseif (len_trim(line) == 0) then
+                      if (read_semicolon_block(unit,semic_text)) then
+                          semic_text = adjustl(semic_text)
+                          if (len_trim(semic_text) > 0 .and. semic_text(1:1) /= '?') then
+                              !write(0,*)'line with semicolon:',trim(semic_text), len_trim(semic_text)
+                              call new_array(cifword(pos)%svet,1,nlen=100)
+                              cifword(pos)%svet(1) = trim(semic_text)
+                              cifword(pos)%wok = .true.
+                          endif
+                      endif
                   endif
               endif
           else
@@ -1744,5 +1751,60 @@ CONTAINS
    call fnw%fclose()
 !
    end function is_cif_with_reflections
+
+!------------------------------------------------------------------------------------------
+
+   function read_semicolon_block(unit, text, eof) result(found)
+!! Reads a semicolon-delimited CIF text block, including the opening line.
+!!
+!! Reads the next line from unit internally.
+!! If it does not start with ';', returns .false. and text is set to ''.
+!! Any text after the opening ';' on the same line is included as the first
+!! content line (non-standard but common in CIF files).
+!!
+!! found : .true.  → a block was found and read (up to closing ';' or EOF).
+!!         .false. → either EOF (check eof argument) or the line did not
+!!                   start with ';' (one line consumed, eof=0).
+!! eof   : optional; set to non-zero if EOF was reached while reading the
+!!         opening line, zero otherwise.
+   use fileutil
+   integer,                   intent(in)  :: unit
+   character(:), allocatable, intent(out) :: text
+   integer, optional,         intent(out) :: eof
+   logical                                :: found
+ 
+   character(:), allocatable :: first_line, line, inline_content
+ 
+   text  = ''
+   found = .false.
+   if (present(eof)) eof = 0
+ 
+   if (.not. get_line(unit, first_line)) then
+     if (present(eof)) eof = 1
+     return   ! EOF
+   end if
+   if (len(first_line) < 1 .or. first_line(1:1) /= ';') return
+ 
+   found = .true.
+ 
+   ! Some CIF files put content on the same line as the opening ';'
+   if (len(first_line) > 1) then
+     inline_content = first_line(2:)          ! everything after the ';'
+     if (len_trim(inline_content) > 0) text = inline_content
+   end if
+ 
+   do while (get_line(unit, line))
+     if (len(line) >= 1 .and. line(1:1) == ';') return  ! closing delimiter
+     if (len(text) == 0) then
+       text = line
+     else
+!       text = text // new_line('a') // line
+       text = text // ' ' // adjustl(line)
+     end if
+   end do
+ 
+   ! EOF without closing ';'
+   write(0, '(A)') 'Warning: EOF reached before closing semicolon delimiter.'
+   end function read_semicolon_block
 
 END MODULE cif_frm

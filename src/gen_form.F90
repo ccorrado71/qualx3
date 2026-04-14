@@ -1,5 +1,3 @@
-!uncomment this line for powcod generation
-#define powcod 1
 module gen_frm
 
 USE prog_constants, only: CU_WAVE, CUwave
@@ -115,6 +113,7 @@ contains
    integer                                                      :: selected_row
    integer, dimension(:), allocatable                           :: vmodel_cif
    integer                                                      :: selected_cif
+   !character(len=:), allocatable                      :: cname1,mname1
 !
    make_conn = .false.     
    is_bfac = .false.
@@ -179,12 +178,12 @@ contains
        endif
 
      case (CIF_FILE)    ! cif file
-#if defined(powcod)
-       call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif,  &
-            etype='S',dummy=.true.,bisotype=2,checkb=.true.,cname=cname,mname=mname)  ! INT files generation for COD
-#else
-       call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif)
-#endif
+       if (present(cname) .and. present(mname)) then  ! used for powcod generation
+           call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif,  &
+            etype='S',dummy=.true.,bisotype=2,checkb=.true.,cname=cname,mname=mname) 
+       else
+            call read_CIFfile(filename,phase_file,nblockcif,has_symmetry,cell,errcif)
+       endif
        if (any(errcif(:nblockcif)%signal .eqv. .false.)) then
            nmodel = 0
            allocate(vmodel_cif(nblockcif))

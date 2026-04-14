@@ -1,6 +1,7 @@
 #include "createdatabasedialog.h"
 #include "ui_createdatabasedialog.h"
 #include "folderselectorwidget.h"
+#include "fileselectorwidget.h"
 
 #include <QMessageBox>
 #include <QStandardPaths>
@@ -23,6 +24,19 @@ CreateDatabaseDialog::CreateDatabaseDialog(QWidget *parent)
     connect(ui->checkCod,  &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
     connect(ui->checkPdf,  &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
     connect(ui->checkUser, &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
+
+    // Enable/disable pdf source group when checkPdf changes
+    connect(ui->checkPdf, &QCheckBox::toggled,
+            ui->pdfSourceGroupBox, &QWidget::setEnabled);
+    ui->pdfFileSelector->setFilter(tr("PDF-2 files (*.dat);;All files (*)"));
+
+    // Enable/disable user source group when checkUser changes
+    connect(ui->checkUser, &QCheckBox::toggled,
+            ui->userSourceGroupBox, &QWidget::setEnabled);
+
+    // Update folder label and recursive checkbox state when radio changes
+    connect(ui->radioCif, &QRadioButton::toggled,
+            this, &CreateDatabaseDialog::onUserSourceTypeChanged);
 
     // Set initial auto values
     ui->nameLineEdit->setText(generateAutoName());
@@ -47,6 +61,26 @@ bool CreateDatabaseDialog::isPdfSelected() const
 bool CreateDatabaseDialog::isUserSelected() const
 {
     return ui->checkUser->isChecked();
+}
+
+CreateDatabaseDialog::UserSource CreateDatabaseDialog::userSource() const
+{
+    return ui->radioCif->isChecked() ? UserSource::CifFiles : UserSource::SqDatabase;
+}
+
+bool CreateDatabaseDialog::isRecursive() const
+{
+    return ui->checkRecursive->isChecked();
+}
+
+QString CreateDatabaseDialog::userSourceFolder() const
+{
+    return ui->userFolderSelector->folderPath();
+}
+
+QString CreateDatabaseDialog::pdfFile() const
+{
+    return ui->pdfFileSelector->filePath();
 }
 
 QString CreateDatabaseDialog::databaseName() const
@@ -79,6 +113,20 @@ void CreateDatabaseDialog::onSourceChanged()
         ui->nameLineEdit->setText(generateAutoName());
 }
 
+void CreateDatabaseDialog::onUserSourceTypeChanged()
+{
+    updateUserSourceLabel();
+    ui->checkRecursive->setEnabled(ui->radioCif->isChecked());
+}
+
+void CreateDatabaseDialog::updateUserSourceLabel()
+{
+    if (ui->radioCif->isChecked())
+        ui->labelUserFolder->setText(tr("Folder containing CIF files:"));
+    else
+        ui->labelUserFolder->setText(tr("Folder containing .sq database files:"));
+}
+
 QString CreateDatabaseDialog::generateAutoName() const
 {
     QStringList parts;
@@ -108,5 +156,8 @@ void CreateDatabaseDialog::onHelpRequested()
         tr("<b>COD database</b>: Crystallography Open Database, available free of charge.<br><br>"
            "<b>ICDD PDF</b>: International Centre for Diffraction Data Powder Diffraction File "
            "in NBS*AIDS83 format.<br><br>"
-           "<b>User database</b>: A custom database created from user-supplied CIF files."));
+           "<b>User database (CIF files)</b>: A custom database created from user-supplied CIF files "
+           "in a selected folder.<br><br>"
+           "<b>User database (.sq file)</b>: A custom database created by merging an existing "
+           "QualX database."));
 }

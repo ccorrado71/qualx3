@@ -29,6 +29,9 @@ set(PROJECT_SOURCES
     dbresultswidget.h
     dbresultswidget.ui
     exportqualx.F90
+    fileselectorwidget.cpp
+    fileselectorwidget.h
+    fileselectorwidget.ui
     fileutils.cpp
     fileutils.h
     floatdelegate.cpp

@@ -1,7 +1,10 @@
 #include "databasebuilder.h"
 #include "qualxdbcreator.h"
 #include "qualxdbpopulator.h"
+#include "cifdbpopulator.h"
+#include "cifreader.h"
 #include "pdf2reader.h"
+#include "libcomune.h"
 
 #include <QObject>
 #include <QApplication>
@@ -93,6 +96,106 @@ bool DatabaseBuilder::buildPdfDatabase(const QString &basePath,
         *outCancelled = wasCancelled;
 
     return parsed && !wasCancelled;
+}
+
+bool DatabaseBuilder::buildCifDatabase(const QString &basePath,
+                                       const QString &cifDir,
+                                       bool recursive,
+                                       bool inorganicOnly,
+                                       CifProgressFn progress,
+                                       CifBuildStats *stats)
+{
+    int ok = 0, skipped = 0, errors = 0;
+
+    QualxDbCreator db;
+    if (!db.create(basePath, QualxDbCreator::DbType::CifFiles))
+        return false;
+
+    CifReader reader;
+    CifDbPopulator populator(&db);
+
+    QObject::connect(&reader, &CifReader::cifFound,
+                     [&](const QString &cifPath) {
+                         CifCrystalInfo info;
+                         const bool success = readCrystalInfoFromCif(cifPath, info, inorganicOnly);
+                         if (success) {
+                             populator.onCifReady(cifPath, info);
+                             ++ok;
+                         } else if (inorganicOnly && info.nat == 0) {
+                             ++skipped;
+                         } else {
+                             ++errors;
+                         }
+                         if (progress)
+                             progress(ok, skipped, errors, cifPath);
+                     });
+    QObject::connect(&reader, &CifReader::finished,
+                     [&](int n) { populator.onFinished(n); });
+
+    reader.scan(cifDir, recursive);
+    db.close();
+
+    if (stats) {
+        stats->ok      = ok;
+        stats->skipped = skipped;
+        stats->errors  = errors;
+    }
+    return true;
+}
+
+bool DatabaseBuilder::buildCifDatabase(const QString &basePath,
+                                       const QString &cifDir,
+                                       bool recursive,
+                                       QWidget *parent,
+                                       bool *outCancelled)
+{
+    QualxDbCreator db;
+    if (!db.create(basePath, QualxDbCreator::DbType::CifFiles))
+        return false;
+
+    CifReader reader;
+    CifDbPopulator populator(&db);
+
+    int ok = 0, errors = 0;
+    bool wasCancelled = false;
+
+    QProgressDialog dlg(QObject::tr("Building CIF database, please wait…"),
+                        QObject::tr("Cancel"), 0, 0, parent);
+    dlg.setWindowTitle(QObject::tr("Creating Database"));
+    dlg.setWindowModality(Qt::WindowModal);
+    dlg.setMinimumDuration(0);
+
+    QObject::connect(&reader, &CifReader::cifFound,
+                     [&](const QString &cifPath) {
+                         CifCrystalInfo info;
+                         if (readCrystalInfoFromCif(cifPath, info, /*inorganicOnly=*/false)) {
+                             populator.onCifReady(cifPath, info);
+                             ++ok;
+                         } else {
+                             ++errors;
+                         }
+                         dlg.setLabelText(
+                             QObject::tr("%1 cards processed (%2 errors)…").arg(ok).arg(errors));
+                         QApplication::processEvents();
+                         if (dlg.wasCanceled() && !wasCancelled) {
+                             wasCancelled = true;
+                             reader.cancel();
+                         }
+                     });
+    QObject::connect(&reader, &CifReader::finished,
+                     [&](int n) { populator.onFinished(n); });
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    reader.scan(cifDir, recursive);
+    QApplication::restoreOverrideCursor();
+
+    dlg.hide();
+    db.close();
+
+    if (outCancelled)
+        *outCancelled = wasCancelled;
+
+    return !wasCancelled;
 }
 
 int DatabaseBuilder::queryEntries(const QString &basePath)

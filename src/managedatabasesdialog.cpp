@@ -2,6 +2,8 @@
 #include "ui_managedatabasesdialog.h"
 #include "createdatabasedialog.h"
 #include "databasebuilder.h"
+#include "mainwindow.h"
+#include "libcomune.h"
 #include "progkeysettings.h"
 
 #include <QCheckBox>
@@ -161,17 +163,11 @@ void ManageDatabasesDialog::onCreateClicked()
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    if (!dlg.isPdfSelected()) {
+    if (!dlg.isPdfSelected() && !dlg.isUserSelected()) {
         QMessageBox::information(this, tr("Not Implemented"),
-            tr("Only the ICDD PDF source is currently supported."));
+            tr("Only the ICDD PDF and user CIF sources are currently supported."));
         return;
     }
-
-    const QString pdf2File = QFileDialog::getOpenFileName(
-        this, tr("Select PDF-2 File"), QString(),
-        tr("PDF-2 files (*.dat);;All files (*)"));
-    if (pdf2File.isEmpty())
-        return;
 
     const QString dir      = dlg.databaseDirectory();
     const QString name     = dlg.databaseName();
@@ -184,11 +180,40 @@ void ManageDatabasesDialog::onCreateClicked()
     }
 
     bool cancelled = false;
-    if (!DatabaseBuilder::buildPdfDatabase(basePath, pdf2File, this, &cancelled)) {
-        if (!cancelled)
+
+    if (dlg.isPdfSelected()) {
+        const QString pdf2File = dlg.pdfFile();
+        if (pdf2File.isEmpty()) {
+            QMessageBox::warning(this, tr("Missing File"),
+                tr("Please select a PDF-2 data file (.dat)."));
+            return;
+        }
+        if (!DatabaseBuilder::buildPdfDatabase(basePath, pdf2File, this, &cancelled)) {
+            if (!cancelled)
+                QMessageBox::critical(this, tr("Error"),
+                    tr("Failed to build database at:\n%1").arg(basePath));
+            return;
+        }
+    } else {
+        // User CIF source
+        const QString cifDir = dlg.userSourceFolder();
+        if (cifDir.isEmpty()) {
+            QMessageBox::warning(this, tr("Missing Folder"),
+                tr("Please select the folder containing the CIF files."));
+            return;
+        }
+        if (!initQualxTables(MainWindow::getPathDataFiles())) {
             QMessageBox::critical(this, tr("Error"),
-                tr("Failed to build database at:\n%1").arg(basePath));
-        return;
+                tr("Could not initialise chemical tables."));
+            return;
+        }
+        if (!DatabaseBuilder::buildCifDatabase(basePath, cifDir,
+                dlg.isRecursive(), this, &cancelled)) {
+            if (!cancelled)
+                QMessageBox::critical(this, tr("Error"),
+                    tr("Failed to build CIF database at:\n%1").arg(basePath));
+            return;
+        }
     }
 
     DatabaseEntry entry;

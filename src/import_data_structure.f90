@@ -143,6 +143,7 @@ contains
    filename_f = cstr_to_fstr(cif_file)
 !
 !  Import crystal structure from CIF
+   write(0,*) 'Importing CIF file: ', trim(filename_f)
    call import_structure(filename_f, crystal, chem_name, mineral_name, err)
    if (err%signal) then
        ier_c = INT(-1, C_INT)

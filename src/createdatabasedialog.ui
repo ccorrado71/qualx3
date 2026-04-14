@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>753</width>
-    <height>279</height>
+    <height>420</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,6 +40,112 @@
          <string>User database</string>
         </property>
        </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="pdfSourceGroupBox">
+     <property name="title">
+      <string>ICDD PDF source</string>
+     </property>
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <layout class="QHBoxLayout" name="pdfSourceLayout">
+      <item>
+       <widget class="QLabel" name="labelPdfFile">
+        <property name="text">
+         <string>PDF-2 data file (.dat):</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="FileSelectorWidget" name="pdfFileSelector" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="userSourceGroupBox">
+     <property name="title">
+      <string>User database source</string>
+     </property>
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="userSourceLayout">
+      <item>
+       <widget class="QRadioButton" name="radioCif">
+        <property name="text">
+         <string>Source from CIF files</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="recursiveLayout">
+        <property name="leftMargin">
+         <number>20</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="checkRecursive">
+          <property name="text">
+           <string>Recursive (include subfolders)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="recursiveSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioSq">
+        <property name="text">
+         <string>Source from QualX database file (.sq)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="userFolderLayout">
+        <item>
+         <widget class="QLabel" name="labelUserFolder">
+          <property name="text">
+           <string>Folder containing CIF files:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="FolderSelectorWidget" name="userFolderSelector" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -130,6 +236,11 @@
    <extends>QWidget</extends>
    <header>folderselectorwidget.h</header>
   </customwidget>
+  <customwidget>
+   <class>FileSelectorWidget</class>
+   <extends>QWidget</extends>
+   <header>fileselectorwidget.h</header>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
@@ -141,11 +252,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>248</x>
-     <y>320</y>
+     <y>390</y>
     </hint>
     <hint type="destinationlabel">
      <x>310</x>
-     <y>349</y>
+     <y>419</y>
     </hint>
    </hints>
   </connection>
@@ -157,11 +268,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>316</x>
-     <y>320</y>
+     <y>390</y>
     </hint>
     <hint type="destinationlabel">
      <x>310</x>
-     <y>349</y>
+     <y>419</y>
     </hint>
    </hints>
   </connection>

@@ -29,6 +29,9 @@ public:
     // Emits cifFound() for each file found, then finished().
     void scan(const QString &folder, bool recursive);
 
+    // Requests an early stop; scan() will emit finished() with the count so far.
+    void cancel();
+
 signals:
     // Emitted for each .cif file found, in filesystem order.
     void cifFound(const QString &filePath);
@@ -36,4 +39,7 @@ signals:
     // Emitted once all files have been processed.
     // totalFiles is the total number of .cif files found.
     void finished(int totalFiles);
+
+private:
+    bool m_cancelled = false;
 };

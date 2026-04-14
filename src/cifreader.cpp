@@ -8,6 +8,8 @@ CifReader::CifReader(QObject *parent)
 
 void CifReader::scan(const QString &folder, bool recursive)
 {
+    m_cancelled = false;
+
     QDirIterator::IteratorFlags flags = QDirIterator::NoIteratorFlags;
     if (recursive)
         flags |= QDirIterator::Subdirectories;
@@ -18,10 +20,15 @@ void CifReader::scan(const QString &folder, bool recursive)
                     QDir::Files, flags);
 
     int count = 0;
-    while (it.hasNext()) {
+    while (it.hasNext() && !m_cancelled) {
         emit cifFound(it.next());
         ++count;
     }
 
     emit finished(count);
+}
+
+void CifReader::cancel()
+{
+    m_cancelled = true;
 }
