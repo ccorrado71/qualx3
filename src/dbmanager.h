@@ -1,7 +1,9 @@
 #ifndef DBMANAGER_H
 #define DBMANAGER_H
 
-#include <QSqlDatabase>
+#include <QString>
+
+class QSqlDatabase;
 
 class DbManager
 {
@@ -17,7 +19,10 @@ public:
     QSqlDatabase db() const;
 
 private:
-    QSqlDatabase m_db;
+    // Store only the connection name, not a QSqlDatabase value member.
+    // A QSqlDatabase value member in a class with static storage duration
+    // would be constructed before QApplication exists, causing Qt warnings.
+    QString m_connName;
     QString queryElementString(const QString &elString);
     void debugDatabaseInfo();
 };

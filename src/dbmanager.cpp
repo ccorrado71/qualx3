@@ -2,12 +2,12 @@
 
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 
 DbManager::DbManager()
 {
-
 }
 
 DbManager::DbManager(const QString &path)
@@ -17,18 +17,15 @@ DbManager::DbManager(const QString &path)
 
 void DbManager::closeDb()
 {
-    if (m_db.isOpen())
-    {        
-        //qInfo() << "ConnName: " << m_db.connectionName();
-        QString connName = m_db.connectionName();
-        m_db.close();
-        m_db = QSqlDatabase(); //reset m_db by assigning a default constructor
-        //m_db.removeDatabase(m_db.connectionName());
-        //qInfo() << "ConnName: " << m_db.connectionName();
-        //m_db.removeDatabase(connName);
-        m_db.removeDatabase(connName);
-    }
-
+    if (m_connName.isEmpty())
+        return;
+    {
+        QSqlDatabase db = QSqlDatabase::database(m_connName, /*open=*/false);
+        if (db.isOpen())
+            db.close();
+    }  // db copy destroyed here, before removeDatabase()
+    QSqlDatabase::removeDatabase(m_connName);
+    m_connName.clear();
 }
 
 DbManager::~DbManager()
@@ -38,35 +35,44 @@ DbManager::~DbManager()
 
 bool DbManager::openDb(const QString &path)
 {
-    m_db = QSqlDatabase::addDatabase("QSQLITE", QFileInfo(path).fileName());
-    m_db.setDatabaseName(path);
-
-    if (!m_db.open()) {
-        QMessageBox::critical(nullptr,"Database Error",m_db.lastError().text());
-        return false;
+    closeDb();  // close any previously open connection
+    m_connName = QFileInfo(path).fileName();
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", m_connName);
+        db.setDatabaseName(path);
+        if (!db.open()) {
+            QMessageBox::critical(nullptr, "Database Error", db.lastError().text());
+            QSqlDatabase::removeDatabase(m_connName);
+            m_connName.clear();
+            return false;
+        }
     }
     return true;
 }
 
 bool DbManager::isOpen() const
 {
-    return m_db.isOpen();
+    if (m_connName.isEmpty())
+        return false;
+    return QSqlDatabase::database(m_connName, /*open=*/false).isOpen();
 }
 
 QSqlDatabase DbManager::db() const
 {
-    return m_db;
+    if (m_connName.isEmpty())
+        return QSqlDatabase();
+    return QSqlDatabase::database(m_connName, /*open=*/false);
 }
 
 void DbManager::debugDatabaseInfo()
 {
     qDebug() << "\n=== DATABASE DEBUG INFO ===";
-    qDebug() << "Connection name:" << m_db.connectionName();
-    qDebug() << "Database name:" << m_db.databaseName();
-    qDebug() << "Is open?" << m_db.isOpen();
-    qDebug() << "Last error:" << m_db.lastError().text();
+    qDebug() << "Connection name:" << db().connectionName();
+    qDebug() << "Database name:" << db().databaseName();
+    qDebug() << "Is open?" << db().isOpen();
+    qDebug() << "Last error:" << db().lastError().text();
 
-    QSqlQuery query(m_db);
+    QSqlQuery query(db());
     if (query.exec("PRAGMA database_list")) {
         qDebug() << "\nAttached databases:";
         while (query.next()) {
@@ -94,7 +100,7 @@ int DbManager::queryForCount(const QString &queryString)
     if (queryString.isEmpty()) return count;
 
     qInfo() << "Start query count";
-    QSqlQuery querycount(m_db);
+    QSqlQuery querycount(db());
     querycount.prepare("SELECT COUNT(*) FROM ("+queryString+")");
     if (querycount.exec()) {
         if (querycount.first()) {

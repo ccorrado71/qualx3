@@ -11,6 +11,7 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QScopeGuard>
 
 extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *fileout, int lenOut, const char *exepath, int lenPath, int *ier);
 
@@ -27,8 +28,6 @@ int main(int argc, char *argv[])
     qApp->setApplicationName(APP_NAME);
     qApp->setOrganizationName("IC");
     qApp->setOrganizationDomain("www.ba.ic.cnr.it/softwareic");
-
-    AppState::load();
 
     QLocale locale = QLocale::system();
     if (locale.decimalPoint() == ',') {
@@ -66,6 +65,12 @@ int main(int argc, char *argv[])
         parser.showHelp();
         Q_UNREACHABLE();
     }
+
+    // Load databases only after early-exit cases (--version, --help, bad args).
+    // Declared after 'a' so the scope guard is destroyed before QApplication,
+    // ensuring closeDatabeses() is called while QCoreApplication still exists.
+    AppState::load();
+    auto dbCleanup = qScopeGuard([] { AppState::db().closeDatabeses(); });
 
     //Find folder with program files
     QString errPath;

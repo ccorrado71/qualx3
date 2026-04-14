@@ -190,6 +190,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     //std::cout << "\nThanks for using " << qPrintable(qApp->applicationName()) << "\nBye!\n\n";
 
+    AppState::db().closeDatabeses();
+
     QApplication::quit();
 
     //Force close of dialog windows in a loop, kill the fortran computation

@@ -656,7 +656,12 @@ CONTAINS
        if (.not. OK) return
        if (present(InLine)) then
            if (set) then
-               InLine = InS(1:size)
+               ! Intel ifort/ifx may not allocate InLine when size=0 (empty line)
+               if (size > 0) then
+                   InLine = InS(1:size)
+               else
+                   InLine = ''
+               end if
                set=.false.
            else
                InLine = InLine // InS(1:size)

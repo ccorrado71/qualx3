@@ -293,11 +293,13 @@ CONTAINS
                   elseif (len_trim(line) == 0) then
                       if (read_semicolon_block(unit,semic_text)) then
                           semic_text = adjustl(semic_text)
-                          if (len_trim(semic_text) > 0 .and. semic_text(1:1) /= '?') then
-                              !write(0,*)'line with semicolon:',trim(semic_text), len_trim(semic_text)
-                              call new_array(cifword(pos)%svet,1,nlen=100)
-                              cifword(pos)%svet(1) = trim(semic_text)
-                              cifword(pos)%wok = .true.
+                          if (len_trim(semic_text) > 0) then
+                              if (semic_text(1:1) /= '?') then
+                                  !write(0,*)'line with semicolon:',trim(semic_text), len_trim(semic_text)
+                                  call new_array(cifword(pos)%svet,1,nlen=100)
+                                  cifword(pos)%svet(1) = trim(semic_text)
+                                  cifword(pos)%wok = .true.
+                              endif
                           endif
                       endif
                   endif
@@ -1757,54 +1759,66 @@ CONTAINS
    function read_semicolon_block(unit, text, eof) result(found)
 !! Reads a semicolon-delimited CIF text block, including the opening line.
 !!
+!! Uses ONLY standard sequential read (no advance='NO' / get_line) so that
+!! backspace() is reliable on all compilers including Intel ifort/ifx.
+!! Mixing advance='NO' reads with backspace is known to be unreliable on Intel.
+!!
 !! Reads the next line from unit internally.
-!! If it does not start with ';', returns .false. and text is set to ''.
+!! If it does not start with ';', the line is put back with backspace and
+!! .false. is returned — no line is silently consumed on a .false. return.
 !! Any text after the opening ';' on the same line is included as the first
 !! content line (non-standard but common in CIF files).
 !!
 !! found : .true.  → a block was found and read (up to closing ';' or EOF).
 !!         .false. → either EOF (check eof argument) or the line did not
-!!                   start with ';' (one line consumed, eof=0).
+!!                   start with ';' (position restored, eof=0).
 !! eof   : optional; set to non-zero if EOF was reached while reading the
 !!         opening line, zero otherwise.
-   use fileutil
    integer,                   intent(in)  :: unit
    character(:), allocatable, intent(out) :: text
    integer, optional,         intent(out) :: eof
    logical                                :: found
- 
-   character(:), allocatable :: first_line, line, inline_content
- 
+
+   integer,        parameter :: LBUF = 4096
+   character(LBUF)           :: buf
+   integer                   :: stat, lent
+
    text  = ''
    found = .false.
    if (present(eof)) eof = 0
- 
-   if (.not. get_line(unit, first_line)) then
+
+   read(unit, '(a)', iostat=stat) buf    ! standard sequential read — safe for backspace
+   if (stat < 0) then                    ! EOF on opening line
      if (present(eof)) eof = 1
-     return   ! EOF
+     return
    end if
-   if (len(first_line) < 1 .or. first_line(1:1) /= ';') return
- 
+   lent = len_trim(buf)
+   if (lent == 0 .or. buf(1:1) /= ';') then
+     backspace(unit)                     ! restore — caller re-reads this line
+     return
+   end if
+
    found = .true.
- 
-   ! Some CIF files put content on the same line as the opening ';'
-   if (len(first_line) > 1) then
-     inline_content = first_line(2:)          ! everything after the ';'
-     if (len_trim(inline_content) > 0) text = inline_content
-   end if
- 
-   do while (get_line(unit, line))
-     if (len(line) >= 1 .and. line(1:1) == ';') return  ! closing delimiter
+
+   ! Content on the same line as the opening ';' (non-standard but found in the wild)
+   if (lent > 1 .and. len_trim(buf(2:lent)) > 0) text = trim(adjustl(buf(2:lent)))
+
+   do
+     read(unit, '(a)', iostat=stat) buf  ! standard sequential read throughout
+     if (stat < 0) then                  ! EOF before closing ';'
+       write(0, '(a)') 'Warning: EOF reached before closing semicolon delimiter.'
+       return
+     end if
+     lent = len_trim(buf)
+     if (lent == 0) cycle                ! blank line inside block — skip
+     if (buf(1:1) == ';') return         ! closing delimiter
      if (len(text) == 0) then
-       text = line
+       text = trim(adjustl(buf(1:lent)))
      else
-!       text = text // new_line('a') // line
-       text = text // ' ' // adjustl(line)
+       text = text // ' ' // trim(adjustl(buf(1:lent)))
      end if
    end do
- 
-   ! EOF without closing ';'
-   write(0, '(A)') 'Warning: EOF reached before closing semicolon delimiter.'
+
    end function read_semicolon_block
 
 END MODULE cif_frm
