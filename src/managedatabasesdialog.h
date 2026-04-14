@@ -48,6 +48,7 @@ private:
     Ui::ManageDatabasesDialog *ui;
 
     void rebuildTable();
+    void registerExistingSqDatabase(const QString &sqFile, const QString &name);
     int currentSelectedRow() const;
 
     QList<DatabaseEntry> mDatabases;

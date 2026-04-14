@@ -157,11 +157,44 @@ void ManageDatabasesDialog::onAddClicked()
     emit addRequested();
 }
 
+// Helper: append an entry for an existing .sq database and persist settings.
+// sqFile is the full path to the .sq file; name is the display name.
+void ManageDatabasesDialog::registerExistingSqDatabase(const QString &sqFile,
+                                                        const QString &name)
+{
+    const QString base = sqFile.chopped(3);   // strip trailing ".sq"
+    DatabaseEntry entry;
+    entry.inUse   = mDatabases.isEmpty();
+    entry.name    = name;
+    entry.entries = DatabaseBuilder::queryEntries(base);
+    entry.path    = base;
+    mDatabases.append(entry);
+    if (entry.inUse)
+        mActiveIndex = mDatabases.size() - 1;
+    saveSettings(mDatabases);
+    rebuildTable();
+}
+
 void ManageDatabasesDialog::onCreateClicked()
 {
     CreateDatabaseDialog dlg(this);
     if (dlg.exec() != QDialog::Accepted)
         return;
+
+    const QString name = dlg.databaseName();
+
+    // COD: register an existing QualX .sq database (no build step)
+    if (dlg.isCodSelected()) {
+        registerExistingSqDatabase(dlg.codSqFile(), name);
+        return;
+    }
+
+    // User source — .sq file: register an existing QualX database (no build step)
+    if (dlg.isUserSelected() &&
+            dlg.userSource() == CreateDatabaseDialog::UserSource::SqDatabase) {
+        registerExistingSqDatabase(dlg.userSqFile(), name);
+        return;
+    }
 
     if (!dlg.isPdfSelected() && !dlg.isUserSelected()) {
         QMessageBox::information(this, tr("Not Implemented"),
@@ -170,7 +203,6 @@ void ManageDatabasesDialog::onCreateClicked()
     }
 
     const QString dir      = dlg.databaseDirectory();
-    const QString name     = dlg.databaseName();
     const QString basePath = dir + QDir::separator() + name;
 
     if (!QDir().mkpath(dir)) {

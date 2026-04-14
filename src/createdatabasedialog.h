@@ -2,6 +2,7 @@
 #define CREATEDATABASEDIALOG_H
 
 #include <QDialog>
+#include <QStringList>
 
 namespace Ui {
 class CreateDatabaseDialog;
@@ -19,16 +20,24 @@ public:
     bool isPdfSelected()  const;
     bool isUserSelected() const;
 
-    QString pdfFile() const;
+    QString pdfFile()    const;
+    QString codSqFile()  const;
+    QString userSqFile() const;
 
     // User source options (valid only when isUserSelected() == true)
     enum class UserSource { CifFiles, SqDatabase };
-    UserSource userSource()      const;
-    bool       isRecursive()     const;
+    UserSource userSource()       const;
+    bool       isRecursive()      const;
     QString    userSourceFolder() const;
 
     QString databaseName()      const;
     QString databaseDirectory() const;
+
+    // Returns the paths of missing companion files for a given .sq file.
+    // Empty list means all four files are present.
+    static QStringList missingSqFiles(const QString &sqFile);
+
+    void accept() override;
 
 private slots:
     void onHelpRequested();
@@ -40,7 +49,6 @@ private slots:
 private:
     Ui::CreateDatabaseDialog *ui;
 
-    void updateUserSourceLabel();
     QString generateAutoName()      const;
     QString generateAutoDirectory() const;
 };

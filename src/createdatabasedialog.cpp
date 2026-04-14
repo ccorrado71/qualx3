@@ -3,6 +3,7 @@
 #include "folderselectorwidget.h"
 #include "fileselectorwidget.h"
 
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QDir>
@@ -25,6 +26,11 @@ CreateDatabaseDialog::CreateDatabaseDialog(QWidget *parent)
     connect(ui->checkPdf,  &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
     connect(ui->checkUser, &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
 
+    // Show/hide the COD .sq file selector based on checkCod state
+    connect(ui->checkCod, &QCheckBox::toggled,
+            ui->codSqFileSelector, &QWidget::setVisible);
+    ui->codSqFileSelector->setFilter(tr("QualX database (*.sq);;All files (*)"));
+
     // Enable/disable pdf source group when checkPdf changes
     connect(ui->checkPdf, &QCheckBox::toggled,
             ui->pdfSourceGroupBox, &QWidget::setEnabled);
@@ -34,9 +40,12 @@ CreateDatabaseDialog::CreateDatabaseDialog(QWidget *parent)
     connect(ui->checkUser, &QCheckBox::toggled,
             ui->userSourceGroupBox, &QWidget::setEnabled);
 
-    // Update folder label and recursive checkbox state when radio changes
+    // Update visible widgets when radio changes
     connect(ui->radioCif, &QRadioButton::toggled,
             this, &CreateDatabaseDialog::onUserSourceTypeChanged);
+
+    // Set filter for the user .sq file selector
+    ui->sqFileSelector->setFilter(tr("QualX database (*.sq);;All files (*)"));
 
     // Set initial auto values
     ui->nameLineEdit->setText(generateAutoName());
@@ -61,6 +70,16 @@ bool CreateDatabaseDialog::isPdfSelected() const
 bool CreateDatabaseDialog::isUserSelected() const
 {
     return ui->checkUser->isChecked();
+}
+
+QString CreateDatabaseDialog::codSqFile() const
+{
+    return ui->codSqFileSelector->filePath();
+}
+
+QString CreateDatabaseDialog::userSqFile() const
+{
+    return ui->sqFileSelector->filePath();
 }
 
 CreateDatabaseDialog::UserSource CreateDatabaseDialog::userSource() const
@@ -93,6 +112,53 @@ QString CreateDatabaseDialog::databaseDirectory() const
     return ui->folderSelector->folderPath();
 }
 
+// static
+QStringList CreateDatabaseDialog::missingSqFiles(const QString &sqFile)
+{
+    QStringList missing;
+    for (const QString &suffix : QStringList{".info", ".search", ".infostat"}) {
+        const QString companion = sqFile + suffix;
+        if (!QFileInfo::exists(companion))
+            missing << companion;
+    }
+    return missing;
+}
+
+void CreateDatabaseDialog::accept()
+{
+    if (ui->checkCod->isChecked()) {
+        const QString sqFile = ui->codSqFileSelector->filePath();
+        if (sqFile.isEmpty()) {
+            QMessageBox::warning(this, tr("Missing File"),
+                tr("Please select a COD database file (.sq)."));
+            return;
+        }
+        const QStringList missing = missingSqFiles(sqFile);
+        if (!missing.isEmpty()) {
+            QMessageBox::critical(this, tr("Missing Files"),
+                tr("The following companion files are missing:\n%1").arg(missing.join('\n')));
+            return;
+        }
+    }
+
+    if (ui->checkUser->isChecked() && ui->radioSq->isChecked()) {
+        const QString sqFile = ui->sqFileSelector->filePath();
+        if (sqFile.isEmpty()) {
+            QMessageBox::warning(this, tr("Missing File"),
+                tr("Please select a QualX database file (.sq)."));
+            return;
+        }
+        const QStringList missing = missingSqFiles(sqFile);
+        if (!missing.isEmpty()) {
+            QMessageBox::critical(this, tr("Missing Files"),
+                tr("The following companion files are missing:\n%1").arg(missing.join('\n')));
+            return;
+        }
+    }
+
+    QDialog::accept();
+}
+
 void CreateDatabaseDialog::onAutoNameToggled(bool checked)
 {
     ui->nameLineEdit->setEnabled(!checked);
@@ -115,16 +181,10 @@ void CreateDatabaseDialog::onSourceChanged()
 
 void CreateDatabaseDialog::onUserSourceTypeChanged()
 {
-    updateUserSourceLabel();
-    ui->checkRecursive->setEnabled(ui->radioCif->isChecked());
-}
-
-void CreateDatabaseDialog::updateUserSourceLabel()
-{
-    if (ui->radioCif->isChecked())
-        ui->labelUserFolder->setText(tr("Folder containing CIF files:"));
-    else
-        ui->labelUserFolder->setText(tr("Folder containing .sq database files:"));
+    const bool isCif = ui->radioCif->isChecked();
+    ui->recursiveWidget->setVisible(isCif);
+    ui->cifFolderWidget->setVisible(isCif);
+    ui->sqFileSelector->setVisible(!isCif);
 }
 
 QString CreateDatabaseDialog::generateAutoName() const
@@ -153,11 +213,12 @@ QString CreateDatabaseDialog::generateAutoDirectory() const
 void CreateDatabaseDialog::onHelpRequested()
 {
     QMessageBox::information(this, tr("Help"),
-        tr("<b>COD database</b>: Crystallography Open Database, available free of charge.<br><br>"
+        tr("<b>COD database</b>: Select an existing QualX database (.sq) built from the "
+           "Crystallography Open Database.<br><br>"
            "<b>ICDD PDF</b>: International Centre for Diffraction Data Powder Diffraction File "
            "in NBS*AIDS83 format.<br><br>"
            "<b>User database (CIF files)</b>: A custom database created from user-supplied CIF files "
            "in a selected folder.<br><br>"
-           "<b>User database (.sq file)</b>: A custom database created by merging an existing "
-           "QualX database."));
+           "<b>User database (.sq file)</b>: Register an existing QualX database (.sq) as a "
+           "user database."));
 }

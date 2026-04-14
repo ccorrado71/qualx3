@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>753</width>
-    <height>420</height>
+    <height>460</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,19 @@
        <widget class="QCheckBox" name="checkCod">
         <property name="text">
          <string>COD database provided free-of-charge</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="FileSelectorWidget" name="codSqFileSelector" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="visible">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -93,31 +106,39 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="recursiveLayout">
-        <property name="leftMargin">
-         <number>20</number>
-        </property>
-        <item>
-         <widget class="QCheckBox" name="checkRecursive">
-          <property name="text">
-           <string>Recursive (include subfolders)</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="recursiveSpacer">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
+       <widget class="QWidget" name="recursiveWidget" native="false">
+        <layout class="QHBoxLayout" name="recursiveLayout">
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="checkRecursive">
+           <property name="text">
+            <string>Recursive (include subfolders)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="recursiveSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
       </item>
       <item>
        <widget class="QRadioButton" name="radioSq">
@@ -127,25 +148,46 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="userFolderLayout">
-        <item>
-         <widget class="QLabel" name="labelUserFolder">
-          <property name="text">
-           <string>Folder containing CIF files:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="FolderSelectorWidget" name="userFolderSelector" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="FileSelectorWidget" name="sqFileSelector" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="cifFolderWidget" native="false">
+        <layout class="QHBoxLayout" name="userFolderLayout">
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="labelUserFolder">
+           <property name="text">
+            <string>Folder containing CIF files:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="FolderSelectorWidget" name="userFolderSelector" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </widget>
