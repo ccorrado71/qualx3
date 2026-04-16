@@ -7,23 +7,39 @@
     <x>0</x>
     <y>0</y>
     <width>753</width>
-    <height>460</height>
+    <height>490</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Create New Database</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+
    <item>
-    <widget class="QGroupBox" name="sourceGroupBox">
-     <property name="title">
+    <widget class="QLabel" name="labelSource">
+     <property name="text">
       <string>Select the source(s) from which you would like to create a new database</string>
      </property>
-     <layout class="QVBoxLayout" name="groupBoxLayout">
+    </widget>
+   </item>
+
+   <!-- COD: checkable groupbox -->
+   <item>
+    <widget class="QGroupBox" name="checkCod">
+     <property name="title">
+      <string>COD database provided free-of-charge</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <layout class="QHBoxLayout" name="codSourceLayout">
       <item>
-       <widget class="QCheckBox" name="checkCod">
+       <widget class="QLabel" name="labelCodFile">
         <property name="text">
-         <string>COD database provided free-of-charge</string>
+         <string>Qualx database file (.sq):</string>
         </property>
        </widget>
       </item>
@@ -35,34 +51,22 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="visible">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkPdf">
-        <property name="text">
-         <string>ICDD PDF (only NBS*AIDS format database)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkUser">
-        <property name="text">
-         <string>User database</string>
-        </property>
        </widget>
       </item>
      </layout>
     </widget>
    </item>
+
+   <!-- PDF: checkable groupbox -->
    <item>
-    <widget class="QGroupBox" name="pdfSourceGroupBox">
+    <widget class="QGroupBox" name="checkPdf">
      <property name="title">
-      <string>ICDD PDF source</string>
+      <string>ICDD PDF (only NBS*AIDS format database)</string>
      </property>
-     <property name="enabled">
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
       <bool>false</bool>
      </property>
      <layout class="QHBoxLayout" name="pdfSourceLayout">
@@ -86,12 +90,17 @@
      </layout>
     </widget>
    </item>
+
+   <!-- User: checkable groupbox -->
    <item>
-    <widget class="QGroupBox" name="userSourceGroupBox">
+    <widget class="QGroupBox" name="checkUser">
      <property name="title">
-      <string>User database source</string>
+      <string>User database</string>
      </property>
-     <property name="enabled">
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
       <bool>false</bool>
      </property>
      <layout class="QVBoxLayout" name="userSourceLayout">
@@ -141,26 +150,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioSq">
-        <property name="text">
-         <string>Source from QualX database file (.sq)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="FileSelectorWidget" name="sqFileSelector" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="visible">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QWidget" name="cifFolderWidget" native="false">
         <layout class="QHBoxLayout" name="userFolderLayout">
          <property name="topMargin">
@@ -189,9 +178,31 @@
         </layout>
        </widget>
       </item>
+      <item>
+       <widget class="QRadioButton" name="radioSq">
+        <property name="text">
+         <string>Source from QualX database file (.sq)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="FileSelectorWidget" name="sqFileSelector" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
+
+   <!-- Output name and directory -->
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <property name="verticalSpacing">
@@ -247,6 +258,7 @@
      </item>
     </layout>
    </item>
+
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
@@ -270,6 +282,7 @@
      </property>
     </widget>
    </item>
+
   </layout>
  </widget>
  <customwidgets>
@@ -292,14 +305,8 @@
    <receiver>CreateDatabaseDialog</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel">
-     <x>248</x>
-     <y>390</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>310</x>
-     <y>419</y>
-    </hint>
+    <hint type="sourcelabel"><x>248</x><y>470</y></hint>
+    <hint type="destinationlabel"><x>310</x><y>489</y></hint>
    </hints>
   </connection>
   <connection>
@@ -308,14 +315,8 @@
    <receiver>CreateDatabaseDialog</receiver>
    <slot>reject()</slot>
    <hints>
-    <hint type="sourcelabel">
-     <x>316</x>
-     <y>390</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>310</x>
-     <y>419</y>
-    </hint>
+    <hint type="sourcelabel"><x>316</x><y>470</y></hint>
+    <hint type="destinationlabel"><x>310</x><y>489</y></hint>
    </hints>
   </connection>
  </connections>

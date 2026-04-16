@@ -6,5 +6,8 @@
         <file>images/deletepoint.xpm</file>
         <file>images/addpeak.xpm</file>
         <file>images/delpeak.xpm</file>
+        <file>images/filter.png</file>
+        <file>images/Database_add.png</file>
+        <file>images/Database_delete.png</file>
     </qresource>
 </RCC>

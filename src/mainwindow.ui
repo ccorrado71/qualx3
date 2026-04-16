@@ -21,7 +21,7 @@
     <item>
      <widget class="QScrollBar" name="horizontalScrollBar">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -36,10 +36,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -55,10 +55,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -74,10 +74,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Panel</enum>
+         <enum>QFrame::Shape::Panel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="text">
          <string>TextLabel</string>
@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -102,6 +102,7 @@
      <string>Search</string>
     </property>
     <addaction name="actionSearch_Match"/>
+    <addaction name="actionRestraints"/>
     <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
     <addaction name="actionGetCard"/>
@@ -289,6 +290,15 @@
   <action name="actionManage_Databases">
    <property name="text">
     <string>Manage Databases</string>
+   </property>
+  </action>
+  <action name="actionRestraints">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/filter.png</normaloff>:/images/images/filter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Restraints</string>
    </property>
   </action>
  </widget>

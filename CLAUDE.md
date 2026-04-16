@@ -2,7 +2,7 @@
 
 ## Progetto
 
-QualX: applicazione Qt6/C++ + Fortran per l'analisi qualitativa di spettri di polveri, con database di riferimento e funzionalità di creazione database da PDF-2 o CIF.
+Applicazione Qt6/C++ + Fortran per l'analisi qualitativa di spettri di polveri, con database di riferimento e funzionalità di creazione database da PDF-2 o CIF.
 
 ## Stack tecnologico
 

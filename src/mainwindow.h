@@ -88,6 +88,7 @@ private slots:
 
     //Search
     void actionManageDatabasesTriggered();
+    void actionRestraintsTriggered();
 
 private:
     void createDialogs();

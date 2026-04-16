@@ -16,11 +16,11 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTableWidget" name="tableWidget">
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
      <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
+      <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
      </property>
      <column>
       <property name="text">
@@ -65,6 +65,10 @@
        <property name="text">
         <string>Create</string>
        </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/Database_add.png</normaloff>:/images/images/Database_add.png</iconset>
+       </property>
       </widget>
      </item>
      <item>
@@ -72,12 +76,16 @@
        <property name="text">
         <string>Delete</string>
        </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/Database_delete.png</normaloff>:/images/images/Database_delete.png</iconset>
+       </property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -92,12 +100,17 @@
        <property name="text">
         <string>Quit</string>
        </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::ApplicationExit"/>
+       </property>
       </widget>
      </item>
     </layout>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

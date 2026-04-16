@@ -35,7 +35,6 @@ public:
 signals:
     void renameRequested(int row);
     void addRequested();
-    void deleteRequested(int row);
 
 private slots:
     void onCheckboxChanged(int row, bool checked);

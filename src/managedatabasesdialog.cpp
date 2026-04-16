@@ -8,6 +8,7 @@
 
 #include <QCheckBox>
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QMessageBox>
@@ -294,5 +295,65 @@ QList<DatabaseEntry> ManageDatabasesDialog::loadSettings()
 
 void ManageDatabasesDialog::onDeleteClicked()
 {
-    emit deleteRequested(currentSelectedRow());
+    const int row = currentSelectedRow();
+    if (row < 0 || row >= mDatabases.size()) {
+        QMessageBox::information(this, tr("No Selection"),
+            tr("Please select a database to remove."));
+        return;
+    }
+
+    const DatabaseEntry &entry = mDatabases[row];
+
+    // Single confirmation dialog with embedded "delete files" checkbox
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Remove Database"));
+    msgBox.setText(tr("Remove <b>%1</b> from the database list?").arg(entry.name));
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+
+    QCheckBox *deleteFilesCheck = new QCheckBox(
+        tr("Also delete database files from disk (.sq, .sq.info, .sq.infostat, .sq.search)"));
+    deleteFilesCheck->setChecked(true);
+    msgBox.setCheckBox(deleteFilesCheck);   // msgBox takes ownership
+
+    if (msgBox.exec() != QMessageBox::Yes)
+        return;
+
+    const bool deleteFiles = deleteFilesCheck->isChecked();
+    const QString basePath = entry.path;
+
+    // --- Remove from list ---
+    mDatabases.removeAt(row);
+
+    // Update active index
+    if (mActiveIndex == row) {
+        // Deleted the active database: activate the first remaining, if any
+        mActiveIndex = mDatabases.isEmpty() ? -1 : 0;
+        if (mActiveIndex == 0)
+            mDatabases[0].inUse = true;
+    } else if (mActiveIndex > row) {
+        --mActiveIndex;
+    }
+
+    // --- Delete files from disk (if requested) ---
+    if (deleteFiles) {
+        const QStringList suffixes = { ".sq", ".sq.info", ".sq.infostat", ".sq.search" };
+        QStringList failed;
+        for (const QString &suffix : suffixes) {
+            const QString filePath = basePath + suffix;
+            QFile f(filePath);
+            if (f.exists() && !f.remove())
+                failed << filePath;
+        }
+        if (!failed.isEmpty()) {
+            QMessageBox::warning(this, tr("Could Not Delete Files"),
+                tr("The following files could not be deleted:\n%1")
+                    .arg(failed.join('\n')));
+        }
+    }
+
+    // --- Persist and refresh ---
+    saveSettings(mDatabases);
+    rebuildTable();
 }

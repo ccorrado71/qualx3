@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
     dbresultswidget.cpp
     dbresultswidget.h
     dbresultswidget.ui
+    elementbutton.cpp
+    elementbutton.h
     exportqualx.F90
     fileselectorwidget.cpp
     fileselectorwidget.h
@@ -72,6 +74,8 @@ set(PROJECT_SOURCES
     peaksearchdialog.cpp
     peaksearchdialog.h
     peaksearchdialog.ui
+    periodictablewidget.cpp
+    periodictablewidget.h
     plotsettings.h
     plotsettings.cpp
     progkeysettings.h
@@ -85,6 +89,9 @@ set(PROJECT_SOURCES
     qualxdbmanager.cpp
     qualxdbpopulator.h
     qualxdbpopulator.cpp
+    restraintsdialog.cpp
+    restraintsdialog.h
+    restraintsdialog.ui
     savedialog.cpp
     savedialog.h
     stringlistdialog.cpp

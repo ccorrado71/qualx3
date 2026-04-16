@@ -21,24 +21,13 @@ CreateDatabaseDialog::CreateDatabaseDialog(QWidget *parent)
     connect(ui->checkAutoDir,  &QCheckBox::toggled,
             this, &CreateDatabaseDialog::onAutoDirToggled);
 
-    // Update auto name whenever a source checkbox changes
-    connect(ui->checkCod,  &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
-    connect(ui->checkPdf,  &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
-    connect(ui->checkUser, &QCheckBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
+    // Update auto name whenever a source groupbox is toggled
+    connect(ui->checkCod,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
+    connect(ui->checkPdf,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
+    connect(ui->checkUser, &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
 
-    // Show/hide the COD .sq file selector based on checkCod state
-    connect(ui->checkCod, &QCheckBox::toggled,
-            ui->codSqFileSelector, &QWidget::setVisible);
     ui->codSqFileSelector->setFilter(tr("QualX database (*.sq);;All files (*)"));
-
-    // Enable/disable pdf source group when checkPdf changes
-    connect(ui->checkPdf, &QCheckBox::toggled,
-            ui->pdfSourceGroupBox, &QWidget::setEnabled);
     ui->pdfFileSelector->setFilter(tr("PDF-2 files (*.dat);;All files (*)"));
-
-    // Enable/disable user source group when checkUser changes
-    connect(ui->checkUser, &QCheckBox::toggled,
-            ui->userSourceGroupBox, &QWidget::setEnabled);
 
     // Update visible widgets when radio changes
     connect(ui->radioCif, &QRadioButton::toggled,

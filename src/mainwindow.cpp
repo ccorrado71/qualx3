@@ -3,6 +3,7 @@
 #include "appstate.h"
 #include "dbquerybuilder.h"
 #include "managedatabasesdialog.h"
+#include "restraintsdialog.h"
 #include "progkeysettings.h"
 #include "savedialog.h"
 #include "fileutils.h"
@@ -169,6 +170,7 @@ void MainWindow::actionsSetup()
 
     //Search menu
     connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
+    connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
     connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
     connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
@@ -515,6 +517,12 @@ void MainWindow::onActionSearchMatchTriggered()
     AppState::db().makeQueryStrongest(builder, acceptedCards);
     qInfo() << "Number of accepted cards: " << acceptedCards.size();
     ui->resultsWidget->setResults(acceptedCards);
+}
+
+void MainWindow::actionRestraintsTriggered()
+{
+    RestraintsDialog dlg(this);
+    dlg.exec();
 }
 
 void MainWindow::onActionDatabaseInfoTriggered()
