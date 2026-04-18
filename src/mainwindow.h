@@ -57,6 +57,9 @@ public:
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
     void setAction(const MouseAction &action, bool writeConfig = true);
+    void setStatusMessage(const QString &message);
+    void clearStatusMessage();
+    QProgressBar *getStatusProgressBar() const;
     void updatePeakListTable();
     void checkAction(MouseAction action);
     void setZoomAction();
@@ -97,6 +100,8 @@ private:
     void readSettings();
 
     Ui::MainWindow *ui;
+    QLabel *statusLabel1;
+    QProgressBar *statusProgressBar;
     MouseAction mAction;
     MouseAction savedZoomAction;
     QMap<QAction *, bool> stateActions;

@@ -5,14 +5,18 @@
 #include "dbquerybuilder.h"
 #include "cardtype.h"
 
+#include <functional>
+
 class QualxDbManager
 {
 public:
+    using ProgressCallback = std::function<void(int current, int total)>;
+
     QualxDbManager();
     ~QualxDbManager();
     bool openDatabases(const QString &path);
     void closeDatabeses();
-    void makeQuery(const DbQueryBuilder &builder);
+    QVector<CardType> makeQuery(const DbQueryBuilder &builder, ProgressCallback progress = nullptr);
     void makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards);
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
@@ -30,8 +34,8 @@ private:
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);
-    void makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom=true);
-    void makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count);
+    void makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom=true, ProgressCallback progress=nullptr);
+    QVector<CardType> makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count, ProgressCallback progress=nullptr);
     void makeQuerySearch(bool addDeleted, QString &result);
     void makeQuerySearchStrongest(QString &result);
     int stringInnerJoin(const QStringList &list1, const QStringList &list2, QStringList &result);

@@ -8,6 +8,7 @@
 #include "savedialog.h"
 #include "fileutils.h"
 
+#include <QApplication>
 #include <QDebug>
 #include <QMessageBox>
 
@@ -29,6 +30,21 @@ MainWindow::MainWindow(QWidget *parent)
     , savedZoomAction(mAction)
 {
     ui->setupUi(this);
+
+    setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
+
+    // set objects for the statusbar
+    statusLabel1 = new QLabel(this);
+    statusLabel1->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    statusProgressBar = new QProgressBar(this);
+    statusProgressBar->setTextVisible(true);
+    statusProgressBar->hide();
+    ui->statusBar->addPermanentWidget(statusLabel1,3);
+    ui->statusBar->addPermanentWidget(statusProgressBar,1);
+    // send statustip on statusLabel1
+    connect(ui->statusBar, &QStatusBar::messageChanged, this, [=](){
+        statusLabel1->setText(ui->statusBar->currentMessage());
+    });
 
     actionsSetup();
     createDialogs();
@@ -94,6 +110,21 @@ void MainWindow::setZoomAction()
 {
     if (mAction != savedZoomAction)
         checkAction(savedZoomAction);
+}
+
+void MainWindow::setStatusMessage(const QString &message)
+{
+    statusLabel1->setText(message);
+}
+
+void MainWindow::clearStatusMessage()
+{
+    statusLabel1->clear();
+}
+
+QProgressBar *MainWindow::getStatusProgressBar() const
+{
+    return statusProgressBar;
 }
 
 void MainWindow::enableActions(EnabledActions action, bool state)
@@ -522,7 +553,44 @@ void MainWindow::onActionSearchMatchTriggered()
 void MainWindow::actionRestraintsTriggered()
 {
     RestraintsDialog dlg(this);
-    dlg.exec();
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+
+    // Composition restraints
+    QString formula = dlg.compositionFormula();
+    if (!formula.isEmpty()) {
+        // DbQueryBuilder expects lowercase operators ("and", "or", "not")
+        formula.replace(" AND ", " and ").replace(" OR ", " or ").replace(" NOT ", " not ");
+        builder.setElements(formula);
+        if (dlg.isExactComposition())
+            builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        else if (dlg.isContainsAny())
+            builder.setBOperator(DbQueryBuilder::JUST_OP);
+        // else: AND_OR_OP is the default
+    }
+
+    builder.buildQuery();
+
+    setStatusMessage(tr("Querying database..."));
+    statusProgressBar->setRange(0, 100);
+    statusProgressBar->setValue(0);
+    statusProgressBar->show();
+    QApplication::processEvents();
+
+    auto progress = [this](int current, int total) {
+        statusProgressBar->setValue(total > 0 ? (100 * current) / total : 0);
+        QApplication::processEvents();
+    };
+
+    QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
+
+    statusProgressBar->hide();
+    setStatusMessage(tr("Found %1 card(s)").arg(cards.size()));
+    qInfo() << "Number of cards found:" << cards.size();
+    ui->resultsWidget->setResults(cards);
 }
 
 void MainWindow::onActionDatabaseInfoTriggered()
@@ -542,7 +610,9 @@ void MainWindow::onActionTestDatabaseTriggered()
     testSelection(builder, 1);
 
     builder.buildQuery();
-    AppState::db().makeQuery(builder);
+    QVector<CardType> cards = AppState::db().makeQuery(builder);
+    qInfo() << "Number of cards found: " << cards.size();
+    ui->resultsWidget->setResults(cards);
 }
 
 void MainWindow::onActionGetCardTriggered()

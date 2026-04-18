@@ -21,7 +21,7 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
     connect(ui->helpButton,             &QPushButton::clicked,
             this, &RestraintsDialog::onHelpClicked);
     connect(ui->loadCardsButton,        &QPushButton::clicked,
-            this, &RestraintsDialog::loadCardsRequested);
+            this, [this]() { emit loadCardsRequested(); accept(); });
     connect(ui->loadMergeButton,        &QPushButton::clicked,
             this, &RestraintsDialog::loadAndMergeCardsRequested);
     connect(ui->searchButton,           &QPushButton::clicked,
@@ -29,7 +29,7 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
     connect(ui->cancelRestraintsButton, &QPushButton::clicked,
             this, &RestraintsDialog::onCancelAllRestraintsClicked);
     connect(ui->closeButton,            &QPushButton::clicked,
-            this, &QDialog::accept);
+            this, &QDialog::reject);
 
     setupCompositionTab();
 }
