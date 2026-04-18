@@ -12,6 +12,15 @@ struct ProgOptions
     float wavel;
 };
 
+// Options for database search from command line
+struct SearchOptions
+{
+    bool    enabled          = false;  // --search was specified
+    QString composition;               // --composition "Al AND Si OR O"
+    bool    exactComposition = false;  // --exact  (ONLY_OP: all elements, no others)
+    bool    containsAny      = false;  // --contains-any (JUST_OP: only these elements allowed)
+};
+
 // Options for database creation from command line
 struct DbBuildOptions
 {
@@ -35,7 +44,7 @@ enum CommandLineParseResult
 };
 
 CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &filein, QString &fileout,
-                                        ProgOptions &popt, DbBuildOptions &dbopt,
+                                        ProgOptions &popt, DbBuildOptions &dbopt, SearchOptions &searchopt,
                                         QString &errorMessage, bool &test, QString &testFolder);
 
 #endif // COMMANDLINE_H

@@ -550,28 +550,8 @@ void MainWindow::onActionSearchMatchTriggered()
     ui->resultsWidget->setResults(acceptedCards);
 }
 
-void MainWindow::actionRestraintsTriggered()
+void MainWindow::executeSearch(DbQueryBuilder &builder)
 {
-    RestraintsDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
-
-    DbQueryBuilder builder;
-    builder.setPrintEnabled(true);
-
-    // Composition restraints
-    QString formula = dlg.compositionFormula();
-    if (!formula.isEmpty()) {
-        // DbQueryBuilder expects lowercase operators ("and", "or", "not")
-        formula.replace(" AND ", " and ").replace(" OR ", " or ").replace(" NOT ", " not ");
-        builder.setElements(formula);
-        if (dlg.isExactComposition())
-            builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        else if (dlg.isContainsAny())
-            builder.setBOperator(DbQueryBuilder::JUST_OP);
-        // else: AND_OR_OP is the default
-    }
-
     builder.buildQuery();
 
     setStatusMessage(tr("Querying database..."));
@@ -591,6 +571,45 @@ void MainWindow::actionRestraintsTriggered()
     setStatusMessage(tr("Found %1 card(s)").arg(cards.size()));
     qInfo() << "Number of cards found:" << cards.size();
     ui->resultsWidget->setResults(cards);
+}
+
+void MainWindow::actionRestraintsTriggered()
+{
+    RestraintsDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+
+    QString formula = dlg.compositionFormula();
+    if (!formula.isEmpty()) {
+        builder.setElements(formula);
+        if (dlg.isExactComposition())
+            builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        else if (dlg.isContainsAny())
+            builder.setBOperator(DbQueryBuilder::JUST_OP);
+        // else: AND_OR_OP is the default
+    }
+
+    executeSearch(builder);
+}
+
+void MainWindow::runSearch(const SearchOptions &opts)
+{
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+
+    if (!opts.composition.isEmpty()) {
+        builder.setElements(opts.composition);
+        if (opts.exactComposition)
+            builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        else if (opts.containsAny)
+            builder.setBOperator(DbQueryBuilder::JUST_OP);
+        // else: AND_OR_OP is the default
+    }
+
+    executeSearch(builder);
 }
 
 void MainWindow::onActionDatabaseInfoTriggered()

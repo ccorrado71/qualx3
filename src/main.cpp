@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
     DbBuildOptions dbopt;
     QString filein, fileout, testFolder;
     bool testApp;
-    switch (parseCommandLine(parser, filein, fileout, opt, dbopt, errorMessage, testApp, testFolder)) {
+    SearchOptions searchopt;
+    switch (parseCommandLine(parser, filein, fileout, opt, dbopt, searchopt, errorMessage, testApp, testFolder)) {
     case CommandLineOk:
         break;
     case CommandLineError:
@@ -132,7 +133,38 @@ int main(int argc, char *argv[])
         }
         return 0;
     } else if (opt.nogui) {
+        if (searchopt.enabled) {
+            DbQueryBuilder builder;
+            if (!searchopt.composition.isEmpty()) {
+                builder.setElements(searchopt.composition);
+                if (searchopt.exactComposition)
+                    builder.setBOperator(DbQueryBuilder::ONLY_OP);
+                else if (searchopt.containsAny)
+                    builder.setBOperator(DbQueryBuilder::JUST_OP);
+            }
+            builder.buildQuery();
 
+            printf("Searching database...\n");
+            int lastProg = -1;
+            auto progress = [&lastProg](int current, int total) {
+                int prog = total > 0 ? (100 * current) / total : 0;
+                if (prog != lastProg) {
+                    lastProg = prog;
+                    printf("\r  %3d%%", prog);
+                    fflush(stdout);
+                }
+            };
+
+            QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
+            printf("\rFound %d card(s):\n", (int)cards.size());
+            for (const CardType &card : cards) {
+                printf("  [%s] %-40s | %-50s | %s\n",
+                       qPrintable(card.getId()),
+                       qPrintable(card.getChemicalName()),
+                       qPrintable(card.getChemicalFormula()),
+                       qPrintable(card.getSpaceGroup()));
+            }
+        }
     } else {
         MainWindow w;
         w.show();
@@ -143,6 +175,8 @@ int main(int argc, char *argv[])
             qualxmain(&opt,filein.toLocal8Bit().constData(),filein.toLocal8Bit().size(),fileout.toLocal8Bit().constData(),
                       fileout.toLocal8Bit().size(),pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
             //test_crystal_info_from_cif();
+            if (searchopt.enabled)
+                w.runSearch(searchopt);
         }
         return a.exec();
     }

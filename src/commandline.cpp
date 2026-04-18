@@ -3,7 +3,7 @@
 #include <QFileInfo>
 
 CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &filein, QString &fileout,
-                                        ProgOptions &popt, DbBuildOptions &dbopt,
+                                        ProgOptions &popt, DbBuildOptions &dbopt, SearchOptions &searchopt,
                                         QString &errorMessage, bool &test, QString &testFolder)
 {
     parser.addPositionalArgument("file1",QCoreApplication::translate("main","Input file, optionally"),"[file1]");
@@ -31,6 +31,20 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
     const QCommandLineOption dbOutOption("dbout", "Output database base path (without extension)", "dbpath");
     parser.addOption(dbOutOption);
 
+    // Search options
+    const QCommandLineOption searchOption("search", "Run a database search and show results");
+    parser.addOption(searchOption);
+    const QCommandLineOption compositionOption("composition",
+        "Composition filter formula (e.g. \"Al AND Si\", \"Ti OR Fe\", \"Ca NOT O\"). "
+        "Operators: AND, OR, NOT (case-insensitive).", "formula");
+    parser.addOption(compositionOption);
+    const QCommandLineOption exactOption("exact",
+        "Exact composition: match structures containing exactly the listed elements and no others");
+    parser.addOption(exactOption);
+    const QCommandLineOption containsAnyOption("contains-any",
+        "Contains-any composition: match structures whose elements are a subset of the listed ones");
+    parser.addOption(containsAnyOption);
+
     if (!parser.parse(QCoreApplication::arguments())) {
         errorMessage = parser.errorText();
         return CommandLineError;
@@ -44,6 +58,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
 
     popt = {0, 0, 0, -1};
     dbopt = {};
+    searchopt = {};
 
     if (parser.isSet((noguiOption))) {
         popt.nogui = 1;
@@ -92,6 +107,19 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
                 return CommandLineError;
             }
         }
+    }
+
+    // Parse search options
+    if (parser.isSet(searchOption)) {
+        searchopt.enabled = true;
+        if (parser.isSet(compositionOption))
+            searchopt.composition = parser.value(compositionOption).trimmed();
+        if (parser.isSet(exactOption) && parser.isSet(containsAnyOption)) {
+            errorMessage = "Options --exact and --contains-any are mutually exclusive.";
+            return CommandLineError;
+        }
+        searchopt.exactComposition = parser.isSet(exactOption);
+        searchopt.containsAny      = parser.isSet(containsAnyOption);
     }
 
     const QStringList positionalArguments = parser.positionalArguments();

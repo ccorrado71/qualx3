@@ -7,6 +7,7 @@
 #include "dbquerybuilder.h"
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
+#include "commandline.h"
 
 #include <QMainWindow>
 
@@ -60,6 +61,7 @@ public:
     void setStatusMessage(const QString &message);
     void clearStatusMessage();
     QProgressBar *getStatusProgressBar() const;
+    void runSearch(const SearchOptions &opts);
     void updatePeakListTable();
     void checkAction(MouseAction action);
     void setZoomAction();
@@ -116,5 +118,6 @@ private:
     static QString pathDataFiles;
 
     void testSelection(DbQueryBuilder &builder, int testCase);
+    void executeSearch(DbQueryBuilder &builder);
 };
 #endif // MAINWINDOW_H

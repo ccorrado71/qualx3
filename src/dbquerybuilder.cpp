@@ -128,6 +128,10 @@ void DbQueryBuilder::setCsysString(const QStringList &newCsysString)
 void DbQueryBuilder::setElements(const QString &newElements)
 {
     elString = newElements;
+    // buildQueryElementString() compares operators in lowercase ("and", "or", "not")
+    elString.replace(" AND ", " and ", Qt::CaseInsensitive)
+            .replace(" OR ",  " or ",  Qt::CaseInsensitive)
+            .replace(" NOT ", " not ", Qt::CaseInsensitive);
 }
 
 void DbQueryBuilder::setNames(const QString &newNames)
