@@ -30,6 +30,9 @@ public:
     int         compositionMinSpecies() const;
     int         compositionMaxSpecies() const;
 
+    // --- Chemical Name tab accessors ---
+    QString     chemicalName() const;
+
 signals:
     void loadCardsRequested();
     void loadAndMergeCardsRequested();
@@ -64,6 +67,7 @@ private:
     QSpinBox            *m_maxSpecies         = nullptr;
 
     QStringList m_lastSelectedSymbols;
+
 };
 
 #endif // RESTRAINTSDIALOG_H

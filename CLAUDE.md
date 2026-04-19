@@ -87,6 +87,10 @@ qualx --createdb --pdf2 /path/to/pdf2.dat --dbout /path/to/output
 qualx --createdb --cifdir /path/to/cifs [--recursive] --dbout /path/to/output
 ```
 
+## Convenzioni UI
+
+- **Preferire il file `.ui`** per definire widget e layout. Evitare di costruire widget programmaticamente in C++ (es. `setupXxxTab()`) quando è possibile farlo nel file `.ui`. Il codice C++ deve solo leggere i widget tramite `ui->nomeWidget`.
+
 ## Note importanti
 
 - Gli errori di diagnostica con codice **1696** sono **solo IntelliSense** (Qt headers non trovati nella configurazione IDE). Non sono errori di compilazione reali.

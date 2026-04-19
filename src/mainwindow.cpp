@@ -286,6 +286,7 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         break;
     case 6:
         builder.setElements("Al");
+        builder.setNames("copper");
         break;
     case 7:
         builder.setElements("Al and P and O");
@@ -592,6 +593,10 @@ void MainWindow::actionRestraintsTriggered()
         // else: AND_OR_OP is the default
     }
 
+    QString chemName = dlg.chemicalName();
+    if (!chemName.isEmpty())
+        builder.setNames(chemName);
+
     executeSearch(builder);
 }
 
@@ -626,7 +631,7 @@ void MainWindow::onActionTestDatabaseTriggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 1);
+    testSelection(builder, 6);
 
     builder.buildQuery();
     QVector<CardType> cards = AppState::db().makeQuery(builder);

@@ -244,6 +244,11 @@ int RestraintsDialog::compositionMaxSpecies() const
     return m_maxSpecies ? m_maxSpecies->value() : 0;
 }
 
+QString RestraintsDialog::chemicalName() const
+{
+    return ui->chemicalNameEdit->text().trimmed();
+}
+
 // ---------------------------------------------------------------------------
 // Other slots
 // ---------------------------------------------------------------------------
