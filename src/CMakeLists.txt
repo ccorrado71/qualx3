@@ -7,6 +7,9 @@ set(PROJECT_SOURCES
     backgrounddialog.cpp
     backgrounddialog.h
     backgrounddialog.ui
+    cellsearchwidget.cpp
+    cellsearchwidget.h
+    cellsearchwidget.ui
     colorbutton.cpp
     colorbutton.h
     colorwidget.cpp         

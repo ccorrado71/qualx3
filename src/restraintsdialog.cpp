@@ -1,7 +1,14 @@
 #include "restraintsdialog.h"
 #include "ui_restraintsdialog.h"
+#include "appstate.h"
 #include "periodictablewidget.h"
 
+#include <QCheckBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QTableWidget>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -18,6 +25,8 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
+    connect(ui->symbolListButton,        &QPushButton::clicked,
+            this, &RestraintsDialog::onSymbolListClicked);
     connect(ui->helpButton,             &QPushButton::clicked,
             this, &RestraintsDialog::onHelpClicked);
     connect(ui->loadCardsButton,        &QPushButton::clicked,
@@ -32,6 +41,18 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
             this, &QDialog::reject);
 
     setupCompositionTab();
+    setupSubfilesTab();
+
+    // Symmetry tab — Clear All / Select All
+    const QList<QCheckBox*> csysChecks = {
+        ui->checkCubic, ui->checkHexagonalTrigonal, ui->checkMonoclinic,
+        ui->checkOrthorhombic, ui->checkTetragonal, ui->checkTriclinic,
+        ui->checkRhombohedral
+    };
+    connect(ui->clearCrystalSystemButton, &QPushButton::clicked, this,
+            [csysChecks]() { for (QCheckBox *cb : csysChecks) cb->setChecked(false); });
+    connect(ui->selectAllCrystalSystemButton, &QPushButton::clicked, this,
+            [csysChecks]() { for (QCheckBox *cb : csysChecks) cb->setChecked(true); });
 }
 
 RestraintsDialog::~RestraintsDialog()
@@ -244,18 +265,248 @@ int RestraintsDialog::compositionMaxSpecies() const
     return m_maxSpecies ? m_maxSpecies->value() : 0;
 }
 
+QStringList RestraintsDialog::crystalSystemStrings() const
+{
+    QStringList result;
+    if (ui->checkCubic->isChecked())            result << QStringLiteral("Cubic");
+    if (ui->checkHexagonalTrigonal->isChecked()) {
+        result << QStringLiteral("Hexagonal");
+        result << QStringLiteral("Trigonal (hexagonal axes)");
+    }
+    if (ui->checkMonoclinic->isChecked())       result << QStringLiteral("Monoclinic");
+    if (ui->checkOrthorhombic->isChecked())     result << QStringLiteral("Orthorhombic");
+    if (ui->checkTetragonal->isChecked())       result << QStringLiteral("Tetragonal");
+    if (ui->checkTriclinic->isChecked())        result << QStringLiteral("Triclinic");
+    if (ui->checkRhombohedral->isChecked())     result << QStringLiteral("Trigonal (rhombohedral axes)");
+    return result;
+}
+
+RestraintsDialog::CellQuery RestraintsDialog::cellQuery() const
+{
+    CellQuery q;
+    const QLineEdit *edits[6] = {
+        ui->cellSearch->lineEditA(),  ui->cellSearch->lineEditB(),
+        ui->cellSearch->lineEditC(),  ui->cellSearch->lineEditAl(),
+        ui->cellSearch->lineEditBe(), ui->cellSearch->lineEditGa()
+    };
+    bool ok;
+    for (int i = 0; i < 6; ++i) {
+        const double v = edits[i]->text().trimmed().toDouble(&ok);
+        if (ok && v > 0.0)
+            q.values[i] = v;
+    }
+    q.lenTol = ui->cellSearch->doubleSpinLenTol()->value();
+    q.angTol = ui->cellSearch->doubleSpinAngTol()->value();
+    return q;
+}
+
+QStringList RestraintsDialog::spaceGroupStrings() const
+{
+    QStringList result;
+    const QString text = ui->spaceGroupEdit->text().trimmed();
+    if (text.isEmpty())
+        return result;
+    for (const QString &tok : text.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+        const QString s = tok.trimmed();
+        if (!s.isEmpty())
+            result << s;
+    }
+    return result;
+}
+
 QString RestraintsDialog::chemicalName() const
 {
     return ui->chemicalNameEdit->text().trimmed();
 }
 
 // ---------------------------------------------------------------------------
+// Subfiles tab — built in C++
+// ---------------------------------------------------------------------------
+
+void RestraintsDialog::setupSubfilesTab()
+{
+    QWidget     *tab    = ui->tabSubfiles;
+    // Remove placeholder spacer inserted by Qt Designer
+    qDeleteAll(tab->children());
+    QVBoxLayout *layout = new QVBoxLayout(tab);
+    layout->setContentsMargins(6, 6, 6, 6);
+    layout->setSpacing(8);
+
+    // Helper lambda to register a checkbox
+    auto addCheck = [&](QGroupBox *box, QLayout *boxLayout,
+                        const QString &label, const QString &code) {
+        QCheckBox *cb = new QCheckBox(label, box);
+        boxLayout->addWidget(cb);
+        m_subfileChecks.append(cb);
+        m_subfileCodes.append(code);
+    };
+
+    // --- Main Subfiles ---
+    QGroupBox   *mainBox    = new QGroupBox(tr("Main Subfiles"), tab);
+    QGridLayout *mainLayout = new QGridLayout(mainBox);
+    mainLayout->setHorizontalSpacing(20);
+
+    auto addCheckGrid = [&](QGroupBox *box, QGridLayout *grid,
+                            const QString &label, const QString &code, int col) {
+        QCheckBox *cb = new QCheckBox(label, box);
+        grid->addWidget(cb, 0, col);
+        m_subfileChecks.append(cb);
+        m_subfileCodes.append(code);
+    };
+
+    addCheckGrid(mainBox, mainLayout, tr("Inorganic"), QStringLiteral("I"), 0);
+    addCheckGrid(mainBox, mainLayout, tr("Organic"),   QStringLiteral("O"), 1);
+    addCheckGrid(mainBox, mainLayout, tr("Mineral"),   QStringLiteral("M"), 2);
+    for (int col = 0; col < 3; ++col)
+        mainLayout->setColumnStretch(col, 1);
+
+    layout->addWidget(mainBox);
+
+    // --- Additional Subfiles (grid, 3 columns) ---
+    const QList<QPair<QString,QString>> additional = {
+        { tr("Alloy"),               QStringLiteral("A")   },
+        { tr("Battery material"),    QStringLiteral("BAT") },
+        { tr("Cement"),              QStringLiteral("CEM") },
+        { tr("Ceramic"),             QStringLiteral("CER") },
+        { tr("Corrosion"),           QStringLiteral("COR") },
+        { tr("Coordination Polymer"),QStringLiteral("CP")  },
+        { tr("Detected"),            QStringLiteral("DET") },
+        { tr("Educational"),         QStringLiteral("EDU") },
+        { tr("Experimental"),        QStringLiteral("EXP") },
+        { tr("Forensic"),            QStringLiteral("FOR") },
+        { tr("Ionic Conductor"),     QStringLiteral("ION") },
+        { tr("NBS"),                 QStringLiteral("NBS") },
+        { tr("Pharmaceutical"),      QStringLiteral("PHR") },
+        { tr("Pigment"),             QStringLiteral("PIG") },
+        { tr("Polymer"),             QStringLiteral("POL") },
+        { tr("Superconductor"),      QStringLiteral("SCM") },
+        { tr("Zeolite"),             QStringLiteral("ZEO") },
+    };
+
+    QGroupBox   *addBox    = new QGroupBox(tr("Additional Subfiles"), tab);
+    QGridLayout *addLayout = new QGridLayout(addBox);
+    addLayout->setHorizontalSpacing(20);
+    for (int col = 0; col < 3; ++col)
+        addLayout->setColumnStretch(col, 1);
+
+    const int cols = 3;
+    for (int i = 0; i < additional.size(); ++i) {
+        QCheckBox *cb = new QCheckBox(additional[i].first, addBox);
+        addLayout->addWidget(cb, i / cols, i % cols);
+        m_subfileChecks.append(cb);
+        m_subfileCodes.append(additional[i].second);
+    }
+
+    layout->addWidget(addBox);
+
+    // --- Clear All / Select All ---
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+    QPushButton *clearAll  = new QPushButton(tr("Clear All"),  tab);
+    QPushButton *selectAll = new QPushButton(tr("Select All"), tab);
+    clearAll->setFixedWidth(100);
+    selectAll->setFixedWidth(100);
+    btnLayout->addWidget(clearAll);
+    btnLayout->addWidget(selectAll);
+    btnLayout->addStretch();
+    layout->addLayout(btnLayout);
+
+    layout->addStretch();
+
+    connect(clearAll,  &QPushButton::clicked, this, &RestraintsDialog::onSubfilesClearAll);
+    connect(selectAll, &QPushButton::clicked, this, &RestraintsDialog::onSubfilesSelectAll);
+}
+
+// ---------------------------------------------------------------------------
+// Public accessors — Subfiles tab
+// ---------------------------------------------------------------------------
+
+QStringList RestraintsDialog::subfilesCodes() const
+{
+    QStringList codes;
+    for (int i = 0; i < m_subfileChecks.size(); ++i)
+        if (m_subfileChecks[i]->isChecked())
+            codes << m_subfileCodes[i];
+    return codes;
+}
+
+// ---------------------------------------------------------------------------
+// Slots — Subfiles tab
+// ---------------------------------------------------------------------------
+
+void RestraintsDialog::onSubfilesClearAll()
+{
+    for (QCheckBox *cb : m_subfileChecks)
+        cb->setChecked(false);
+}
+
+void RestraintsDialog::onSubfilesSelectAll()
+{
+    for (QCheckBox *cb : m_subfileChecks)
+        cb->setChecked(true);
+}
+
+// ---------------------------------------------------------------------------
 // Other slots
 // ---------------------------------------------------------------------------
+
+void RestraintsDialog::onSymbolListClicked()
+{
+    const auto rows = AppState::db().querySpaceGroups();
+
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Space Group Symbols"));
+    dlg.resize(380, 500);
+
+    auto *infoLabel = new QLabel(
+        tr("Select one or more space group symbols to use as filter:"), &dlg);
+    infoLabel->setWordWrap(true);
+
+    QTableWidget *table = new QTableWidget(rows.size(), 2, &dlg);
+    table->setHorizontalHeaderLabels({ tr("Space Group"), tr("Count") });
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    table->verticalHeader()->setVisible(false);
+    table->verticalHeader()->setDefaultSectionSize(22);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::MultiSelection);
+
+    for (int i = 0; i < rows.size(); ++i) {
+        auto *symItem = new QTableWidgetItem(rows[i].first);
+        auto *cntItem = new QTableWidgetItem(QString::number(rows[i].second));
+        cntItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        table->setItem(i, 0, symItem);
+        table->setItem(i, 1, cntItem);
+    }
+
+    auto *buttons = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    auto *layout = new QVBoxLayout(&dlg);
+    layout->addWidget(infoLabel);
+    layout->addWidget(table);
+    layout->addWidget(buttons);
+
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QStringList symbols;
+    const auto selected = table->selectedItems();
+    for (auto *item : selected) {
+        if (item->column() == 0)
+            symbols << item->text();
+    }
+    if (!symbols.isEmpty())
+        ui->spaceGroupEdit->setText(symbols.join(QStringLiteral(" ; ")));
+}
 
 void RestraintsDialog::onCancelAllRestraintsClicked()
 {
     onCompositionClearClicked();
+    onSubfilesClearAll();
+    ui->chemicalNameEdit->clear();
     emit cancelAllRestraintsRequested();
 }
 

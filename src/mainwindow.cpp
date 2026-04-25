@@ -345,7 +345,7 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
         builder.setElements("Al");
         break;
     case 22:
-        builder.setSpgString({"P 1 1 2"});
+        builder.setSpgString({"P 1 2 1"});
         break;
     case 23:
         builder.setSpgString({"P 1 1 2", "P 2 1 1"});
@@ -546,7 +546,9 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
     QVector<CardType> acceptedCards;
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     AppState::db().makeQueryStrongest(builder, acceptedCards);
+    QApplication::restoreOverrideCursor();
     qInfo() << "Number of accepted cards: " << acceptedCards.size();
     ui->resultsWidget->setResults(acceptedCards);
 }
@@ -559,6 +561,7 @@ void MainWindow::executeSearch(DbQueryBuilder &builder)
     statusProgressBar->setRange(0, 100);
     statusProgressBar->setValue(0);
     statusProgressBar->show();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     QApplication::processEvents();
 
     auto progress = [this](int current, int total) {
@@ -568,6 +571,7 @@ void MainWindow::executeSearch(DbQueryBuilder &builder)
 
     QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
 
+    QApplication::restoreOverrideCursor();
     statusProgressBar->hide();
     setStatusMessage(tr("Found %1 card(s)").arg(cards.size()));
     qInfo() << "Number of cards found:" << cards.size();
@@ -596,6 +600,26 @@ void MainWindow::actionRestraintsTriggered()
     QString chemName = dlg.chemicalName();
     if (!chemName.isEmpty())
         builder.setNames(chemName);
+
+    const QStringList subfiles = dlg.subfilesCodes();
+    if (!subfiles.isEmpty())
+        builder.setSubfiles(subfiles);
+
+    const QStringList csys = dlg.crystalSystemStrings();
+    if (!csys.isEmpty())
+        builder.setCsysString(csys);
+
+    const QStringList spg = dlg.spaceGroupStrings();
+    if (!spg.isEmpty())
+        builder.setSpgString(spg);
+
+    const auto cell = dlg.cellQuery();
+    for (int i = 0; i < 6; ++i) {
+        if (cell.values[i] > 0.0) {
+            const double tol = (i < 3) ? cell.lenTol : cell.angTol;
+            builder.setCellParameter(i, cell.values[i] - tol, cell.values[i] + tol);
+        }
+    }
 
     executeSearch(builder);
 }
@@ -631,7 +655,7 @@ void MainWindow::onActionTestDatabaseTriggered()
 
     builder.setPrintEnabled(true);
 
-    testSelection(builder, 6);
+    testSelection(builder, 22);
 
     builder.buildQuery();
     QVector<CardType> cards = AppState::db().makeQuery(builder);

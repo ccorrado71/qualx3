@@ -9,6 +9,7 @@
 #include <QCheckBox>
 #include <QDir>
 #include <QFile>
+#include <QInputDialog>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QMessageBox>
@@ -33,6 +34,8 @@ ManageDatabasesDialog::ManageDatabasesDialog(QWidget *parent)
     connect(ui->addButton,    &QPushButton::clicked, this, &ManageDatabasesDialog::onAddClicked);
     connect(ui->createButton, &QPushButton::clicked, this, &ManageDatabasesDialog::onCreateClicked);
     connect(ui->deleteButton, &QPushButton::clicked, this, &ManageDatabasesDialog::onDeleteClicked);
+    connect(ui->tableWidget,  &QTableWidget::itemSelectionChanged,
+            this, &ManageDatabasesDialog::onSelectionChanged);
 }
 
 ManageDatabasesDialog::~ManageDatabasesDialog()
@@ -148,9 +151,40 @@ int ManageDatabasesDialog::currentSelectedRow() const
     return ui->tableWidget->currentRow();
 }
 
+void ManageDatabasesDialog::onSelectionChanged()
+{
+    const bool hasSelection = (currentSelectedRow() >= 0);
+    ui->renameButton->setEnabled(hasSelection);
+    ui->deleteButton->setEnabled(hasSelection);
+}
+
 void ManageDatabasesDialog::onRenameClicked()
 {
-    emit renameRequested(currentSelectedRow());
+    const int row = currentSelectedRow();
+    if (row < 0 || row >= mDatabases.size())
+        return;
+
+    const QString currentName = mDatabases[row].name;
+
+    bool ok = false;
+    const QString newName = QInputDialog::getText(
+        this,
+        tr("Rename Database"),
+        tr("Enter a new name for the database:"),
+        QLineEdit::Normal,
+        currentName,
+        &ok);
+
+    if (!ok || newName.trimmed().isEmpty() || newName == currentName)
+        return;
+
+    mDatabases[row].name = newName.trimmed();
+
+    // Update the table cell directly (no full rebuild needed)
+    if (QTableWidgetItem *item = ui->tableWidget->item(row, 1))
+        item->setText(newName.trimmed());
+
+    saveSettings(mDatabases);
 }
 
 void ManageDatabasesDialog::onAddClicked()

@@ -5,6 +5,9 @@
 #include "dbquerybuilder.h"
 #include "cardtype.h"
 
+#include <QList>
+#include <QPair>
+#include <QString>
 #include <functional>
 
 class QualxDbManager
@@ -21,6 +24,7 @@ public:
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
+    QList<QPair<QString,int>> querySpaceGroups() const;
 
 private:
     DbManager dbMain;

@@ -441,6 +441,20 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<C
     }
 }
 
+QList<QPair<QString,int>> QualxDbManager::querySpaceGroups() const
+{
+    QList<QPair<QString,int>> result;
+    if (!dbInfoStat.isOpen())
+        return result;
+    QSqlQuery q(dbInfoStat.db());
+    q.prepare(QStringLiteral("SELECT val, n FROM stat_spgr ORDER BY n DESC"));
+    if (q.exec()) {
+        while (q.next())
+            result.append({ q.value(0).toString(), q.value(1).toInt() });
+    }
+    return result;
+}
+
 void QualxDbManager::getInfo(int &ncard, QString &type)
 {
     QSqlQuery queryInfo(dbMain.db());

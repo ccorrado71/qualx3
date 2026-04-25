@@ -33,11 +33,11 @@ public:
     static QList<DatabaseEntry> loadSettings();
 
 signals:
-    void renameRequested(int row);
     void addRequested();
 
 private slots:
     void onCheckboxChanged(int row, bool checked);
+    void onSelectionChanged();
     void onRenameClicked();
     void onAddClicked();
     void onCreateClicked();

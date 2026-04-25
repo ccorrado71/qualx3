@@ -9,5 +9,6 @@
         <file>images/filter.png</file>
         <file>images/Database_add.png</file>
         <file>images/Database_delete.png</file>
+        <file>images/rename.png</file>
     </qresource>
 </RCC>

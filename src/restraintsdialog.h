@@ -9,6 +9,7 @@ class RestraintsDialog;
 }
 
 class PeriodicTableWidget;
+class QCheckBox;
 class QLineEdit;
 class QRadioButton;
 class QPushButton;
@@ -33,6 +34,20 @@ public:
     // --- Chemical Name tab accessors ---
     QString     chemicalName() const;
 
+    // --- Subfiles tab accessors ---
+    QStringList subfilesCodes() const;
+
+    // --- Symmetry tab accessors ---
+    QStringList crystalSystemStrings() const;
+    QStringList spaceGroupStrings()    const;
+
+    struct CellQuery {
+        double values[6] = {-1,-1,-1,-1,-1,-1};  // a,b,c,alpha,beta,gamma (-1=not set)
+        double lenTol = 0;
+        double angTol = 0;
+    };
+    CellQuery cellQuery() const;
+
 signals:
     void loadCardsRequested();
     void loadAndMergeCardsRequested();
@@ -42,14 +57,20 @@ signals:
 private slots:
     void onHelpClicked();
     void onCancelAllRestraintsClicked();
+    void onSymbolListClicked();
 
     // Composition tab
     void onCompositionSelectionChanged(const QStringList &symbols);
     void onCompositionClearClicked();
     void onSpecialModeToggled(bool checked);
 
+    // Subfiles tab
+    void onSubfilesClearAll();
+    void onSubfilesSelectAll();
+
 private:
     void setupCompositionTab();
+    void setupSubfilesTab();
     QString currentOperator() const;
 
     Ui::RestraintsDialog *ui;
@@ -68,6 +89,10 @@ private:
 
     QStringList m_lastSelectedSymbols;
 
+    // Subfiles tab widgets
+    QList<QCheckBox*> m_subfileChecks;
+    QStringList       m_subfileCodes;
 };
+
 
 #endif // RESTRAINTSDIALOG_H

@@ -90,6 +90,7 @@ qualx --createdb --cifdir /path/to/cifs [--recursive] --dbout /path/to/output
 ## Convenzioni UI
 
 - **Preferire il file `.ui`** per definire widget e layout. Evitare di costruire widget programmaticamente in C++ (es. `setupXxxTab()`) quando è possibile farlo nel file `.ui`. Il codice C++ deve solo leggere i widget tramite `ui->nomeWidget`.
+- **Altezza righe nelle liste e tabelle**: usare sempre `verticalHeader()->setDefaultSectionSize(22)` per impostare l'altezza delle righe a 22 pixel in tutti i `QTableWidget`, `QTableView`, `QListView` e widget simili.
 
 ## Note importanti
 
