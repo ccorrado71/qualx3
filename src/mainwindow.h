@@ -4,6 +4,7 @@
 //#include "dbmanager.h"
 #include "peaksearchdialog.h"
 #include "backgrounddialog.h"
+#include "restraintsdialog.h"
 #include "dbquerybuilder.h"
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
@@ -86,14 +87,15 @@ private slots:
     void onActionLoadPeaksTriggered();
     void onActionSavePeaksTriggered();
 
+    //Search
     void onActionSearchMatchTriggered();
+    void onActionSearchMatchOptionsTriggered();
+    void actionRestraintsTriggered();
+    void actionManageDatabasesTriggered();
     void onActionTestDatabaseTriggered();
     void onActionDatabaseInfoTriggered();
     void onActionGetCardTriggered();
-
-    //Search
-    void actionManageDatabasesTriggered();
-    void actionRestraintsTriggered();
+    void onRestraintsExecuteSearch();
 
 private:
     void createDialogs();
@@ -110,8 +112,9 @@ private:
     void enumerateEnabledActionsMenu(QMenu *menu);
 
     //Dialog Windows
-    PeakSearchDialog *peakSearchDialog;
-    BackgroundDialog *backgroundDialog;
+    PeakSearchDialog  *peakSearchDialog  = nullptr;
+    BackgroundDialog  *backgroundDialog  = nullptr;
+    RestraintsDialog  *m_restraintsDialog = nullptr;
 
     //Files
     QString currentFile;

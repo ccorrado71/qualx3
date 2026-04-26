@@ -27,14 +27,18 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
 
     connect(ui->symbolListButton,        &QPushButton::clicked,
             this, &RestraintsDialog::onSymbolListClicked);
+    connect(ui->availableColorsButton,   &QPushButton::clicked,
+            this, &RestraintsDialog::onAvailableColorsClicked);
     connect(ui->helpButton,             &QPushButton::clicked,
             this, &RestraintsDialog::onHelpClicked);
     connect(ui->loadCardsButton,        &QPushButton::clicked,
-            this, [this]() { emit loadCardsRequested(); accept(); });
+            this, [this]() { accept(); emit loadCardsRequested(); });
     connect(ui->loadMergeButton,        &QPushButton::clicked,
             this, &RestraintsDialog::loadAndMergeCardsRequested);
     connect(ui->searchButton,           &QPushButton::clicked,
             this, &RestraintsDialog::searchWithRestraintsRequested);
+    connect(ui->clearEntryIdsButton,     &QPushButton::clicked,
+            this, [this]() { ui->entryIdsEdit->clear(); });
     connect(ui->cancelRestraintsButton, &QPushButton::clicked,
             this, &RestraintsDialog::onCancelAllRestraintsClicked);
     connect(ui->closeButton,            &QPushButton::clicked,
@@ -314,9 +318,60 @@ QStringList RestraintsDialog::spaceGroupStrings() const
     return result;
 }
 
+QStringList RestraintsDialog::entryIds() const
+{
+    QStringList result;
+    const QString text = ui->entryIdsEdit->toPlainText().trimmed();
+    if (text.isEmpty())
+        return result;
+    for (const QString &tok : text.split(QLatin1Char(' '), Qt::SkipEmptyParts))
+        result << tok.trimmed();
+    return result;
+}
+
 QString RestraintsDialog::chemicalName() const
 {
     return ui->chemicalNameEdit->text().trimmed();
+}
+
+QString RestraintsDialog::colorString() const
+{
+    return ui->colorEdit->text().trimmed();
+}
+
+QStringList RestraintsDialog::colorStrings() const
+{
+    QStringList result;
+    const QString text = ui->colorEdit->text().trimmed();
+    if (text.isEmpty())
+        return result;
+    for (const QString &tok : text.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+        const QString s = tok.trimmed();
+        if (!s.isEmpty())
+            result << s;
+    }
+    return result;
+}
+
+double RestraintsDialog::densityCalc() const
+{
+    bool ok;
+    double v = ui->densityCalculatedEdit->text().trimmed().toDouble(&ok);
+    return ok ? v : -1.0;
+}
+
+double RestraintsDialog::densityMeas() const
+{
+    bool ok;
+    double v = ui->densityMeasuredEdit->text().trimmed().toDouble(&ok);
+    return ok ? v : -1.0;
+}
+
+double RestraintsDialog::densityTolerance() const
+{
+    bool ok;
+    double v = ui->densityToleranceEdit->text().trimmed().toDouble(&ok);
+    return (ok && v >= 0.0) ? v : 0.1;
 }
 
 // ---------------------------------------------------------------------------
@@ -449,20 +504,21 @@ void RestraintsDialog::onSubfilesSelectAll()
 // Other slots
 // ---------------------------------------------------------------------------
 
-void RestraintsDialog::onSymbolListClicked()
+void RestraintsDialog::showValuePickerDialog(const QString &title,
+                                             const QString &colHeader,
+                                             const QList<QPair<QString,int>> &rows,
+                                             QLineEdit *targetEdit)
 {
-    const auto rows = AppState::db().querySpaceGroups();
-
     QDialog dlg(this);
-    dlg.setWindowTitle(tr("Space Group Symbols"));
+    dlg.setWindowTitle(title);
     dlg.resize(380, 500);
 
     auto *infoLabel = new QLabel(
-        tr("Select one or more space group symbols to use as filter:"), &dlg);
+        tr("Select one or more values to use as filter:"), &dlg);
     infoLabel->setWordWrap(true);
 
     QTableWidget *table = new QTableWidget(rows.size(), 2, &dlg);
-    table->setHorizontalHeaderLabels({ tr("Space Group"), tr("Count") });
+    table->setHorizontalHeaderLabels({ colHeader, tr("Count") });
     table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     table->verticalHeader()->setVisible(false);
@@ -472,10 +528,10 @@ void RestraintsDialog::onSymbolListClicked()
     table->setSelectionMode(QAbstractItemView::MultiSelection);
 
     for (int i = 0; i < rows.size(); ++i) {
-        auto *symItem = new QTableWidgetItem(rows[i].first);
+        auto *valItem = new QTableWidgetItem(rows[i].first);
         auto *cntItem = new QTableWidgetItem(QString::number(rows[i].second));
         cntItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        table->setItem(i, 0, symItem);
+        table->setItem(i, 0, valItem);
         table->setItem(i, 1, cntItem);
     }
 
@@ -492,21 +548,41 @@ void RestraintsDialog::onSymbolListClicked()
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    QStringList symbols;
-    const auto selected = table->selectedItems();
-    for (auto *item : selected) {
+    QStringList selected;
+    for (auto *item : table->selectedItems()) {
         if (item->column() == 0)
-            symbols << item->text();
+            selected << item->text();
     }
-    if (!symbols.isEmpty())
-        ui->spaceGroupEdit->setText(symbols.join(QStringLiteral(" ; ")));
+    if (!selected.isEmpty()) {
+        const QString existing = targetEdit->text().trimmed();
+        const QString appended = selected.join(QStringLiteral(" ; "));
+        targetEdit->setText(
+            existing.isEmpty() ? appended
+                               : existing + QStringLiteral(" ; ") + appended);
+    }
+}
+
+void RestraintsDialog::onSymbolListClicked()
+{
+    showValuePickerDialog(tr("Space Group Symbols"), tr("Space Group"),
+                          AppState::db().querySpaceGroups(),
+                          ui->spaceGroupEdit);
+}
+
+void RestraintsDialog::onAvailableColorsClicked()
+{
+    showValuePickerDialog(tr("Available Colors"), tr("Color"),
+                          AppState::db().queryColors(),
+                          ui->colorEdit);
 }
 
 void RestraintsDialog::onCancelAllRestraintsClicked()
 {
     onCompositionClearClicked();
     onSubfilesClearAll();
+    ui->entryIdsEdit->clear();
     ui->chemicalNameEdit->clear();
+    ui->colorEdit->clear();
     emit cancelAllRestraintsRequested();
 }
 

@@ -25,6 +25,7 @@ public:
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
     QList<QPair<QString,int>> querySpaceGroups() const;
+    QList<QPair<QString,int>> queryColors() const;
 
 private:
     DbManager dbMain;

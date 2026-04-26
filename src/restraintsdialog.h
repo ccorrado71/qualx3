@@ -31,8 +31,16 @@ public:
     int         compositionMinSpecies() const;
     int         compositionMaxSpecies() const;
 
-    // --- Chemical Name tab accessors ---
-    QString     chemicalName() const;
+    // --- Entries tab accessors ---
+    QStringList entryIds() const;
+
+    // --- Properties tab accessors ---
+    QString     chemicalName()      const;
+    QString     colorString()        const;
+    QStringList colorStrings()       const;
+    double      densityCalc()       const;
+    double      densityMeas()       const;
+    double      densityTolerance()  const;
 
     // --- Subfiles tab accessors ---
     QStringList subfilesCodes() const;
@@ -58,6 +66,7 @@ private slots:
     void onHelpClicked();
     void onCancelAllRestraintsClicked();
     void onSymbolListClicked();
+    void onAvailableColorsClicked();
 
     // Composition tab
     void onCompositionSelectionChanged(const QStringList &symbols);
@@ -72,6 +81,13 @@ private:
     void setupCompositionTab();
     void setupSubfilesTab();
     QString currentOperator() const;
+
+    // Shows a two-column (Value / Count) picker dialog and appends selections
+    // (separated by " ; ") to targetEdit.
+    void showValuePickerDialog(const QString &title,
+                               const QString &colHeader,
+                               const QList<QPair<QString,int>> &rows,
+                               QLineEdit *targetEdit);
 
     Ui::RestraintsDialog *ui;
 

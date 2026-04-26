@@ -3,7 +3,6 @@
 #include "appstate.h"
 #include "dbquerybuilder.h"
 #include "managedatabasesdialog.h"
-#include "restraintsdialog.h"
 #include "progkeysettings.h"
 #include "savedialog.h"
 #include "fileutils.h"
@@ -181,8 +180,16 @@ void MainWindow::restoreEnabledActions()
 
 void MainWindow::createDialogs()
 {
-    peakSearchDialog = new PeakSearchDialog(this);
-    backgroundDialog = new BackgroundDialog(this);
+    peakSearchDialog    = new PeakSearchDialog(this);
+    backgroundDialog    = new BackgroundDialog(this);
+    m_restraintsDialog  = new RestraintsDialog(this);
+
+    connect(m_restraintsDialog, &RestraintsDialog::loadCardsRequested,
+            this, &MainWindow::onRestraintsExecuteSearch);
+    connect(m_restraintsDialog, &RestraintsDialog::loadAndMergeCardsRequested,
+            this, &MainWindow::onRestraintsExecuteSearch);
+    connect(m_restraintsDialog, &RestraintsDialog::searchWithRestraintsRequested,
+            this, &MainWindow::onRestraintsExecuteSearch);
 }
 
 void MainWindow::actionsSetup()
@@ -201,6 +208,7 @@ void MainWindow::actionsSetup()
 
     //Search menu
     connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
+    connect(ui->actionSearch_Match_Options, &QAction::triggered, this, &MainWindow::onActionSearchMatchOptionsTriggered);
     connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
     connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
@@ -553,6 +561,11 @@ void MainWindow::onActionSearchMatchTriggered()
     ui->resultsWidget->setResults(acceptedCards);
 }
 
+void MainWindow::onActionSearchMatchOptionsTriggered()
+{
+    qInfo() << "FIX LATER onActionSearchMatchOptionsTriggered";
+}
+
 void MainWindow::executeSearch(DbQueryBuilder &builder)
 {
     builder.buildQuery();
@@ -580,46 +593,65 @@ void MainWindow::executeSearch(DbQueryBuilder &builder)
 
 void MainWindow::actionRestraintsTriggered()
 {
-    RestraintsDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
+    m_restraintsDialog->show();
+    m_restraintsDialog->raise();
+    m_restraintsDialog->activateWindow();
+}
 
+void MainWindow::onRestraintsExecuteSearch()
+{
+    const RestraintsDialog *dlg = m_restraintsDialog;
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
 
-    QString formula = dlg.compositionFormula();
+    const QString formula = dlg->compositionFormula();
     if (!formula.isEmpty()) {
         builder.setElements(formula);
-        if (dlg.isExactComposition())
+        if (dlg->isExactComposition())
             builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        else if (dlg.isContainsAny())
+        else if (dlg->isContainsAny())
             builder.setBOperator(DbQueryBuilder::JUST_OP);
-        // else: AND_OR_OP is the default
     }
 
-    QString chemName = dlg.chemicalName();
+    const QString chemName = dlg->chemicalName();
     if (!chemName.isEmpty())
         builder.setNames(chemName);
 
-    const QStringList subfiles = dlg.subfilesCodes();
+    const QStringList subfiles = dlg->subfilesCodes();
     if (!subfiles.isEmpty())
         builder.setSubfiles(subfiles);
 
-    const QStringList csys = dlg.crystalSystemStrings();
+    const QStringList csys = dlg->crystalSystemStrings();
     if (!csys.isEmpty())
         builder.setCsysString(csys);
 
-    const QStringList spg = dlg.spaceGroupStrings();
+    const QStringList spg = dlg->spaceGroupStrings();
     if (!spg.isEmpty())
         builder.setSpgString(spg);
 
-    const auto cell = dlg.cellQuery();
+    const auto cell = dlg->cellQuery();
     for (int i = 0; i < 6; ++i) {
         if (cell.values[i] > 0.0) {
             const double tol = (i < 3) ? cell.lenTol : cell.angTol;
             builder.setCellParameter(i, cell.values[i] - tol, cell.values[i] + tol);
         }
     }
+
+    const QStringList ids = dlg->entryIds();
+    if (!ids.isEmpty())
+        builder.setIdEntry(ids);
+
+    const QStringList colors = dlg->colorStrings();
+    if (!colors.isEmpty())
+        builder.setColorString(colors);
+
+    const double densTol = dlg->densityTolerance();
+    const double densCalc = dlg->densityCalc();
+    if (densCalc > 0.0)
+        builder.setDensityCalc(densCalc - densTol, densCalc + densTol);
+    const double densMeas = dlg->densityMeas();
+    if (densMeas > 0.0)
+        builder.setDensityMeas(densMeas - densTol, densMeas + densTol);
 
     executeSearch(builder);
 }

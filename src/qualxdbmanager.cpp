@@ -348,6 +348,24 @@ QVector<CardType> QualxDbManager::makeQuery(const DbQueryBuilder &builder, Progr
         nCountQuery = makeQueryCellParameters(queryCellPar, queryResult);
     }
 
+    //Step 1b: density queries (stat_cdens = calculated, stat_dens = measured)
+    QStringList queryDens = builder.getQueryDensity();
+    if (!queryDens.isEmpty()) {
+        QString densResult;
+        int nCountDens = makeQueryCellParameters(queryDens, densResult);
+        if (!queryResult.isEmpty() && nCountDens > 0) {
+            QStringList list1 = queryResult.split(",");
+            QStringList list2 = densResult.split(",");
+            QStringList resultTmp;
+            nCountQuery = stringInnerJoin(list1, list2, resultTmp);
+            qInfo() << "Inner join density: " << list1.size() << " - " << list2.size() << " -> " << nCountQuery;
+            queryResult = resultTmp.join(",");
+        } else if (nCountDens > 0) {
+            nCountQuery = nCountDens;
+            queryResult = densResult;
+        }
+    }
+
     //Step 2: build and make query for crystal system and space groups
     QString qSimmetryResult;
     int nCountSimmetry = 0;
@@ -364,6 +382,24 @@ QVector<CardType> QualxDbManager::makeQuery(const DbQueryBuilder &builder, Progr
         } else {
             nCountQuery = nCountSimmetry;
             queryResult = qSimmetryResult;
+        }
+    }
+
+    //Step 2b: color query (stat_color in dbInfoStat)
+    QString queryColor = builder.getColorQueryString();
+    if (!queryColor.isEmpty()) {
+        QString colorResult;
+        int nCountColor = makeQuerySymmetry(queryColor, colorResult);
+        if (!queryResult.isEmpty() && nCountColor > 0) {
+            QStringList list1 = queryResult.split(",");
+            QStringList list2 = colorResult.split(",");
+            QStringList resultTmp;
+            nCountQuery = stringInnerJoin(list1, list2, resultTmp);
+            qInfo() << "Inner join color: " << list1.size() << " - " << list2.size() << " -> " << nCountQuery;
+            queryResult = resultTmp.join(",");
+        } else if (nCountColor > 0) {
+            nCountQuery = nCountColor;
+            queryResult = colorResult;
         }
     }
 
@@ -448,6 +484,20 @@ QList<QPair<QString,int>> QualxDbManager::querySpaceGroups() const
         return result;
     QSqlQuery q(dbInfoStat.db());
     q.prepare(QStringLiteral("SELECT val, n FROM stat_spgr ORDER BY n DESC"));
+    if (q.exec()) {
+        while (q.next())
+            result.append({ q.value(0).toString(), q.value(1).toInt() });
+    }
+    return result;
+}
+
+QList<QPair<QString,int>> QualxDbManager::queryColors() const
+{
+    QList<QPair<QString,int>> result;
+    if (!dbInfoStat.isOpen())
+        return result;
+    QSqlQuery q(dbInfoStat.db());
+    q.prepare(QStringLiteral("SELECT val, n FROM stat_color ORDER BY n DESC"));
     if (q.exec()) {
         while (q.next())
             result.append({ q.value(0).toString(), q.value(1).toInt() });

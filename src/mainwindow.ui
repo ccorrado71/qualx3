@@ -102,6 +102,7 @@
      <string>Search</string>
     </property>
     <addaction name="actionSearch_Match"/>
+    <addaction name="actionSearch_Match_Options"/>
     <addaction name="actionRestraints"/>
     <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
@@ -283,6 +284,10 @@
    </property>
   </action>
   <action name="actionSearch_Match">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/search_match.png</normaloff>:/images/images/search_match.png</iconset>
+   </property>
    <property name="text">
     <string>Search-Match</string>
    </property>
@@ -299,6 +304,15 @@
    </property>
    <property name="text">
     <string>Restraints</string>
+   </property>
+  </action>
+  <action name="actionSearch_Match_Options">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/search_match_options.png</normaloff>:/images/images/search_match_options.png</iconset>
+   </property>
+   <property name="text">
+    <string>Search-Match Options</string>
    </property>
   </action>
  </widget>

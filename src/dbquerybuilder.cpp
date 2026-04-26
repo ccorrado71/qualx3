@@ -20,11 +20,16 @@ void DbQueryBuilder::initialize()
         cellParMin[i] = -1;
         cellParMax[i] = -1;
     }
+    densCalcMin = densCalcMax = -1;
+    densMeasMin = densMeasMax = -1;
 
     queryChemical.clear();
     queryCrySys.clear();
     querySymmetry.clear();
     queryCellPar.clear();
+    queryDensity.clear();
+    colorList.clear();
+    queryColor.clear();
 }
 
 void DbQueryBuilder::setSubfiles(const QStringList &newSubfiles)
@@ -115,6 +120,33 @@ void DbQueryBuilder::setCellParameter(int index, double min, double max)
     cellParMax[index] = max;
 }
 
+void DbQueryBuilder::setColorString(const QStringList &colors)
+{
+    colorList = colors;
+}
+
+QString DbQueryBuilder::getColorQueryString() const
+{
+    return queryColor;
+}
+
+void DbQueryBuilder::setDensityCalc(double min, double max)
+{
+    densCalcMin = min;
+    densCalcMax = max;
+}
+
+void DbQueryBuilder::setDensityMeas(double min, double max)
+{
+    densMeasMin = min;
+    densMeasMax = max;
+}
+
+QStringList DbQueryBuilder::getQueryDensity() const
+{
+    return queryDensity;
+}
+
 void DbQueryBuilder::setIdEntry(const QStringList &newIdEntry)
 {
     idEntry = newIdEntry;
@@ -141,7 +173,9 @@ void DbQueryBuilder::setNames(const QString &newNames)
 
 void DbQueryBuilder::buildQuery()
 {
-    queryCellPar = buildQueryCellParameters();
+    queryCellPar  = buildQueryCellParameters();
+    queryDensity  = buildQueryDensity();
+    queryColor    = buildQueryColor();
     if (printEnabled) {
         for (int i = 0; i < queryCellPar.size(); i++) {
             qInfo() << "Query cell parameter " << i << ": " << queryCellPar.at(i);
@@ -405,6 +439,31 @@ QStringList DbQueryBuilder::buildQueryCellParameters()
     }
 
     return queryCell;
+}
+
+QString DbQueryBuilder::buildQueryColor()
+{
+    if (colorList.isEmpty())
+        return {};
+    QString q = QStringLiteral("select ids,n from stat_color where (");
+    for (int i = 0; i < colorList.size(); ++i) {
+        q += QString("trim(val) like '%1'").arg(colorList.at(i));
+        if (i != colorList.size() - 1) q += QStringLiteral(" or ");
+    }
+    q += QLatin1Char(')');
+    return q;
+}
+
+QStringList DbQueryBuilder::buildQueryDensity()
+{
+    QStringList queries;
+    if (densCalcMin > -1 && densCalcMax > -1)
+        queries << QString("select ids,n from stat_cdens where (val >= %1 and val <= %2)")
+                       .arg(densCalcMin).arg(densCalcMax);
+    if (densMeasMin > -1 && densMeasMax > -1)
+        queries << QString("select ids,n from stat_dens where (val >= %1 and val <= %2)")
+                       .arg(densMeasMin).arg(densMeasMax);
+    return queries;
 }
 
 QString DbQueryBuilder::buildQueryIdEntry()

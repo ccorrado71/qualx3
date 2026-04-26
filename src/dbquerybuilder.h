@@ -16,7 +16,10 @@ public:
     void setElements(const QString &newElements);
     void setCsysString(const QStringList &newCsysString);
     void setSpgString(const QStringList &newSpgString);
+    void setColorString(const QStringList &colors);
     void setCellParameter(int index, double min, double max);
+    void setDensityCalc(double min, double max);
+    void setDensityMeas(double min, double max);
     void setIdEntry(const QStringList &newIdEntry);
     void setPrintEnabled(bool newPrintEnabled);
     void setBOperator(boolOperator newBOperator);
@@ -26,7 +29,9 @@ public:
     void buildQuery();
     QString getChemicalQueryString() const;
     QString getSymmetryQueryString() const;
+    QString getColorQueryString()    const;
     QStringList getQueryCellPar() const;
+    QStringList getQueryDensity() const;
     QString getQueryIdEntry() const;
     bool deletedEnabled() const;
     QVector<double> getDValues() const;
@@ -46,8 +51,13 @@ private:
     QString elString;
     QStringList csysString;
     QStringList spgString;
+    QStringList colorList;
+    QString     queryColor;
     QStringList idEntry;
     double cellParMin[6], cellParMax[6];
+    double densCalcMin, densCalcMax;
+    double densMeasMin, densMeasMax;
+    QStringList queryDensity;
     bool printEnabled;
     boolOperator bOperator;
     bool addDeleted;
@@ -58,7 +68,9 @@ private:
     QString buildQuerySubfilesString();
     QString buildQueryElementString();
     QString buildQuerySymmetry();
+    QString buildQueryColor();
     QStringList buildQueryCellParameters();
+    QStringList buildQueryDensity();
     QString buildQueryIdEntry();
 };
 
