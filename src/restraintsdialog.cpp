@@ -475,6 +475,23 @@ void RestraintsDialog::setupSubfilesTab()
 // Public accessors — Subfiles tab
 // ---------------------------------------------------------------------------
 
+bool RestraintsDialog::hasRestraints() const
+{
+    if (!compositionFormula().isEmpty()) return true;
+    if (!chemicalName().isEmpty())       return true;
+    if (!subfilesCodes().isEmpty())      return true;
+    if (!crystalSystemStrings().isEmpty()) return true;
+    if (!spaceGroupStrings().isEmpty())  return true;
+
+    const CellQuery cell = cellQuery();
+    for (int i = 0; i < 6; ++i)
+        if (cell.values[i] > 0.0) return true;
+
+    if (!ui->entryIdsEdit->toPlainText().trimmed().isEmpty()) return true;
+
+    return false;
+}
+
 QStringList RestraintsDialog::subfilesCodes() const
 {
     QStringList codes;

@@ -22,6 +22,7 @@ void DbQueryBuilder::initialize()
     }
     densCalcMin = densCalcMax = -1;
     densMeasMin = densMeasMax = -1;
+    minFom = 0.35;
 
     queryChemical.clear();
     queryCrySys.clear();
@@ -71,6 +72,9 @@ QVector<double> DbQueryBuilder::getDTol() const
 {
     return dTol;
 }
+
+void DbQueryBuilder::setMinFom(double v) { minFom = v; }
+double DbQueryBuilder::getMinFom() const { return minFom; }
 
 void DbQueryBuilder::setWave(double newWave)
 {

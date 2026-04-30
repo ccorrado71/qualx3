@@ -186,19 +186,16 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
 
     int nId = 0;
     int lastProg = -1;
-    double fomLim = 0.70;
+    double fomLim = builder.getMinFom();
     if (queryIds.exec()) {
         if (calcFom) {
             //QVector<CardType> acceptedCards;
             while (queryIds.next()) {
                 nId++;
                 float perc = 100.0f*nId/count;
-                if (fmod(perc,10) == 0) qInfo() << perc << "%";
+                //if (fmod(perc,10) == 0) qInfo() << perc << "%";
                 int prog = static_cast<int>(perc);
                 if (progress && prog != lastProg) { lastProg = prog; progress(nId, count); }
-                //if (nId <= 100) {
-                //qInfo() << "id =" << queryIds.value(0).toString() << queryIds.value(3).toString()
-                //        << queryIds.value(4).toString();
                 QByteArray dByte = queryIds.value(8).toByteArray();
                 QVector<double> dvalues = blobToDoubleVector(dByte);
                 QByteArray iByte = queryIds.value(9).toByteArray();
@@ -217,8 +214,6 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                     double fomd;
                     computeFOM(card.getTth().data(), card.getIntensity().data(), size, &fomd);
                     if (fomd > fomLim) {
-                        //qInfo() << "FOM: " << fomd << queryIds.value(0).toString() << queryIds.value(3).toString()
-                        //        << queryIds.value(4).toString();
                         card.setId(queryIds.value(0).toString());
                         card.setChemicalName(queryIds.value(1).toString());
                         card.setMineralName(queryIds.value(2).toString());
@@ -231,7 +226,6 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                         //card.printCard(1);
                     }
                 }
-                //}
             }
         } else {
             while (queryIds.next()) {
@@ -445,36 +439,128 @@ QVector<CardType> QualxDbManager::makeQuery(const DbQueryBuilder &builder, Progr
     return {};
 }
 
-void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards)
+void QualxDbManager::applyRestraintsToIds(const DbQueryBuilder &builder,
+                                          QStringList &ids, int &count)
+{
+    if (ids.isEmpty()) return;
+
+    // --- Stat-table restraints (cell params, symmetry, color) ---
+    QString statResult;
+    int     statCount = 0;
+    bool    hasStatRestraints = false;
+
+    const QStringList queryCellPar = builder.getQueryCellPar();
+    if (!queryCellPar.isEmpty()) {
+        statCount = makeQueryCellParameters(queryCellPar, statResult);
+        hasStatRestraints = true;
+    }
+
+    const QString querySymm = builder.getSymmetryQueryString();
+    if (!querySymm.isEmpty()) {
+        QString symResult;
+        int symCount = makeQuerySymmetry(querySymm, symResult);
+        if (hasStatRestraints && symCount > 0) {
+            QStringList l1 = statResult.split(QLatin1Char(','), Qt::SkipEmptyParts);
+            QStringList l2 = symResult.split(QLatin1Char(','), Qt::SkipEmptyParts);
+            QStringList tmp;
+            statCount = stringInnerJoin(l1, l2, tmp);
+            statResult = tmp.join(QLatin1Char(','));
+        } else if (symCount > 0) {
+            statCount = symCount;
+            statResult = symResult;
+        }
+        hasStatRestraints = true;
+    }
+
+    const QString queryColor = builder.getColorQueryString();
+    if (!queryColor.isEmpty()) {
+        QString colResult;
+        int colCount = makeQuerySymmetry(queryColor, colResult);
+        if (hasStatRestraints && colCount > 0) {
+            QStringList l1 = statResult.split(QLatin1Char(','), Qt::SkipEmptyParts);
+            QStringList l2 = colResult.split(QLatin1Char(','), Qt::SkipEmptyParts);
+            QStringList tmp;
+            statCount = stringInnerJoin(l1, l2, tmp);
+            statResult = tmp.join(QLatin1Char(','));
+        } else if (colCount > 0) {
+            statCount = colCount;
+            statResult = colResult;
+        }
+        hasStatRestraints = true;
+    }
+
+    if (hasStatRestraints) {
+        if (statCount == 0) { ids.clear(); count = 0; return; }
+        const QStringList statIds = statResult.split(QLatin1Char(','), Qt::SkipEmptyParts);
+        QStringList filtered;
+        stringInnerJoin(ids, statIds, filtered);
+        ids   = filtered;
+        count = ids.size();
+        if (ids.isEmpty()) return;
+    }
+
+    // --- Chemical / name / subfile / element restraints ---
+    const QString queryChemical = builder.getChemicalQueryString();
+    if (!queryChemical.isEmpty()) {
+        // Build quoted id list for INTERSECT clause
+        QString quotedIds;
+        for (const QString &id : std::as_const(ids))
+            quotedIds.append(QLatin1Char('\'') + id + QLatin1String("',"));
+        quotedIds.chop(1);
+
+        const QString combined = queryChemical
+            + QStringLiteral(" INTERSECT SELECT id FROM id WHERE id IN (") + quotedIds + QLatin1Char(')');
+
+        QSqlQuery q(dbMain.db());
+        q.prepare(combined);
+        if (q.exec()) {
+            ids.clear();
+            while (q.next())
+                ids.append(q.value(0).toString());
+            count = ids.size();
+        }
+    }
+}
+
+void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
+                                        ProgressCallback progress)
 {
     ScopedTimer timer("QualxDbManager::makeQueryStrongest->makeQueryInfoIdsWithFom");
 
     QSqlQuery query(dbSearch.db());
     query.prepare("SELECT id, n, dval FROM top");
 
-    QString idsString;
-    if (query.exec()) {
-        int nq = 0;
-        while (query.next()) {
-            QString id = query.value(0).toString();
-            int n = query.value(1).toInt();
-            QString dvalStr = query.value(2).toString();
-
-            QVector<double> dStrong = SearchUtil::extractNumbers(dvalStr, n, 3);
-            bool result = SearchUtil::checkStrongValuesWithTolerance(builder.getDValues(), builder.getDTol(), dStrong);
-            if (result) {
-                nq++;
-                idsString.append("'"+id+"',");
-            }
-        }
-        idsString.chop(1); // Remove last ','
-        qInfo() << "idsString: " << idsString.length();
-        qInfo() << "Number of strongest matches: " << nq;
-        //QVector<CardType> acceptedCard;
-        makeQueryInfoIdsWithFom(idsString, builder, nq, acceptedCards,true);
-    } else {
+    if (!query.exec()) {
         qCritical() << "Failed to execute strongest query:" << query.lastError().text();
+        return;
     }
+
+    // Collect candidate IDs as plain strings (no quotes)
+    QStringList idList;
+    while (query.next()) {
+        const QString id      = query.value(0).toString();
+        const int     n       = query.value(1).toInt();
+        const QString dvalStr = query.value(2).toString();
+        const QVector<double> dStrong = SearchUtil::extractNumbers(dvalStr, n, 3);
+        if (SearchUtil::checkStrongValuesWithTolerance(builder.getDValues(), builder.getDTol(), dStrong))
+            idList.append(id);
+    }
+    qInfo() << "Number of strongest matches:" << idList.size();
+
+    // Apply restraints from builder (cell params, symmetry, chemical, names…)
+    int count = idList.size();
+    applyRestraintsToIds(builder, idList, count);
+    qInfo() << "Number of candidates after restraints:" << count;
+
+    if (idList.isEmpty()) return;
+
+    // Build quoted idsString for makeQueryInfoIdsWithFom
+    QString idsString;
+    for (const QString &id : std::as_const(idList))
+        idsString.append(QLatin1Char('\'') + id + QLatin1String("',"));
+    idsString.chop(1);
+
+    makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, true, progress);
 }
 
 QList<QPair<QString,int>> QualxDbManager::querySpaceGroups() const

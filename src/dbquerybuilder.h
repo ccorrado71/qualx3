@@ -25,6 +25,8 @@ public:
     void setBOperator(boolOperator newBOperator);
     void enableDeleted(bool newAddDeleted);
     void setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol);
+    void   setMinFom(double v);
+    double getMinFom() const;
 
     void buildQuery();
     QString getChemicalQueryString() const;
@@ -63,6 +65,7 @@ private:
     bool addDeleted;
     QVector<double> dValues, dTol;
     double wave;
+    double minFom;
 
     QString buildQueryNameString();
     QString buildQuerySubfilesString();

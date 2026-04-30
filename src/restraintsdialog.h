@@ -42,6 +42,8 @@ public:
     double      densityMeas()       const;
     double      densityTolerance()  const;
 
+    bool hasRestraints() const;
+
     // --- Subfiles tab accessors ---
     QStringList subfilesCodes() const;
 

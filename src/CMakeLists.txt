@@ -97,6 +97,9 @@ set(PROJECT_SOURCES
     restraintsdialog.ui
     savedialog.cpp
     savedialog.h
+    searchoptionsdialog.cpp
+    searchoptionsdialog.h
+    searchoptionsdialog.ui
     stringlistdialog.cpp
     stringlistdialog.h
     stringlistdialog.ui

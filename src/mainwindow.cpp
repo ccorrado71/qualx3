@@ -4,12 +4,16 @@
 #include "dbquerybuilder.h"
 #include "managedatabasesdialog.h"
 #include "progkeysettings.h"
+#include "restraintsdialog.h"
 #include "savedialog.h"
+#include "searchoptionsdialog.h"
 #include "fileutils.h"
 
 #include <QApplication>
 #include <QDebug>
 #include <QMessageBox>
+
+#include <algorithm>
 
 MainWindow *mMainWindow;
 QString MainWindow::pathDataFiles = "";
@@ -553,17 +557,49 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setPrintEnabled(true);
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
-    QVector<CardType> acceptedCards;
+    builder.setMinFom(SearchOptionsDialog::savedMinFom());
+    applyDialogRestraints(builder);
+    builder.buildQuery();
+
+    setStatusMessage(m_restraintsDialog->hasRestraints()
+                         ? tr("Searching database with restraints...")
+                         : tr("Searching database..."));
+    statusProgressBar->setRange(0, 100);
+    statusProgressBar->setValue(0);
+    statusProgressBar->show();
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    AppState::db().makeQueryStrongest(builder, acceptedCards);
+    QApplication::processEvents();
+
+    auto progress = [this](int current, int total) {
+        statusProgressBar->setValue(total > 0 ? (100 * current) / total : 0);
+        QApplication::processEvents();
+    };
+
+    QVector<CardType> acceptedCards;
+    AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+
     QApplication::restoreOverrideCursor();
-    qInfo() << "Number of accepted cards: " << acceptedCards.size();
+    statusProgressBar->hide();
+    clearStatusMessage();
+
+    // Keep only the top maxEntries cards by descending FOM
+    const int maxEntries = SearchOptionsDialog::savedMaxEntries();
+    if (acceptedCards.size() > maxEntries) {
+        std::sort(acceptedCards.begin(), acceptedCards.end(),
+                  [](const CardType &a, const CardType &b) {
+                      return a.getFomd() > b.getFomd();
+                  });
+        acceptedCards.resize(maxEntries);
+    }
+
+    setStatusMessage(tr("Found %1 card(s)").arg(acceptedCards.size()));
     ui->resultsWidget->setResults(acceptedCards);
 }
 
 void MainWindow::onActionSearchMatchOptionsTriggered()
 {
-    qInfo() << "FIX LATER onActionSearchMatchOptionsTriggered";
+    SearchOptionsDialog dlg(this);
+    dlg.exec();
 }
 
 void MainWindow::executeSearch(DbQueryBuilder &builder)
@@ -587,7 +623,7 @@ void MainWindow::executeSearch(DbQueryBuilder &builder)
     QApplication::restoreOverrideCursor();
     statusProgressBar->hide();
     setStatusMessage(tr("Found %1 card(s)").arg(cards.size()));
-    qInfo() << "Number of cards found:" << cards.size();
+
     ui->resultsWidget->setResults(cards);
 }
 
@@ -598,11 +634,9 @@ void MainWindow::actionRestraintsTriggered()
     m_restraintsDialog->activateWindow();
 }
 
-void MainWindow::onRestraintsExecuteSearch()
+void MainWindow::applyDialogRestraints(DbQueryBuilder &builder)
 {
     const RestraintsDialog *dlg = m_restraintsDialog;
-    DbQueryBuilder builder;
-    builder.setPrintEnabled(true);
 
     const QString formula = dlg->compositionFormula();
     if (!formula.isEmpty()) {
@@ -652,7 +686,13 @@ void MainWindow::onRestraintsExecuteSearch()
     const double densMeas = dlg->densityMeas();
     if (densMeas > 0.0)
         builder.setDensityMeas(densMeas - densTol, densMeas + densTol);
+}
 
+void MainWindow::onRestraintsExecuteSearch()
+{
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+    applyDialogRestraints(builder);
     executeSearch(builder);
 }
 

@@ -20,7 +20,8 @@ public:
     bool openDatabases(const QString &path);
     void closeDatabeses();
     QVector<CardType> makeQuery(const DbQueryBuilder &builder, ProgressCallback progress = nullptr);
-    void makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards);
+    void makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
+                            ProgressCallback progress = nullptr);
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
@@ -36,6 +37,7 @@ private:
 
     static QVector<double> blobToDoubleVector(const QByteArray &blob);
 
+    void applyRestraintsToIds(const DbQueryBuilder &builder, QStringList &ids, int &count);
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);

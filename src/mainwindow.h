@@ -122,5 +122,6 @@ private:
 
     void testSelection(DbQueryBuilder &builder, int testCase);
     void executeSearch(DbQueryBuilder &builder);
+    void applyDialogRestraints(DbQueryBuilder &builder);
 };
 #endif // MAINWINDOW_H
