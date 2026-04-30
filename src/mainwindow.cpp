@@ -576,7 +576,10 @@ void MainWindow::onActionSearchMatchTriggered()
     };
 
     QVector<CardType> acceptedCards;
-    AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+    if (SearchOptionsDialog::savedCheckStrongest())
+        AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+    else
+        AppState::db().makeQueryWithoutStrongest(builder, acceptedCards, progress);
 
     QApplication::restoreOverrideCursor();
     statusProgressBar->hide();

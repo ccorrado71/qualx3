@@ -17,6 +17,7 @@ public:
     // Static helpers — read saved settings without creating the UI
     static double savedMinFom();
     static int    savedMaxEntries();
+    static bool   savedCheckStrongest();
 
     double minFom()              const;
     double weight2thetaD()       const;

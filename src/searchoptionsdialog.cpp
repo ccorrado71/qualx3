@@ -141,8 +141,9 @@ void SearchOptionsDialog::saveSettings()
 // Accessors
 // ---------------------------------------------------------------------------
 
-double SearchOptionsDialog::savedMinFom()    { return QSettings().value(SK_FOM,    0.35).toDouble(); }
-int    SearchOptionsDialog::savedMaxEntries() { return QSettings().value(SK_MAXENT, 3000).toInt(); }
+double SearchOptionsDialog::savedMinFom()      { return QSettings().value(SK_FOM,       0.35).toDouble(); }
+int    SearchOptionsDialog::savedMaxEntries()  { return QSettings().value(SK_MAXENT,   3000).toInt(); }
+bool   SearchOptionsDialog::savedCheckStrongest() { return QSettings().value(SK_STRONGEST, true).toBool(); }
 
 double SearchOptionsDialog::minFom()              const { return ui->spinFom->value(); }
 double SearchOptionsDialog::weight2thetaD()       const { return ui->spinTwothetaD->value(); }

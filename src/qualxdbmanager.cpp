@@ -177,25 +177,27 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
     QString queryString;
     queryString = "Select id, name, mineralname, chemical_formula, spacegroup, "
                   "quality, rir, nrec, dvalue, intensita, n from id";
-    if (builder.deletedEnabled()) {
-        queryString = queryString + " where trim(quality)!='D' and id in ("+idsString+")";
-    } else {
-        queryString = queryString + " where id in ("+idsString+")";
+    if (!idsString.isEmpty()) {
+        if (builder.deletedEnabled())
+            queryString += " where trim(quality)!='D' and id in (" + idsString + ")";
+        else
+            queryString += " where id in (" + idsString + ")";
+    } else if (builder.deletedEnabled()) {
+        queryString += " where trim(quality)!='D'";
     }
     queryIds.prepare(queryString);
 
+    const int actualCount = (count > 0) ? count : dbMain.queryForCount(queryString);
     int nId = 0;
     int lastProg = -1;
     double fomLim = builder.getMinFom();
     if (queryIds.exec()) {
         if (calcFom) {
-            //QVector<CardType> acceptedCards;
             while (queryIds.next()) {
                 nId++;
-                float perc = 100.0f*nId/count;
-                //if (fmod(perc,10) == 0) qInfo() << perc << "%";
+                float perc = (actualCount > 0) ? 100.0f*nId/actualCount : 0.0f;
                 int prog = static_cast<int>(perc);
-                if (progress && prog != lastProg) { lastProg = prog; progress(nId, count); }
+                if (progress && prog != lastProg) { lastProg = prog; progress(nId, actualCount); }
                 QByteArray dByte = queryIds.value(8).toByteArray();
                 QVector<double> dvalues = blobToDoubleVector(dByte);
                 QByteArray iByte = queryIds.value(9).toByteArray();
@@ -230,10 +232,9 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
         } else {
             while (queryIds.next()) {
                 nId++;
-                float perc = 100.0f*nId/count;
-                if (fmod(perc,10) == 0) qInfo() << perc << "%";
+                float perc = (actualCount > 0) ? 100.0f*nId/actualCount : 0.0f;
                 int prog = static_cast<int>(perc);
-                if (progress && prog != lastProg) { lastProg = prog; progress(nId, count); }
+                if (progress && prog != lastProg) { lastProg = prog; progress(nId, actualCount); }
                 CardType card;
                 card.setId(queryIds.value(0).toString());
                 card.setChemicalName(queryIds.value(1).toString());
@@ -561,6 +562,54 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<C
     idsString.chop(1);
 
     makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, true, progress);
+}
+
+void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
+                                               QVector<CardType> &acceptedCards,
+                                               ProgressCallback progress)
+{
+    ScopedTimer timer("QualxDbManager::makeQueryWithoutStrongest");
+
+    const bool hasRestraints = !builder.getQueryCellPar().isEmpty()
+                            || !builder.getSymmetryQueryString().isEmpty()
+                            || !builder.getColorQueryString().isEmpty()
+                            || !builder.getQueryDensity().isEmpty()
+                            || !builder.getChemicalQueryString().isEmpty()
+                            || !builder.getQueryIdEntry().isEmpty();
+
+    if (hasRestraints) {
+        // Populate the candidate list with all card IDs, then filter via restraints
+        QString fetchQuery = QStringLiteral("SELECT id FROM id");
+        if (builder.deletedEnabled())
+            fetchQuery += QStringLiteral(" WHERE trim(quality)!='D'");
+
+        QSqlQuery q(dbMain.db());
+        q.prepare(fetchQuery);
+        QStringList idList;
+        if (q.exec()) {
+            while (q.next())
+                idList.append(q.value(0).toString());
+        }
+        qInfo() << "makeQueryWithoutStrongest: total candidates =" << idList.size();
+
+        int count = idList.size();
+        applyRestraintsToIds(builder, idList, count);
+        qInfo() << "makeQueryWithoutStrongest: after restraints =" << count;
+
+        if (idList.isEmpty()) return;
+
+        QString idsString;
+        for (const QString &id : std::as_const(idList))
+            idsString.append(QLatin1Char('\'') + id + QLatin1String("',"));
+        idsString.chop(1);
+
+        makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, true, progress);
+    } else {
+        // No restraints: query all cards directly (idsString empty → no IN filter)
+        makeQueryInfoIdsWithFom(QString(), builder, 0, acceptedCards, true, progress);
+    }
+
+    qInfo() << "makeQueryWithoutStrongest: accepted =" << acceptedCards.size();
 }
 
 QList<QPair<QString,int>> QualxDbManager::querySpaceGroups() const

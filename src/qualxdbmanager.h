@@ -22,6 +22,8 @@ public:
     QVector<CardType> makeQuery(const DbQueryBuilder &builder, ProgressCallback progress = nullptr);
     void makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
                             ProgressCallback progress = nullptr);
+    void makeQueryWithoutStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
+                                   ProgressCallback progress = nullptr);
     void getInfo(int &ncard, QString &type);
     void getCardInfo(const QString &idCard);
     void getCardAdditionalInfo(const QString &idCard);
