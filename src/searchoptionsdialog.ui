@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SearchOptionsDialog</class>
+ <widget class="QDialog" name="SearchOptionsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>420</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Search Options</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+
+   <!-- QGroupBox: FOM Settings (contains the sliders grid) -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxFom">
+     <property name="title"><string>FOM Settings</string></property>
+     <layout class="QGridLayout" name="gridWeights">
+
+      <!-- Row 0: Min. FOM -->
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelFom">
+        <property name="text"><string>Min. FOM</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSlider" name="sliderFom">
+        <property name="minimum"><number>0</number></property>
+        <property name="maximum"><number>100</number></property>
+        <property name="value"><number>35</number></property>
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QDoubleSpinBox" name="spinFom">
+        <property name="decimals"><number>2</number></property>
+        <property name="minimum"><double>0.000000000000000</double></property>
+        <property name="maximum"><double>1.000000000000000</double></property>
+        <property name="singleStep"><double>0.010000000000000</double></property>
+        <property name="value"><double>0.350000000000000</double></property>
+       </widget>
+      </item>
+
+      <!-- Row 1: 2θ/d -->
+      <item row="1" column="0">
+       <widget class="QLabel" name="labelTwothetaD">
+        <property name="text"><string>2θ/d</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSlider" name="sliderTwothetaD">
+        <property name="minimum"><number>0</number></property>
+        <property name="maximum"><number>100</number></property>
+        <property name="value"><number>50</number></property>
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="spinTwothetaD">
+        <property name="decimals"><number>2</number></property>
+        <property name="minimum"><double>0.000000000000000</double></property>
+        <property name="maximum"><double>1.000000000000000</double></property>
+        <property name="singleStep"><double>0.010000000000000</double></property>
+        <property name="value"><double>0.500000000000000</double></property>
+       </widget>
+      </item>
+
+      <!-- Row 2: Intensity -->
+      <item row="2" column="0">
+       <widget class="QLabel" name="labelIntensity">
+        <property name="text"><string>Intensity</string></property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSlider" name="sliderIntensity">
+        <property name="minimum"><number>0</number></property>
+        <property name="maximum"><number>100</number></property>
+        <property name="value"><number>50</number></property>
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="spinIntensity">
+        <property name="decimals"><number>2</number></property>
+        <property name="minimum"><double>0.000000000000000</double></property>
+        <property name="maximum"><double>1.000000000000000</double></property>
+        <property name="singleStep"><double>0.010000000000000</double></property>
+        <property name="value"><double>0.500000000000000</double></property>
+       </widget>
+      </item>
+
+      <!-- Row 3: Phases (with Single/Multiple end labels) -->
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelPhases">
+        <property name="text"><string>Phases</string></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <layout class="QHBoxLayout" name="layoutPhases">
+        <item>
+         <widget class="QLabel" name="labelSingle">
+          <property name="text"><string>Single</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="sliderPhases">
+          <property name="minimum"><number>0</number></property>
+          <property name="maximum"><number>100</number></property>
+          <property name="value"><number>50</number></property>
+          <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelMultiple">
+          <property name="text"><string>Multiple</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="spinPhases">
+        <property name="decimals"><number>2</number></property>
+        <property name="minimum"><double>0.000000000000000</double></property>
+        <property name="maximum"><double>1.000000000000000</double></property>
+        <property name="singleStep"><double>0.010000000000000</double></property>
+        <property name="value"><double>0.500000000000000</double></property>
+       </widget>
+      </item>
+
+      <!-- Row 4: Δ2θ with Auto checkbox -->
+      <item row="4" column="0">
+       <layout class="QHBoxLayout" name="layoutDeltaLabel">
+        <item>
+         <widget class="QLabel" name="labelDelta">
+          <property name="text"><string>Δ2θ</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkAuto">
+          <property name="text"><string>Auto</string></property>
+          <property name="checked"><bool>true</bool></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSlider" name="sliderDelta">
+        <property name="minimum"><number>1</number></property>
+        <property name="maximum"><number>50</number></property>
+        <property name="value"><number>8</number></property>
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QDoubleSpinBox" name="spinDelta">
+        <property name="decimals"><number>2</number></property>
+        <property name="minimum"><double>0.010000000000000</double></property>
+        <property name="maximum"><double>0.500000000000000</double></property>
+        <property name="singleStep"><double>0.010000000000000</double></property>
+        <property name="value"><double>0.080000000000000</double></property>
+       </widget>
+      </item>
+
+     </layout>
+    </widget>
+   </item>
+
+   <!-- QGroupBox: Search Settings (checkboxes + max entries) -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxSearch">
+     <property name="title"><string>Search Settings</string></property>
+     <layout class="QVBoxLayout" name="layoutSearch">
+      <item>
+       <widget class="QCheckBox" name="checkResidual">
+        <property name="text"><string>Residual Searching</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkStrongest">
+        <property name="text"><string>Check strongest peaks</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkDeleted">
+        <property name="text"><string>Check deleted cards</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="layoutMaxEntries">
+        <item>
+         <widget class="QLabel" name="labelMaxEntries">
+          <property name="text"><string>Max. number of resulting entries:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEditMaxEntries">
+          <property name="text"><string>3000</string></property>
+          <property name="maximumWidth"><number>80</number></property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="spacerMaxEntries">
+          <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+          <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- Vertical spacer -->
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation"><enum>Qt::Orientation::Vertical</enum></property>
+     <property name="sizeHint" stdset="0"><size><width>20</width><height>10</height></size></property>
+    </spacer>
+   </item>
+
+   <!-- Button box: Help, OK, Cancel, Restore Defaults -->
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Help|QDialogButtonBox::StandardButton::Ok|QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::RestoreDefaults</set>
+     </property>
+    </widget>
+   </item>
+
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
