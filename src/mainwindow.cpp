@@ -558,6 +558,10 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
     builder.setMinFom(SearchOptionsDialog::savedMinFom());
+    builder.setWeight2thetaD(SearchOptionsDialog::savedWeight2thetaD());
+    builder.setWeightIntensity(SearchOptionsDialog::savedWeightIntensity());
+    builder.setWeightPhases(SearchOptionsDialog::savedWeightPhases());
+    builder.setDelta2theta(SearchOptionsDialog::savedDelta2theta());
     applyDialogRestraints(builder);
     builder.buildQuery();
 
@@ -590,7 +594,7 @@ void MainWindow::onActionSearchMatchTriggered()
     if (acceptedCards.size() > maxEntries) {
         std::sort(acceptedCards.begin(), acceptedCards.end(),
                   [](const CardType &a, const CardType &b) {
-                      return a.getFomd() > b.getFomd();
+                      return a.getFom() > b.getFom();
                   });
         acceptedCards.resize(maxEntries);
     }
@@ -639,6 +643,8 @@ void MainWindow::actionRestraintsTriggered()
 
 void MainWindow::applyDialogRestraints(DbQueryBuilder &builder)
 {
+    builder.enableDeleted(SearchOptionsDialog::savedCheckDeleted());
+
     const RestraintsDialog *dlg = m_restraintsDialog;
 
     const QString formula = dlg->compositionFormula();

@@ -26,7 +26,15 @@ public:
     void enableDeleted(bool newAddDeleted);
     void setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol);
     void   setMinFom(double v);
-    double getMinFom() const;
+    double getMinFom()          const;
+    void   setWeight2thetaD(double v);
+    double getWeight2thetaD()   const;
+    void   setWeightIntensity(double v);
+    double getWeightIntensity() const;
+    void   setWeightPhases(double v);
+    double getWeightPhases()    const;
+    void   setDelta2theta(double v);
+    double getDelta2theta()     const;
 
     void buildQuery();
     QString getChemicalQueryString() const;
@@ -66,6 +74,10 @@ private:
     QVector<double> dValues, dTol;
     double wave;
     double minFom;
+    double weight2thetaD;
+    double weightIntensity;
+    double weightPhases;
+    double delta2theta;
 
     QString buildQueryNameString();
     QString buildQuerySubfilesString();

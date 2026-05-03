@@ -1,6 +1,8 @@
 #include "searchoptionsdialog.h"
 #include "ui_searchoptionsdialog.h"
 
+extern "C" double delta2thetaPeaks();
+
 #include <QAbstractButton>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
@@ -66,6 +68,7 @@ SearchOptionsDialog::SearchOptionsDialog(QWidget *parent)
             this, &SearchOptionsDialog::onButtonClicked);
 
     loadSettings();
+    onAutoToggled(ui->checkAuto->isChecked());
 }
 
 SearchOptionsDialog::~SearchOptionsDialog()
@@ -79,6 +82,8 @@ SearchOptionsDialog::~SearchOptionsDialog()
 
 void SearchOptionsDialog::onAutoToggled(bool checked)
 {
+    if (checked)
+        ui->spinDelta->setValue(delta2thetaPeaks());
     ui->sliderDelta->setDisabled(checked);
     ui->spinDelta->setDisabled(checked);
 }
@@ -99,12 +104,12 @@ void SearchOptionsDialog::resetToDefaults()
     ui->spinTwothetaD->setValue(0.50);
     ui->spinIntensity->setValue(0.50);
     ui->spinPhases->setValue(0.50);
-    ui->spinDelta->setValue(0.08);
     ui->checkAuto->setChecked(true);
     ui->checkResidual->setChecked(true);
     ui->checkStrongest->setChecked(true);
     ui->checkDeleted->setChecked(true);
     ui->lineEditMaxEntries->setText(QStringLiteral("3000"));
+    onAutoToggled(true);
 }
 
 void SearchOptionsDialog::loadSettings()
@@ -144,6 +149,16 @@ void SearchOptionsDialog::saveSettings()
 double SearchOptionsDialog::savedMinFom()      { return QSettings().value(SK_FOM,       0.35).toDouble(); }
 int    SearchOptionsDialog::savedMaxEntries()  { return QSettings().value(SK_MAXENT,   3000).toInt(); }
 bool   SearchOptionsDialog::savedCheckStrongest() { return QSettings().value(SK_STRONGEST, true).toBool(); }
+bool   SearchOptionsDialog::savedCheckDeleted()   { return QSettings().value(SK_DELETED,   true).toBool(); }
+double SearchOptionsDialog::savedWeight2thetaD()  { return QSettings().value(SK_2THETA,    0.50).toDouble(); }
+double SearchOptionsDialog::savedWeightIntensity(){ return QSettings().value(SK_INT,       0.50).toDouble(); }
+double SearchOptionsDialog::savedWeightPhases()   { return QSettings().value(SK_PHASES,    0.50).toDouble(); }
+double SearchOptionsDialog::savedDelta2theta()
+{
+    if (QSettings().value(SK_AUTO, true).toBool())
+        return delta2thetaPeaks();
+    return QSettings().value(SK_DELTA, 0.08).toDouble();
+}
 
 double SearchOptionsDialog::minFom()              const { return ui->spinFom->value(); }
 double SearchOptionsDialog::weight2thetaD()       const { return ui->spinTwothetaD->value(); }

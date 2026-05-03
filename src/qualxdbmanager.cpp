@@ -6,7 +6,9 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd);
+extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
+                           double w2thetad, double w_intensity, double w_phases, double delta2theta,
+                           double *fompeakpos_out, double *fomintensity_out, double *scale_out);
 
 QualxDbManager::QualxDbManager()
     : nStrongest(3)
@@ -213,9 +215,12 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                 int size = card.getTth().size();
                 //qInfo() << "SIZE: " << nId << size;
                 if (size > 0) {
-                    double fomd;
-                    computeFOM(card.getTth().data(), card.getIntensity().data(), size, &fomd);
-                    if (fomd > fomLim) {
+                    double fom, fompeakpos = 0.0, fomintensity = 0.0, cardscale = 0.0;
+                    computeFOM(card.getTth().data(), card.getIntensity().data(), size, &fom,
+                               builder.getWeight2thetaD(), builder.getWeightIntensity(),
+                               builder.getWeightPhases(),  builder.getDelta2theta(),
+                               &fompeakpos, &fomintensity, &cardscale);
+                    if (fom > fomLim) {
                         card.setId(queryIds.value(0).toString());
                         card.setChemicalName(queryIds.value(1).toString());
                         card.setMineralName(queryIds.value(2).toString());
@@ -223,9 +228,11 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                         card.setSpaceGroup(queryIds.value(4).toString());
                         card.setQuality(queryIds.value(5).toString());
                         card.setRIR(queryIds.value(6).toString());
-                        card.setFomd(fomd);
+                        card.setFom(fom);
+                        card.setFomPeakPos(fompeakpos);
+                        card.setFomIntensity(fomintensity);
+                        card.setScale(cardscale);
                         acceptedCards.append(card);
-                        //card.printCard(1);
                     }
                 }
             }

@@ -26,7 +26,6 @@
    integer :: MAXNPSMOOTH = 50, MINSENS = 0, MAXSENS = 100
  
    integer :: peak_pos_message = 2
-
   contains
 
    subroutine peak_search_action(iAction, pSettings) bind(C,name="peak_search_action")
@@ -419,5 +418,20 @@
    call SavePeaks(filenam,tipo)
  
    end subroutine SavePeaksC 
+
+!-------------------------------------------------------------------------------------------------------  
+
+   function delta2thetaPeaks() bind(C,name="delta2thetaPeaks")
+   use peak_mod
+   real(c_double)  :: delta2thetaPeaks
+   real, parameter :: deltatemp = 1.3
+!
+   if (numpeaks(pkind) > 0) then
+      delta2thetaPeaks = min(0.5,deltatemp*(sum(pkind%fwhm)/numpeaks(pkind)))
+   else
+      delta2thetaPeaks = 0.5
+   endif
+!
+   end function delta2thetaPeaks
 
  end module peak_search_interop 

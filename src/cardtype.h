@@ -26,8 +26,14 @@ public:
     void setRIR(const QString &newRIR);
     QString getSpaceGroup() const;
     void setSpaceGroup(const QString &newSpaceGroup);
-    double getFomd() const;
-    void setFomd(double newFomd);
+    double getFom() const;
+    void setFom(double newFomd);
+    double getFomPeakPos()  const;
+    void   setFomPeakPos(double v);
+    double getFomIntensity() const;
+    void   setFomIntensity(double v);
+    double getScale() const;
+    void   setScale(double v);
 
     QVector<double> getIntensity() const;
     void setIntensity(const QVector<double> &newIntensity);
@@ -40,7 +46,10 @@ private:
     QString quality;
     QString RIR;
     QString spaceGroup;
-    double fomd;
+    double fom;
+    double fomPeakPos;
+    double fomIntensity;
+    double scale;
     QVector<double> d;       // d-spacing
     QVector<double> tth;     // two-theta
     QVector<double> intensity; // intensity

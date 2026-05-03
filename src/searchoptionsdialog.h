@@ -18,6 +18,11 @@ public:
     static double savedMinFom();
     static int    savedMaxEntries();
     static bool   savedCheckStrongest();
+    static bool   savedCheckDeleted();
+    static double savedWeight2thetaD();
+    static double savedWeightIntensity();
+    static double savedWeightPhases();
+    static double savedDelta2theta();
 
     double minFom()              const;
     double weight2thetaD()       const;

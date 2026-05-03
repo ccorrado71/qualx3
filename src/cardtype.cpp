@@ -1,7 +1,9 @@
 #include "cardtype.h"
 #include "xpdutils.h"
 
-CardType::CardType() {}
+CardType::CardType()
+    : fom(0.0), fomPeakPos(0.0), fomIntensity(0.0), scale(0.0)
+{}
 
 QVector<double> CardType::getD() const
 {
@@ -25,7 +27,7 @@ QVector<double> CardType::getTth() const
 
 void CardType::printCard(int level) const
 {
-    qDebug() << "Id: " << id << " Formula: " << chemicalFormula << "Fomd: " << fomd;
+    qDebug() << "Id: " << id << " Formula: " << chemicalFormula << "Fomd: " << fom;
     if (level < 2)
         return;
     int n = std::min(d.size(), tth.size());
@@ -104,15 +106,18 @@ void CardType::setSpaceGroup(const QString &newSpaceGroup)
     spaceGroup = newSpaceGroup;
 }
 
-double CardType::getFomd() const
+double CardType::getFom() const
 {
-    return fomd;
+    return fom;
 }
 
-void CardType::setFomd(double newFomd)
-{
-    fomd = newFomd;
-}
+void CardType::setFom(double newFomd)   { fom          = newFomd; }
+double CardType::getFomPeakPos()  const { return fomPeakPos; }
+void   CardType::setFomPeakPos(double v){ fomPeakPos   = v; }
+double CardType::getFomIntensity() const{ return fomIntensity; }
+void   CardType::setFomIntensity(double v){ fomIntensity = v; }
+double CardType::getScale()        const{ return scale; }
+void   CardType::setScale(double v)     { scale        = v; }
 
 QVector<double> CardType::getIntensity() const
 {

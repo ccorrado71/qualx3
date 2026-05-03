@@ -22,7 +22,11 @@ void DbQueryBuilder::initialize()
     }
     densCalcMin = densCalcMax = -1;
     densMeasMin = densMeasMax = -1;
-    minFom = 0.35;
+    minFom          = 0.35;
+    weight2thetaD   = 0.50;
+    weightIntensity = 0.50;
+    weightPhases    = 0.50;
+    delta2theta     = 0.08;
 
     queryChemical.clear();
     queryCrySys.clear();
@@ -73,8 +77,16 @@ QVector<double> DbQueryBuilder::getDTol() const
     return dTol;
 }
 
-void DbQueryBuilder::setMinFom(double v) { minFom = v; }
-double DbQueryBuilder::getMinFom() const { return minFom; }
+void DbQueryBuilder::setMinFom(double v)          { minFom          = v; }
+double DbQueryBuilder::getMinFom()          const { return minFom; }
+void DbQueryBuilder::setWeight2thetaD(double v)   { weight2thetaD   = v; }
+double DbQueryBuilder::getWeight2thetaD()   const { return weight2thetaD; }
+void DbQueryBuilder::setWeightIntensity(double v) { weightIntensity = v; }
+double DbQueryBuilder::getWeightIntensity() const { return weightIntensity; }
+void DbQueryBuilder::setWeightPhases(double v)    { weightPhases    = v; }
+double DbQueryBuilder::getWeightPhases()    const { return weightPhases; }
+void DbQueryBuilder::setDelta2theta(double v)     { delta2theta     = v; }
+double DbQueryBuilder::getDelta2theta()     const { return delta2theta; }
 
 void DbQueryBuilder::setWave(double newWave)
 {

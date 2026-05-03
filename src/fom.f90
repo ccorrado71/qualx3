@@ -9,15 +9,23 @@ end type ass_type
 
 contains
 
-   subroutine computeFOM(tth,intensity,tsize,cfom_tot)  bind(C,name="computeFOM")
+   subroutine computeFOM(tth,intensity,tsize,cfom_tot,w2thetad,w_intensity,w_phases,delta2theta, &
+                         fompeakpos_out,fomintensity_out,scale_out)  bind(C,name="computeFOM")
    use variables, only: dataset
    use peak_mod, only: pkind, numpeaks
    use, intrinsic :: iso_c_binding, only: c_double, c_int
    use arrayutil, only: clocate
    real(c_double), dimension(*), intent(in) :: tth       ! 2theta array for the card
-   real(c_double), dimension(*), intent(in) :: intensity ! intensity array 
+   real(c_double), dimension(*), intent(in) :: intensity ! intensity array
    integer(c_int), intent(in), value        :: tsize     ! size of the 2theta array
    real(c_double), intent(out)              :: cfom_tot
+   real(c_double), intent(in), value        :: w2thetad
+   real(c_double), intent(in), value        :: w_intensity
+   real(c_double), intent(in), value        :: w_phases
+   real(c_double), intent(in), value        :: delta2theta
+   real(c_double), intent(out)              :: fompeakpos_out
+   real(c_double), intent(out)              :: fomintensity_out
+   real(c_double), intent(out)              :: scale_out
    type(ass_type), allocatable              :: ass(:)
    real                                     :: fomd, fomI, fomdb, foms, fom_tot
    real, dimension(:), allocatable          :: xd, Id, Is, Idmult
@@ -34,10 +42,10 @@ contains
    integer                                  :: numass
 !
 !  External variables to add
-   real                                     :: delta = 0.25
-   real                                     :: search_pfomn = 0.5
-   real                                     :: search_pfomd = 0.5
-   real                                     :: search_pfomI = 0.5
+   !real                                     :: delta2theta = 0.25
+   !real                                     :: w_phases = 0.5
+   !real                                     :: w2thetad = 0.5
+   !real                                     :: w_intensity = 0.5
 !  Input variables to add
    logical :: kscal = .true.
    real    :: crd_scale = 1.0
@@ -46,8 +54,8 @@ contains
    fom_tot = 0
 !
 !  Define the experimental range
-   tthmin = dataset(1)%tmin - delta
-   tthmax = dataset(1)%tmax + delta
+   tthmin = dataset(1)%tmin - delta2theta
+   tthmax = dataset(1)%tmax + delta2theta
 !
 !  Count number of peaks in the range
    nd = count((tth(:tsize) >= tthmin .and. tth(:tsize) <= tthmax))
@@ -77,7 +85,7 @@ contains
    do i=1,nd
       nlm = clocate(pkind%getx(),xd(i))
       diffss = abs(pkind(nlm)%getx() - xd(i))
-      if (diffss < delta) then
+      if (diffss < delta2theta) then
           natot = natot + 1
           fomd = fomd + diffss
           ass(natot) = ass_type(nlm,i)
@@ -132,7 +140,7 @@ contains
 !      Compute the 4 contributions to the fom
 !
 !      1) Calculate the fomd that takes into account the difference between the position
-       fomd = 1.0 - fomd/(natot*delta)
+       fomd = 1.0 - fomd/(natot*delta2theta)
 !
 !      2) Calculate fomI that takes into account the difference on intensities       
        fomI = 0.0
@@ -163,7 +171,7 @@ contains
        endif
 !
 !      Calculate ntph = teoretical number of peaks per phase
-       ntph = nint(-9*search_pfomn+10)  ! teoretical number of phases
+       ntph = nint(-9*w_phases+10)  ! teoretical number of phases
        nts = ns / ntph
        if (nts < 1) nts = 1
 !
@@ -194,15 +202,18 @@ contains
        SQRTDA = sqrt((sumda/sumdtot)*fomdb)
 
        if (numass > 1) then
-           fom_tot = SQRTDA*(search_pfomd*fomd + search_pfomI*fomI + search_pfomn*SQRTDS)/   &
-                            (search_pfomd+search_pfomI+search_pfomn)
+           fom_tot = SQRTDA*(w2thetad*fomd + w_intensity*fomI + w_phases*SQRTDS)/   &
+                            (w2thetad+w_intensity+w_phases)
        else
-           fom_tot = SQRTDA*(search_pfomd*fomd + search_pfomn*SQRTDS)/(search_pfomd+search_pfomn) 
+           fom_tot = SQRTDA*(w2thetad*fomd + w_phases*SQRTDS)/(w2thetad+w_phases) 
        endif
        fom_tot = sqrt(fom_tot)
    endif
 
-   cfom_tot = real(fom_tot, c_double)
+   cfom_tot          = real(fom_tot,    c_double)
+   fompeakpos_out    = real(fomd,       c_double)
+   fomintensity_out  = real(fomI,       c_double)
+   scale_out         = real(crd_scale,  c_double)
    !write(0,*)'FOMD = ',fomd,natot,nd
 !
    end subroutine computeFOM

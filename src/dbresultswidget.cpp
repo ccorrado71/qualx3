@@ -15,15 +15,17 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
 {
     ui->setupUi(this);
 
-    // 7 columns for all CardType members
-    sourceModel = new QStandardItemModel(0, 7, this);
+    sourceModel = new QStandardItemModel(0, 10, this);
     sourceModel->setHeaderData(0, Qt::Horizontal, "ID");
     sourceModel->setHeaderData(1, Qt::Horizontal, "Chemical Name");
     sourceModel->setHeaderData(2, Qt::Horizontal, "Chemical Formula");
     sourceModel->setHeaderData(3, Qt::Horizontal, "Mineral Name");
     sourceModel->setHeaderData(4, Qt::Horizontal, "Quality");
     sourceModel->setHeaderData(5, Qt::Horizontal, "RIR");
-    sourceModel->setHeaderData(6, Qt::Horizontal, "FOMD");
+    sourceModel->setHeaderData(6, Qt::Horizontal, "Peakpos.");
+    sourceModel->setHeaderData(7, Qt::Horizontal, "Intensity");
+    sourceModel->setHeaderData(8, Qt::Horizontal, "Scale");
+    sourceModel->setHeaderData(9, Qt::Horizontal, "FOM");
 
     ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->table->horizontalHeader()->show();
@@ -97,7 +99,10 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
         sourceModel->setItem(i, 3, new QStandardItem(card.getMineralName()));
         sourceModel->setItem(i, 4, new QStandardItem(card.getQuality()));
         sourceModel->setItem(i, 5, new QStandardItem(card.getRIR()));
-        sourceModel->setItem(i, 6, new QStandardItem(QString::number(card.getFomd(), 'f', 2)));
+        sourceModel->setItem(i, 6, new QStandardItem(QString::number(card.getFomPeakPos(),  'f', 2)));
+        sourceModel->setItem(i, 7, new QStandardItem(QString::number(card.getFomIntensity(),'f', 2)));
+        sourceModel->setItem(i, 8, new QStandardItem(QString::number(card.getScale(),       'f', 2)));
+        sourceModel->setItem(i, 9, new QStandardItem(QString::number(card.getFom(),         'f', 2)));
     }
     sourceModel->blockSignals(false);
 
