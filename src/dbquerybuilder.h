@@ -26,7 +26,9 @@ public:
     void enableDeleted(bool newAddDeleted);
     void setDValues(const QVector<double> &newDValues, const QVector<double> &newDTol);
     void   setMinFom(double v);
-    double getMinFom()          const;
+    double getMinFom()  const;
+    void   setCalcFom(bool v);
+    bool   getCalcFom() const;
     void   setWeight2thetaD(double v);
     double getWeight2thetaD()   const;
     void   setWeightIntensity(double v);
@@ -74,6 +76,7 @@ private:
     QVector<double> dValues, dTol;
     double wave;
     double minFom;
+    bool   calcFom;
     double weight2thetaD;
     double weightIntensity;
     double weightPhases;

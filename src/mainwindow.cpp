@@ -541,7 +541,6 @@ void MainWindow::onActionSearchMatchTriggered()
     float *deltadval = new float[npeaks];
     double wave;
     get_d_delta_values(dval, deltadval, &wave);
-    qInfo() << "wave:" << wave;
 
     QVector<double> dValues(npeaks);
     QVector<double> deltaValues(npeaks);
@@ -557,6 +556,7 @@ void MainWindow::onActionSearchMatchTriggered()
     builder.setPrintEnabled(true);
     builder.setDValues(dValues, deltaValues);
     builder.setWave(wave);
+    builder.setCalcFom(true);
     builder.setMinFom(SearchOptionsDialog::savedMinFom());
     builder.setWeight2thetaD(SearchOptionsDialog::savedWeight2thetaD());
     builder.setWeightIntensity(SearchOptionsDialog::savedWeightIntensity());
@@ -702,6 +702,34 @@ void MainWindow::onRestraintsExecuteSearch()
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
     applyDialogRestraints(builder);
+
+    int npeaks = peak_number();
+    // if (npeaks == 0)
+    //     run_peaksearchwin();
+    // npeaks = peak_number();
+
+    if (npeaks > 0) {
+        float *dval     = new float[npeaks];
+        float *deltadval = new float[npeaks];
+        double wave;
+        get_d_delta_values(dval, deltadval, &wave);
+
+        QVector<double> dValues(npeaks), deltaValues(npeaks);
+        for (int i = 0; i < npeaks; i++) {
+            dValues[i]     = dval[i];
+            deltaValues[i] = deltadval[i];
+        }
+        delete[] dval;
+        delete[] deltadval;
+
+        builder.setDValues(dValues, deltaValues);
+        builder.setWave(wave);
+        builder.setCalcFom(true);
+        builder.setMinFom(-1.0);  // accept all cards regardless of FOM value
+    } else {
+        builder.setCalcFom(false);
+    }
+
     executeSearch(builder);
 }
 
@@ -709,6 +737,7 @@ void MainWindow::runSearch(const SearchOptions &opts)
 {
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
+    builder.setCalcFom(false);
 
     if (!opts.composition.isEmpty()) {
         builder.setElements(opts.composition);

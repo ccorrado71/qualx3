@@ -2,7 +2,7 @@
 #include "xpdutils.h"
 
 CardType::CardType()
-    : fom(0.0), fomPeakPos(0.0), fomIntensity(0.0), scale(0.0)
+    : fom(0.0), fomCalculated(false), fomPeakPos(0.0), fomIntensity(0.0), scale(0.0)
 {}
 
 QVector<double> CardType::getD() const
@@ -111,7 +111,8 @@ double CardType::getFom() const
     return fom;
 }
 
-void CardType::setFom(double newFomd)   { fom          = newFomd; }
+void CardType::setFom(double newFomd)   { fom = newFomd; fomCalculated = true; }
+bool CardType::isFomCalculated() const  { return fomCalculated; }
 double CardType::getFomPeakPos()  const { return fomPeakPos; }
 void   CardType::setFomPeakPos(double v){ fomPeakPos   = v; }
 double CardType::getFomIntensity() const{ return fomIntensity; }

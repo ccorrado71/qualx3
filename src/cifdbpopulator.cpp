@@ -139,7 +139,7 @@ void CifDbPopulator::insertId(int id, const CifCrystalInfo &info)
     m_idQuery.addBindValue(mineralName.isEmpty() ? QVariant() : QVariant(mineralName));
     m_idQuery.addBindValue(QString::fromLatin1(info.sform).trimmed());
     m_idQuery.addBindValue(QString::fromLatin1(info.spg_sym).trimmed());
-    m_idQuery.addBindValue(QVariant());                            // quality – not available
+    m_idQuery.addBindValue(QStringLiteral("C"));                   // quality – CIF source
     m_idQuery.addBindValue(info.rir > 0.0f ? QVariant(double(info.rir)) : QVariant());
     m_idQuery.addBindValue(0);                                     // nrec – not applicable for CIF
     m_idQuery.addBindValue(info.nat);

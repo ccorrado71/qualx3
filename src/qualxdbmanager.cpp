@@ -170,7 +170,7 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
     return ndata;
 }
 
-void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, bool calcFom, ProgressCallback progress)
+void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress)
 {
     ScopedTimer timer("QualxDbManager::makeQueryInfoIdsWithFom");
 
@@ -194,7 +194,7 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
     int lastProg = -1;
     double fomLim = builder.getMinFom();
     if (queryIds.exec()) {
-        if (calcFom) {
+        if (builder.getCalcFom()) {
             while (queryIds.next()) {
                 nId++;
                 float perc = (actualCount > 0) ? 100.0f*nId/actualCount : 0.0f;
@@ -260,7 +260,7 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
 QVector<CardType> QualxDbManager::makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count, ProgressCallback progress)
 {
     QVector<CardType> cards;
-    makeQueryInfoIdsWithFom(idsString, builder, count, cards, false, progress);
+    makeQueryInfoIdsWithFom(idsString, builder, count, cards, progress);
     return cards;
 }
 
@@ -568,7 +568,7 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<C
         idsString.append(QLatin1Char('\'') + id + QLatin1String("',"));
     idsString.chop(1);
 
-    makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, true, progress);
+    makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, progress);
 }
 
 void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
@@ -610,10 +610,10 @@ void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
             idsString.append(QLatin1Char('\'') + id + QLatin1String("',"));
         idsString.chop(1);
 
-        makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, true, progress);
+        makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, progress);
     } else {
         // No restraints: query all cards directly (idsString empty → no IN filter)
-        makeQueryInfoIdsWithFom(QString(), builder, 0, acceptedCards, true, progress);
+        makeQueryInfoIdsWithFom(QString(), builder, 0, acceptedCards, progress);
     }
 
     qInfo() << "makeQueryWithoutStrongest: accepted =" << acceptedCards.size();

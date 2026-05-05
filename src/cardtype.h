@@ -27,7 +27,8 @@ public:
     QString getSpaceGroup() const;
     void setSpaceGroup(const QString &newSpaceGroup);
     double getFom() const;
-    void setFom(double newFomd);
+    void   setFom(double newFomd);
+    bool   isFomCalculated() const;
     double getFomPeakPos()  const;
     void   setFomPeakPos(double v);
     double getFomIntensity() const;
@@ -47,6 +48,7 @@ private:
     QString RIR;
     QString spaceGroup;
     double fom;
+    bool   fomCalculated;
     double fomPeakPos;
     double fomIntensity;
     double scale;

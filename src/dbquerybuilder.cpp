@@ -23,6 +23,7 @@ void DbQueryBuilder::initialize()
     densCalcMin = densCalcMax = -1;
     densMeasMin = densMeasMax = -1;
     minFom          = 0.35;
+    calcFom         = false;
     weight2thetaD   = 0.50;
     weightIntensity = 0.50;
     weightPhases    = 0.50;
@@ -77,8 +78,10 @@ QVector<double> DbQueryBuilder::getDTol() const
     return dTol;
 }
 
-void DbQueryBuilder::setMinFom(double v)          { minFom          = v; }
-double DbQueryBuilder::getMinFom()          const { return minFom; }
+void DbQueryBuilder::setMinFom(double v)  { minFom  = v; }
+double DbQueryBuilder::getMinFom() const  { return minFom; }
+void DbQueryBuilder::setCalcFom(bool v)   { calcFom = v; }
+bool DbQueryBuilder::getCalcFom()  const  { return calcFom; }
 void DbQueryBuilder::setWeight2thetaD(double v)   { weight2thetaD   = v; }
 double DbQueryBuilder::getWeight2thetaD()   const { return weight2thetaD; }
 void DbQueryBuilder::setWeightIntensity(double v) { weightIntensity = v; }

@@ -4,11 +4,29 @@
 #include "textfilterproxymodel.h"
 #include "scopedtimer.h"
 
+#include "floatdelegate.h"
+
+#include <QColor>
 #include <QStandardItemModel>
 #include <QHeaderView>
 #include <QSignalBlocker>
 #include <QItemSelectionModel>
 #include <QPushButton>
+
+#include <cmath>
+
+// Maps a card ID string to a visually distinct, stable HSV colour.
+// Uses the golden-ratio method so sequential IDs spread evenly around
+// the hue wheel.
+static QColor cardColor(const QString &id)
+{
+    bool ok;
+    quint64 n = id.toULongLong(&ok);
+    if (!ok)
+        n = static_cast<quint64>(qHash(id));
+    const double hue = std::fmod(n * 0.618033988749895, 1.0);
+    return QColor::fromHsvF(hue, 0.65, 0.88);
+}
 
 DbResultsWidget::DbResultsWidget(QWidget* parent)
     : QWidget(parent), ui(new Ui::DbResultsWidget)
@@ -16,19 +34,22 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     ui->setupUi(this);
 
     sourceModel = new QStandardItemModel(0, 10, this);
-    sourceModel->setHeaderData(0, Qt::Horizontal, "ID");
-    sourceModel->setHeaderData(1, Qt::Horizontal, "Chemical Name");
-    sourceModel->setHeaderData(2, Qt::Horizontal, "Chemical Formula");
-    sourceModel->setHeaderData(3, Qt::Horizontal, "Mineral Name");
-    sourceModel->setHeaderData(4, Qt::Horizontal, "Quality");
-    sourceModel->setHeaderData(5, Qt::Horizontal, "RIR");
-    sourceModel->setHeaderData(6, Qt::Horizontal, "Peakpos.");
-    sourceModel->setHeaderData(7, Qt::Horizontal, "Intensity");
-    sourceModel->setHeaderData(8, Qt::Horizontal, "Scale");
-    sourceModel->setHeaderData(9, Qt::Horizontal, "FOM");
+    sourceModel->setHeaderData(0, Qt::Horizontal, "");
+    sourceModel->setHeaderData(1, Qt::Horizontal, "QM");
+    sourceModel->setHeaderData(2, Qt::Horizontal, "ID");
+    sourceModel->setHeaderData(3, Qt::Horizontal, "Chemical Name");
+    sourceModel->setHeaderData(4, Qt::Horizontal, "Chemical Formula");
+    sourceModel->setHeaderData(5, Qt::Horizontal, "Peakpos.");
+    sourceModel->setHeaderData(6, Qt::Horizontal, "Intensity");
+    sourceModel->setHeaderData(7, Qt::Horizontal, "Scale");
+    sourceModel->setHeaderData(8, Qt::Horizontal, "FOM");
+    sourceModel->setHeaderData(9, Qt::Horizontal, "S-Quant.");
 
-    ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     ui->table->horizontalHeader()->show();
+    ui->table->verticalHeader()->setDefaultSectionSize(22);
+    ui->table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->table->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
     filterModel = new TextFilterProxyModel(this);
     filterModel->setSourceModel(sourceModel);
@@ -39,6 +60,11 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
 
     ui->table->setModel(pageModel);
     // NIENTE sortingEnabled qui!
+
+    // FloatDelegate: right-align numerics, show '-' when value is missing
+    for (int col : {5, 6, 7, 8})
+        ui->table->setItemDelegateForColumn(col, new FloatDelegate(this, 5));
+    ui->table->setItemDelegateForColumn(9, new FloatDelegate(this, 3));
 
     ui->ascButton->setEnabled(false);
     ui->desButton->setEnabled(false);
@@ -93,21 +119,43 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
     sourceModel->blockSignals(true);
     for (int i = 0; i < results.size(); ++i) {
         const CardType& card = results[i];
-        sourceModel->setItem(i, 0, new QStandardItem(card.getId()));
-        sourceModel->setItem(i, 1, new QStandardItem(card.getChemicalName()));
-        sourceModel->setItem(i, 2, new QStandardItem(card.getChemicalFormula()));
-        sourceModel->setItem(i, 3, new QStandardItem(card.getMineralName()));
-        sourceModel->setItem(i, 4, new QStandardItem(card.getQuality()));
-        sourceModel->setItem(i, 5, new QStandardItem(card.getRIR()));
-        sourceModel->setItem(i, 6, new QStandardItem(QString::number(card.getFomPeakPos(),  'f', 2)));
-        sourceModel->setItem(i, 7, new QStandardItem(QString::number(card.getFomIntensity(),'f', 2)));
-        sourceModel->setItem(i, 8, new QStandardItem(QString::number(card.getScale(),       'f', 2)));
-        sourceModel->setItem(i, 9, new QStandardItem(QString::number(card.getFom(),         'f', 2)));
+
+        QString chemName = card.getChemicalName();
+        const QString mineral = card.getMineralName();
+        if (!mineral.isEmpty())
+            chemName += QStringLiteral(" [") + mineral + QLatin1Char(']');
+
+        auto *colorItem = new QStandardItem();
+        colorItem->setBackground(QBrush(cardColor(card.getId())));
+        colorItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        sourceModel->setItem(i, 0, colorItem);
+        sourceModel->setItem(i, 1, new QStandardItem(card.getQuality()));
+        sourceModel->setItem(i, 2, new QStandardItem(card.getId()));
+        sourceModel->setItem(i, 3, new QStandardItem(chemName));
+        sourceModel->setItem(i, 4, new QStandardItem(card.getChemicalFormula()));
+        const bool hasFom = card.isFomCalculated();
+        auto numItem = [](double v) {
+            auto *it = new QStandardItem();
+            it->setData(QVariant(v), Qt::DisplayRole);
+            return it;
+        };
+        auto naItem = []() { return new QStandardItem(QStringLiteral("-")); };
+
+        sourceModel->setItem(i, 5, hasFom ? numItem(card.getFomPeakPos())   : naItem());
+        sourceModel->setItem(i, 6, hasFom ? numItem(card.getFomIntensity()) : naItem());
+        sourceModel->setItem(i, 7, hasFom ? numItem(card.getScale())        : naItem());
+        sourceModel->setItem(i, 8, hasFom ? numItem(card.getFom())          : naItem());
+
+        const QString rir = card.getRIR().trimmed();
+        bool rirOk = false;
+        const double rirVal = rir.toDouble(&rirOk);
+        sourceModel->setItem(i, 9, (rirOk && rirVal != 0.0) ? numItem(rirVal) : naItem());
     }
     sourceModel->blockSignals(false);
 
     ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
     pageModel->setCurrentPage(0);
+    ui->table->resizeColumnsToContents();
 }
 
 void DbResultsWidget::currentPageChanged(int page)
