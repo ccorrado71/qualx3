@@ -95,8 +95,6 @@ private slots:
     void onActionTestDatabaseTriggered();
     void onActionDatabaseInfoTriggered();
     void onActionGetCardTriggered();
-    void onRestraintsExecuteSearch();
-
 private:
     void createDialogs();
     void actionsSetup();
@@ -121,7 +119,8 @@ private:
     static QString pathDataFiles;
 
     void testSelection(DbQueryBuilder &builder, int testCase);
-    void executeSearch(DbQueryBuilder &builder);
+    void executeSearch(DbQueryBuilder &builder, bool merge = false);
+    void onRestraintsSearch(bool merge);
     void applyDialogRestraints(DbQueryBuilder &builder);
 };
 #endif // MAINWINDOW_H

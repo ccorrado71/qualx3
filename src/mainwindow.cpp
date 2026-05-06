@@ -189,11 +189,11 @@ void MainWindow::createDialogs()
     m_restraintsDialog  = new RestraintsDialog(this);
 
     connect(m_restraintsDialog, &RestraintsDialog::loadCardsRequested,
-            this, &MainWindow::onRestraintsExecuteSearch);
+            this, [this]() { onRestraintsSearch(false); });
     connect(m_restraintsDialog, &RestraintsDialog::loadAndMergeCardsRequested,
-            this, &MainWindow::onRestraintsExecuteSearch);
+            this, [this]() { onRestraintsSearch(true); });
     connect(m_restraintsDialog, &RestraintsDialog::searchWithRestraintsRequested,
-            this, &MainWindow::onRestraintsExecuteSearch);
+            this, [this]() { onRestraintsSearch(false); });
 }
 
 void MainWindow::actionsSetup()
@@ -609,7 +609,7 @@ void MainWindow::onActionSearchMatchOptionsTriggered()
     dlg.exec();
 }
 
-void MainWindow::executeSearch(DbQueryBuilder &builder)
+void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
 {
     builder.buildQuery();
 
@@ -631,7 +631,10 @@ void MainWindow::executeSearch(DbQueryBuilder &builder)
     statusProgressBar->hide();
     setStatusMessage(tr("Found %1 card(s)").arg(cards.size()));
 
-    ui->resultsWidget->setResults(cards);
+    if (merge)
+        ui->resultsWidget->mergeResults(cards);
+    else
+        ui->resultsWidget->setResults(cards);
 }
 
 void MainWindow::actionRestraintsTriggered()
@@ -697,19 +700,15 @@ void MainWindow::applyDialogRestraints(DbQueryBuilder &builder)
         builder.setDensityMeas(densMeas - densTol, densMeas + densTol);
 }
 
-void MainWindow::onRestraintsExecuteSearch()
+void MainWindow::onRestraintsSearch(bool merge)
 {
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
     applyDialogRestraints(builder);
 
     int npeaks = peak_number();
-    // if (npeaks == 0)
-    //     run_peaksearchwin();
-    // npeaks = peak_number();
-
     if (npeaks > 0) {
-        float *dval     = new float[npeaks];
+        float *dval      = new float[npeaks];
         float *deltadval = new float[npeaks];
         double wave;
         get_d_delta_values(dval, deltadval, &wave);
@@ -725,12 +724,12 @@ void MainWindow::onRestraintsExecuteSearch()
         builder.setDValues(dValues, deltaValues);
         builder.setWave(wave);
         builder.setCalcFom(true);
-        builder.setMinFom(-1.0);  // accept all cards regardless of FOM value
+        builder.setMinFom(-1.0);
     } else {
         builder.setCalcFom(false);
     }
 
-    executeSearch(builder);
+    executeSearch(builder, merge);
 }
 
 void MainWindow::runSearch(const SearchOptions &opts)

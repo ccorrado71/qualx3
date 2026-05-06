@@ -11,7 +11,7 @@
 #include <QHeaderView>
 #include <QSignalBlocker>
 #include <QItemSelectionModel>
-#include <QPushButton>
+#include <QSet>
 
 #include <cmath>
 
@@ -66,8 +66,8 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
         ui->table->setItemDelegateForColumn(col, new FloatDelegate(this, 5));
     ui->table->setItemDelegateForColumn(9, new FloatDelegate(this, 3));
 
-    ui->ascButton->setEnabled(false);
-    ui->desButton->setEnabled(false);
+    ui->table->horizontalHeader()->setSortIndicatorShown(true);
+    ui->table->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
 
     ui->maxRowSpin->setMinimum(1);
     ui->maxRowSpin->setMaximum(10000);
@@ -93,13 +93,9 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     connect(pageModel, &PaginationModel::canGoBackChanged, this, &DbResultsWidget::updateButtons);
     connect(pageModel, &PaginationModel::canGoForwardChanged, this, &DbResultsWidget::updateButtons);
 
-    // Colonna selezionata
-    connect(ui->table->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &DbResultsWidget::onTableSelectionChanged);
-
-    // Pulsanti sort
-    connect(ui->ascButton, &QPushButton::clicked, this, &DbResultsWidget::onAscClicked);
-    connect(ui->desButton, &QPushButton::clicked, this, &DbResultsWidget::onDesClicked);
+    // Sort per click sull'intestazione della colonna
+    connect(ui->table->horizontalHeader(), &QHeaderView::sectionClicked,
+            this, &DbResultsWidget::onHeaderSectionClicked);
 
     updateButtons();
 }
@@ -117,40 +113,73 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
     sourceModel->setRowCount(results.size());
 
     sourceModel->blockSignals(true);
-    for (int i = 0; i < results.size(); ++i) {
-        const CardType& card = results[i];
+    for (int i = 0; i < results.size(); ++i)
+        populateRow(i, results[i]);
+    sourceModel->blockSignals(false);
 
-        QString chemName = card.getChemicalName();
-        const QString mineral = card.getMineralName();
-        if (!mineral.isEmpty())
-            chemName += QStringLiteral(" [") + mineral + QLatin1Char(']');
+    ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
+    pageModel->setCurrentPage(0);
+    ui->table->resizeColumnsToContents();
+}
 
-        auto *colorItem = new QStandardItem();
-        colorItem->setBackground(QBrush(cardColor(card.getId())));
-        colorItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        sourceModel->setItem(i, 0, colorItem);
-        sourceModel->setItem(i, 1, new QStandardItem(card.getQuality()));
-        sourceModel->setItem(i, 2, new QStandardItem(card.getId()));
-        sourceModel->setItem(i, 3, new QStandardItem(chemName));
-        sourceModel->setItem(i, 4, new QStandardItem(card.getChemicalFormula()));
-        const bool hasFom = card.isFomCalculated();
-        auto numItem = [](double v) {
-            auto *it = new QStandardItem();
-            it->setData(QVariant(v), Qt::DisplayRole);
-            return it;
-        };
-        auto naItem = []() { return new QStandardItem(QStringLiteral("-")); };
+void DbResultsWidget::populateRow(int row, const CardType &card)
+{
+    QString chemName = card.getChemicalName();
+    const QString mineral = card.getMineralName();
+    if (!mineral.isEmpty())
+        chemName += QStringLiteral(" [") + mineral + QLatin1Char(']');
 
-        sourceModel->setItem(i, 5, hasFom ? numItem(card.getFomPeakPos())   : naItem());
-        sourceModel->setItem(i, 6, hasFom ? numItem(card.getFomIntensity()) : naItem());
-        sourceModel->setItem(i, 7, hasFom ? numItem(card.getScale())        : naItem());
-        sourceModel->setItem(i, 8, hasFom ? numItem(card.getFom())          : naItem());
+    auto *colorItem = new QStandardItem();
+    colorItem->setBackground(QBrush(cardColor(card.getId())));
+    colorItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    sourceModel->setItem(row, 0, colorItem);
+    sourceModel->setItem(row, 1, new QStandardItem(card.getQuality()));
+    sourceModel->setItem(row, 2, new QStandardItem(card.getId()));
+    sourceModel->setItem(row, 3, new QStandardItem(chemName));
+    sourceModel->setItem(row, 4, new QStandardItem(card.getChemicalFormula()));
 
-        const QString rir = card.getRIR().trimmed();
-        bool rirOk = false;
-        const double rirVal = rir.toDouble(&rirOk);
-        sourceModel->setItem(i, 9, (rirOk && rirVal != 0.0) ? numItem(rirVal) : naItem());
+    const bool hasFom = card.isFomCalculated();
+    auto numItem = [](double v) {
+        auto *it = new QStandardItem();
+        it->setData(QVariant(v), Qt::DisplayRole);
+        return it;
+    };
+    auto naItem = []() { return new QStandardItem(QStringLiteral("-")); };
+
+    sourceModel->setItem(row, 5, hasFom ? numItem(card.getFomPeakPos())   : naItem());
+    sourceModel->setItem(row, 6, hasFom ? numItem(card.getFomIntensity()) : naItem());
+    sourceModel->setItem(row, 7, hasFom ? numItem(card.getScale())        : naItem());
+    sourceModel->setItem(row, 8, hasFom ? numItem(card.getFom())          : naItem());
+
+    const QString rir = card.getRIR().trimmed();
+    bool rirOk = false;
+    const double rirVal = rir.toDouble(&rirOk);
+    sourceModel->setItem(row, 9, (rirOk && rirVal != 0.0) ? numItem(rirVal) : naItem());
+}
+
+void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
+{
+    // Build set of existing IDs (column 2)
+    QSet<QString> existingIds;
+    for (int r = 0; r < sourceModel->rowCount(); ++r) {
+        if (auto *item = sourceModel->item(r, 2))
+            existingIds.insert(item->text());
     }
+
+    // Filter to cards not already present
+    QVector<CardType> toAdd;
+    toAdd.reserve(newCards.size());
+    for (const CardType &card : newCards) {
+        if (!existingIds.contains(card.getId()))
+            toAdd.append(card);
+    }
+    if (toAdd.isEmpty()) return;
+
+    const int startRow = sourceModel->rowCount();
+    sourceModel->setRowCount(startRow + toAdd.size());
+    sourceModel->blockSignals(true);
+    for (int i = 0; i < toAdd.size(); ++i)
+        populateRow(startRow + i, toAdd[i]);
     sourceModel->blockSignals(false);
 
     ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
@@ -173,38 +202,22 @@ void DbResultsWidget::pageCountChanged(int count)
 
 void DbResultsWidget::updateButtons()
 {
-    bool canBack = pageModel->canGoBack();
-    ui->firstBtn->setEnabled(canBack);
-    ui->prevBtn->setEnabled(canBack);
-    bool canFwd = pageModel->canGoForward();
-    ui->nextBtn->setEnabled(canFwd);
-    ui->lastBtn->setEnabled(canFwd);
-
-    // Attiva/disattiva i pulsanti sort in base alla selezione colonna
-    bool enableSort = selectedColumn >= 0;
-    ui->ascButton->setEnabled(enableSort);
-    ui->desButton->setEnabled(enableSort);
+    ui->firstBtn->setEnabled(pageModel->canGoBack());
+    ui->prevBtn->setEnabled(pageModel->canGoBack());
+    ui->nextBtn->setEnabled(pageModel->canGoForward());
+    ui->lastBtn->setEnabled(pageModel->canGoForward());
 }
 
-void DbResultsWidget::onTableSelectionChanged()
+void DbResultsWidget::onHeaderSectionClicked(int column)
 {
-    // Prendi la colonna della selezione attiva
-    auto selection = ui->table->selectionModel()->selectedColumns();
-    if (!selection.isEmpty())
-        selectedColumn = selection.first().column();
-    else
-        selectedColumn = -1;
-    updateButtons();
-}
-
-void DbResultsWidget::onAscClicked()
-{
-    if (selectedColumn >= 0)
-        sourceModel->sort(selectedColumn, Qt::AscendingOrder);
-}
-
-void DbResultsWidget::onDesClicked()
-{
-    if (selectedColumn >= 0)
-        sourceModel->sort(selectedColumn, Qt::DescendingOrder);
+    if (column == m_sortColumn) {
+        m_sortOrder = (m_sortOrder == Qt::AscendingOrder)
+                      ? Qt::DescendingOrder : Qt::AscendingOrder;
+    } else {
+        m_sortColumn = column;
+        m_sortOrder  = Qt::AscendingOrder;
+    }
+    sourceModel->sort(m_sortColumn, m_sortOrder);
+    ui->table->horizontalHeader()->setSortIndicator(m_sortColumn, m_sortOrder);
+    pageModel->setCurrentPage(0);
 }

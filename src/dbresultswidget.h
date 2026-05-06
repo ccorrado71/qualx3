@@ -22,23 +22,24 @@ public:
     ~DbResultsWidget();
 
     void setResults(const QVector<CardType>& results);
+    void mergeResults(const QVector<CardType>& newCards);
 
 private slots:
     void currentPageChanged(int page);
     void pageCountChanged(int count);
     void updateButtons();
-    void onTableSelectionChanged();
-    void onAscClicked();
-    void onDesClicked();
+    void onHeaderSectionClicked(int column);
+    void populateRow(int row, const CardType &card);
 
 private:
     Ui::DbResultsWidget* ui;
 
-    QStandardItemModel* sourceModel;
+    QStandardItemModel*   sourceModel;
     TextFilterProxyModel* filterModel;
-    PaginationModel* pageModel;
+    PaginationModel*      pageModel;
 
-    int selectedColumn{-1};
+    int            m_sortColumn = -1;
+    Qt::SortOrder  m_sortOrder  = Qt::AscendingOrder;
 };
 
 #endif // DBRESULTSWIDGET_H

@@ -49,31 +49,6 @@
        </property>
       </widget>
      </item>
-     <!-- Pulsanti sort aggiunti -->
-     <item>
-      <widget class="QPushButton" name="ascButton">
-       <property name="text">
-        <string>Asc.</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="desButton">
-       <property name="text">
-        <string>Des.</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="pageLayout">
      <item>
       <widget class="QToolButton" name="firstBtn">
        <property name="text">
