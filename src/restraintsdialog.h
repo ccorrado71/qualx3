@@ -43,6 +43,8 @@ public:
     double      densityTolerance()  const;
 
     bool hasRestraints() const;
+    void setMergeEnabled(bool enabled);
+    void setSearchEnabled(bool enabled);
 
     // --- Subfiles tab accessors ---
     QStringList subfilesCodes() const;

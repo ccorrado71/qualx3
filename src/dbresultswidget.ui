@@ -27,29 +27,6 @@
       <widget class="QLineEdit" name="textFilterEdit"/>
      </item>
      <item>
-      <widget class="QLabel" name="labelMaxRows">
-       <property name="text">
-        <string>Max rows:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSpinBox" name="maxRowSpin">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>10000</number>
-       </property>
-       <property name="singleStep">
-        <number>5</number>
-       </property>
-       <property name="value">
-        <number>50</number>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QToolButton" name="firstBtn">
        <property name="text">
         <string>First</string>
@@ -87,6 +64,29 @@
       <widget class="QToolButton" name="lastBtn">
        <property name="text">
         <string>Last</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelMaxRows">
+       <property name="text">
+        <string>Max rows:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="maxRowSpin">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>10000</number>
+       </property>
+       <property name="singleStep">
+        <number>5</number>
+       </property>
+       <property name="value">
+        <number>50</number>
        </property>
       </widget>
      </item>

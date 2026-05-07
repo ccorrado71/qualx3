@@ -38,6 +38,55 @@ void QualxDbManager::closeDatabeses()
     dbSearch.closeDb();
 }
 
+CardInfo QualxDbManager::queryCard(const QString &idCard) const
+{
+    CardInfo info;
+
+    QSqlQuery q1(dbMain.db());
+    q1.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, nd "
+               "FROM id WHERE id=" + idCard);
+    if (q1.exec() && q1.first()) {
+        info.id              = q1.value(0).toString();
+        info.name            = q1.value(1).toString().trimmed();
+        info.mineralName     = q1.value(2).toString().trimmed();
+        info.chemicalFormula = q1.value(3).toString().trimmed();
+        info.spaceGroup      = q1.value(4).toString().trimmed();
+        info.quality         = q1.value(5).toString().trimmed();
+        info.rir             = q1.value(6).toString().trimmed();
+        info.nrec            = q1.value(7).toInt();
+        info.nd              = q1.value(8).toInt();
+        info.valid           = true;
+    }
+
+    QSqlQuery q2(dbInfo.db());
+    q2.prepare("SELECT authors, journal, journal_year, journal_volume, page_start, page_end, "
+               "color, crystal_density, type, volume, density, z, a, b, c, alpha, beta, gamma, "
+               "`mu(CuKa)` FROM info WHERE id=" + idCard);
+    if (q2.exec() && q2.first()) {
+        info.authors        = q2.value(0).toString().trimmed();
+        info.journal        = q2.value(1).toString().trimmed();
+        info.journalYear    = q2.value(2).toInt();
+        info.journalVolume  = q2.value(3).toString().trimmed();
+        info.pageStart      = q2.value(4).toString().trimmed();
+        info.pageEnd        = q2.value(5).toString().trimmed();
+        info.color          = q2.value(6).toString().trimmed();
+        info.crystalDensity = q2.value(7).toDouble();
+        info.type           = q2.value(8).toString().trimmed();
+        info.volume         = q2.value(9).toDouble();
+        info.density        = q2.value(10).toDouble();
+        info.z              = q2.value(11).toInt();
+        info.a              = q2.value(12).toDouble();
+        info.b              = q2.value(13).toDouble();
+        info.c              = q2.value(14).toDouble();
+        info.alpha          = q2.value(15).toDouble();
+        info.beta           = q2.value(16).toDouble();
+        info.gamma          = q2.value(17).toDouble();
+        info.muCuKa         = q2.value(18).toDouble();
+    }
+
+    return info;
+}
+
 void QualxDbManager::getCardInfo(const QString &idCard)
 {
     QSqlQuery queryId(dbMain.db());
@@ -172,6 +221,9 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
 
 void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress)
 {
+    if (idsString.isEmpty())
+        return;
+
     ScopedTimer timer("QualxDbManager::makeQueryInfoIdsWithFom");
 
     qInfo() << "Start queryIds";

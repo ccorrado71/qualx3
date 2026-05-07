@@ -121,6 +121,8 @@ private:
     void testSelection(DbQueryBuilder &builder, int testCase);
     void executeSearch(DbQueryBuilder &builder, bool merge = false);
     void onRestraintsSearch(bool merge);
+    void onRestraintsSearchMatch();
+    void onCardSelected(const QString &id);
     void applyDialogRestraints(DbQueryBuilder &builder);
 };
 #endif // MAINWINDOW_H

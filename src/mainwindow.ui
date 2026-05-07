@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -162,6 +162,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="peakDockWidget">
+   <property name="windowTitle">
+    <string>Peaks</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
@@ -187,6 +190,25 @@
    <addaction name="actionDelete_Background_Point"/>
    <addaction name="actionAdd_Peak"/>
    <addaction name="actionDelete_Peak"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetCard">
+   <property name="windowTitle">
+    <string>Card</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="layoutCard">
+     <property name="leftMargin"><number>0</number></property>
+     <property name="topMargin"><number>0</number></property>
+     <property name="rightMargin"><number>0</number></property>
+     <property name="bottomMargin"><number>0</number></property>
+     <item>
+      <widget class="QTextBrowser" name="cardBrowser"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionDatabaseInfo">
    <property name="text">

@@ -97,6 +97,15 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     connect(ui->table->horizontalHeader(), &QHeaderView::sectionClicked,
             this, &DbResultsWidget::onHeaderSectionClicked);
 
+    // Selezione card: emette l'id dalla colonna 2 (mouse e tastiera)
+    connect(ui->table->selectionModel(), &QItemSelectionModel::currentRowChanged,
+            this, [this](const QModelIndex &current, const QModelIndex &) {
+        if (!current.isValid()) return;
+        const QString id = ui->table->model()->index(current.row(), 2).data().toString();
+        if (!id.isEmpty())
+            emit cardSelected(id);
+    });
+
     updateButtons();
 }
 
@@ -117,9 +126,9 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
         populateRow(i, results[i]);
     sourceModel->blockSignals(false);
 
-    ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
     pageModel->setCurrentPage(0);
     ui->table->resizeColumnsToContents();
+    emit hasResultsChanged(hasResults());
 }
 
 void DbResultsWidget::populateRow(int row, const CardType &card)
@@ -182,9 +191,14 @@ void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
         populateRow(startRow + i, toAdd[i]);
     sourceModel->blockSignals(false);
 
-    ui->maxRowSpin->setMaximum(qMax(1, sourceModel->rowCount()));
     pageModel->setCurrentPage(0);
     ui->table->resizeColumnsToContents();
+    emit hasResultsChanged(hasResults());
+}
+
+bool DbResultsWidget::hasResults() const
+{
+    return sourceModel->rowCount() > 0;
 }
 
 void DbResultsWidget::currentPageChanged(int page)

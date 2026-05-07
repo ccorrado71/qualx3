@@ -23,6 +23,11 @@ public:
 
     void setResults(const QVector<CardType>& results);
     void mergeResults(const QVector<CardType>& newCards);
+    bool hasResults() const;
+
+signals:
+    void hasResultsChanged(bool hasResults);
+    void cardSelected(const QString &id);
 
 private slots:
     void currentPageChanged(int page);

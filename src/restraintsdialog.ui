@@ -423,12 +423,18 @@
        <property name="text">
         <string>Load and Merge Cards</string>
        </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="searchButton">
        <property name="text">
         <string>Search with Restraints</string>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
        </property>
       </widget>
      </item>

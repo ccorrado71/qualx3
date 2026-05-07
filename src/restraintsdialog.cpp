@@ -32,7 +32,7 @@ RestraintsDialog::RestraintsDialog(QWidget *parent)
     connect(ui->helpButton,             &QPushButton::clicked,
             this, &RestraintsDialog::onHelpClicked);
     connect(ui->loadCardsButton,        &QPushButton::clicked,
-            this, [this]() { accept(); emit loadCardsRequested(); });
+            this, [this]() { emit loadCardsRequested(); });
     connect(ui->loadMergeButton,        &QPushButton::clicked,
             this, &RestraintsDialog::loadAndMergeCardsRequested);
     connect(ui->searchButton,           &QPushButton::clicked,
@@ -474,6 +474,16 @@ void RestraintsDialog::setupSubfilesTab()
 // ---------------------------------------------------------------------------
 // Public accessors — Subfiles tab
 // ---------------------------------------------------------------------------
+
+void RestraintsDialog::setMergeEnabled(bool enabled)
+{
+    ui->loadMergeButton->setEnabled(enabled);
+}
+
+void RestraintsDialog::setSearchEnabled(bool enabled)
+{
+    ui->searchButton->setEnabled(enabled);
+}
 
 bool RestraintsDialog::hasRestraints() const
 {

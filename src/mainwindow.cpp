@@ -34,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCard);
+    ui->peakDockWidget->raise();
+
     setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
 
     // set objects for the statusbar
@@ -188,12 +191,18 @@ void MainWindow::createDialogs()
     backgroundDialog    = new BackgroundDialog(this);
     m_restraintsDialog  = new RestraintsDialog(this);
 
+    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
+            m_restraintsDialog, &RestraintsDialog::setMergeEnabled);
+
     connect(m_restraintsDialog, &RestraintsDialog::loadCardsRequested,
             this, [this]() { onRestraintsSearch(false); });
     connect(m_restraintsDialog, &RestraintsDialog::loadAndMergeCardsRequested,
             this, [this]() { onRestraintsSearch(true); });
     connect(m_restraintsDialog, &RestraintsDialog::searchWithRestraintsRequested,
-            this, [this]() { onRestraintsSearch(false); });
+            this, &MainWindow::onRestraintsSearchMatch);
+
+    connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
+            this, &MainWindow::onCardSelected);
 }
 
 void MainWindow::actionsSetup()
@@ -639,6 +648,8 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
 
 void MainWindow::actionRestraintsTriggered()
 {
+    m_restraintsDialog->setMergeEnabled(ui->resultsWidget->hasResults());
+    m_restraintsDialog->setSearchEnabled(peak_number() > 0);
     m_restraintsDialog->show();
     m_restraintsDialog->raise();
     m_restraintsDialog->activateWindow();
@@ -702,6 +713,8 @@ void MainWindow::applyDialogRestraints(DbQueryBuilder &builder)
 
 void MainWindow::onRestraintsSearch(bool merge)
 {
+    if (!m_restraintsDialog->hasRestraints()) return;
+
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
     applyDialogRestraints(builder);
@@ -730,6 +743,66 @@ void MainWindow::onRestraintsSearch(bool merge)
     }
 
     executeSearch(builder, merge);
+}
+
+void MainWindow::onRestraintsSearchMatch()
+{
+    if (!m_restraintsDialog->hasRestraints()) return;
+
+    const int npeaks = peak_number();
+    if (npeaks == 0) return;
+
+    float *dval      = new float[npeaks];
+    float *deltadval = new float[npeaks];
+    double wave;
+    get_d_delta_values(dval, deltadval, &wave);
+
+    QVector<double> dValues(npeaks), deltaValues(npeaks);
+    for (int i = 0; i < npeaks; i++) {
+        dValues[i]     = dval[i];
+        deltaValues[i] = deltadval[i];
+    }
+    delete[] dval;
+    delete[] deltadval;
+
+    DbQueryBuilder builder;
+    builder.setPrintEnabled(true);
+    builder.setDValues(dValues, deltaValues);
+    builder.setWave(wave);
+    builder.setCalcFom(true);
+    builder.setMinFom(SearchOptionsDialog::savedMinFom());
+    applyDialogRestraints(builder);
+    builder.buildQuery();
+
+    setStatusMessage(tr("Searching database with restraints..."));
+    statusProgressBar->setRange(0, 100);
+    statusProgressBar->setValue(0);
+    statusProgressBar->show();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    QApplication::processEvents();
+
+    auto progress = [this](int current, int total) {
+        statusProgressBar->setValue(total > 0 ? (100 * current) / total : 0);
+        QApplication::processEvents();
+    };
+
+    QVector<CardType> acceptedCards;
+    AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+
+    QApplication::restoreOverrideCursor();
+    statusProgressBar->hide();
+    clearStatusMessage();
+
+    const int maxEntries = SearchOptionsDialog::savedMaxEntries();
+    if (acceptedCards.size() > maxEntries) {
+        std::sort(acceptedCards.begin(), acceptedCards.end(),
+                  [](const CardType &a, const CardType &b) {
+                      return a.getFom() > b.getFom();
+                  });
+        acceptedCards.resize(maxEntries);
+    }
+
+    ui->resultsWidget->setResults(acceptedCards);
 }
 
 void MainWindow::runSearch(const SearchOptions &opts)
@@ -786,4 +859,64 @@ void MainWindow::actionManageDatabasesTriggered()
     dlg.setDatabases(AppState::databases());
     if (dlg.exec() == QDialog::Accepted)
         AppState::setDatabases(dlg.databases());
+}
+
+void MainWindow::onCardSelected(const QString &id)
+{
+    const CardInfo info = AppState::db().queryCard(id);
+    if (!info.valid) return;
+
+    auto row = [](const QString &label, const QString &value) -> QString {
+        if (value.isEmpty() || value == "0" ) return QString();
+        return QString("<tr><td><b>%1</b></td><td>%2</td></tr>").arg(label, value);
+    };
+    auto rowD = [](const QString &label, double value, int decimals = 4) -> QString {
+        if (value == 0.0) return QString();
+        return QString("<tr><td><b>%1</b></td><td>%2</td></tr>").arg(label).arg(value, 0, 'f', decimals);
+    };
+
+    QString cellParams;
+    if (info.a != 0.0)
+        cellParams = QString("a=%1 b=%2 c=%3 &alpha;=%4 &beta;=%5 &gamma;=%6")
+                         .arg(info.a, 0, 'f', 4).arg(info.b, 0, 'f', 4).arg(info.c, 0, 'f', 4)
+                         .arg(info.alpha, 0, 'f', 3).arg(info.beta, 0, 'f', 3).arg(info.gamma, 0, 'f', 3);
+
+    QString ref;
+    if (!info.authors.isEmpty())
+        ref = info.authors;
+    if (!info.journal.isEmpty()) {
+        if (!ref.isEmpty()) ref += "; ";
+        ref += info.journal;
+        if (!info.journalVolume.isEmpty()) ref += " <b>" + info.journalVolume + "</b>";
+        if (info.journalYear > 0)   ref += QString(" (%1)").arg(info.journalYear);
+        if (!info.pageStart.isEmpty()) ref += " " + info.pageStart;
+        if (!info.pageEnd.isEmpty())   ref += "-" + info.pageEnd;
+    }
+
+    QString html = "<html><body style='font-family:sans-serif;font-size:9pt'>";
+    html += "<h3 style='margin:4px 0'>" + info.id + "</h3>";
+    html += "<table cellspacing='2' cellpadding='2'>";
+    html += row("Name",             info.name);
+    html += row("Mineral Name",     info.mineralName);
+    html += row("Formula",          info.chemicalFormula);
+    html += row("Space Group",      info.spaceGroup);
+    html += row("Quality",          info.quality);
+    html += row("RIR",              info.rir);
+    if (!cellParams.isEmpty())
+        html += "<tr><td><b>Cell</b></td><td>" + cellParams + "</td></tr>";
+    html += rowD("Volume (&Aring;&sup3;)", info.volume, 2);
+    html += rowD("Z",               static_cast<double>(info.z), 0);
+    html += rowD("Density",         info.density, 3);
+    html += rowD("Calc. Density",   info.crystalDensity, 3);
+    html += rowD("&mu;(CuK&alpha;)",info.muCuKa, 3);
+    html += row("Color",            info.color);
+    html += row("Type",             info.type);
+    if (!ref.isEmpty())
+        html += "<tr><td><b>Reference</b></td><td>" + ref + "</td></tr>";
+    html += "</table></body></html>";
+
+    ui->cardBrowser->setHtml(html);
+    ui->dockWidgetCard->setWindowTitle(id);
+    ui->dockWidgetCard->show();
+    ui->dockWidgetCard->raise();
 }
