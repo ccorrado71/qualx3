@@ -198,6 +198,25 @@ bool DatabaseBuilder::buildCifDatabase(const QString &basePath,
     return !wasCancelled;
 }
 
+QString DatabaseBuilder::queryContentType(const QString &basePath)
+{
+    const QString connName = QStringLiteral("dbbuilder_type_%1")
+                             .arg(QUuid::createUuid().toString(QUuid::Id128));
+    QString type;
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connName);
+        db.setDatabaseName(basePath + ".sq");
+        if (db.open()) {
+            QSqlQuery q(db);
+            if (q.exec("SELECT type FROM infodb") && q.first())
+                type = q.value(0).toString().trimmed();
+            db.close();
+        }
+    }
+    QSqlDatabase::removeDatabase(connName);
+    return type;
+}
+
 int DatabaseBuilder::queryEntries(const QString &basePath)
 {
     // Use a unique connection name to avoid conflicts with open connections.

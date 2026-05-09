@@ -26,7 +26,8 @@ ManageDatabasesDialog::ManageDatabasesDialog(QWidget *parent)
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
     ui->tableWidget->verticalHeader()->setVisible(false);
 
     connect(ui->quitButton,   &QPushButton::clicked, this, &QDialog::accept);
@@ -100,10 +101,15 @@ void ManageDatabasesDialog::rebuildTable()
         entriesItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         ui->tableWidget->setItem(row, 2, entriesItem);
 
-        // Column 3: Path — show the containing directory, not the full base path
+        // Column 3: Content type
+        QTableWidgetItem *typeItem = new QTableWidgetItem(db.contentType);
+        typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
+        ui->tableWidget->setItem(row, 3, typeItem);
+
+        // Column 4: Path — show the containing directory, not the full base path
         QTableWidgetItem *pathItem = new QTableWidgetItem(QFileInfo(db.path).path());
         pathItem->setFlags(pathItem->flags() & ~Qt::ItemIsEditable);
-        ui->tableWidget->setItem(row, 3, pathItem);
+        ui->tableWidget->setItem(row, 4, pathItem);
     }
 
     ui->tableWidget->blockSignals(false);
@@ -199,10 +205,11 @@ void ManageDatabasesDialog::registerExistingSqDatabase(const QString &sqFile,
 {
     const QString base = sqFile.chopped(3);   // strip trailing ".sq"
     DatabaseEntry entry;
-    entry.inUse   = mDatabases.isEmpty();
-    entry.name    = name;
-    entry.entries = DatabaseBuilder::queryEntries(base);
-    entry.path    = base;
+    entry.inUse       = mDatabases.isEmpty();
+    entry.name        = name;
+    entry.entries     = DatabaseBuilder::queryEntries(base);
+    entry.contentType = DatabaseBuilder::queryContentType(base);
+    entry.path        = base;
     mDatabases.append(entry);
     if (entry.inUse)
         mActiveIndex = mDatabases.size() - 1;
@@ -284,10 +291,11 @@ void ManageDatabasesDialog::onCreateClicked()
     }
 
     DatabaseEntry entry;
-    entry.inUse   = mDatabases.isEmpty();
-    entry.name    = name;
-    entry.entries = DatabaseBuilder::queryEntries(basePath);
-    entry.path    = basePath;
+    entry.inUse       = mDatabases.isEmpty();
+    entry.name        = name;
+    entry.entries     = DatabaseBuilder::queryEntries(basePath);
+    entry.contentType = DatabaseBuilder::queryContentType(basePath);
+    entry.path        = basePath;
 
     mDatabases.append(entry);
     if (entry.inUse)
@@ -318,10 +326,11 @@ QList<DatabaseEntry> ManageDatabasesDialog::loadSettings()
     list.reserve(count);
     for (int i = 0; i < count; ++i) {
         DatabaseEntry e;
-        e.inUse   = s.value(QString(DB_INUSE_KEY).arg(i), false).toBool();
-        e.name    = s.value(QString(DB_NAME_KEY).arg(i)).toString();
-        e.path    = s.value(QString(DB_PATH_KEY).arg(i)).toString();
-        e.entries = DatabaseBuilder::queryEntries(e.path);
+        e.inUse       = s.value(QString(DB_INUSE_KEY).arg(i), false).toBool();
+        e.name        = s.value(QString(DB_NAME_KEY).arg(i)).toString();
+        e.path        = s.value(QString(DB_PATH_KEY).arg(i)).toString();
+        e.entries     = DatabaseBuilder::queryEntries(e.path);
+        e.contentType = DatabaseBuilder::queryContentType(e.path);
         list.append(e);
     }
     return list;

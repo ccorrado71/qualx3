@@ -67,4 +67,8 @@ public:
     // Queries infodb.ncard from basePath + ".sq".
     // Returns -1 on error (file missing, query failed, …).
     static int queryEntries(const QString &basePath);
+
+    // Queries infodb.type from basePath + ".sq".
+    // Returns empty string on error.
+    static QString queryContentType(const QString &basePath);
 };

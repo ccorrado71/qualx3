@@ -61,8 +61,12 @@ private:
     // Builds top kNbestd d-values (by intensity, already sorted) as "%f" comma-separated
     static QString buildTopDval(const CifCrystalInfo &info, int &nOut);
 
-    // Encodes an int array as a raw int32 QByteArray
+    // Encodes an int array as a raw int32 QByteArray (first n elements)
     static QByteArray intsToBlob(const int *arr, int n);
+    // Encodes an int array reordered by idx as a raw int32 QByteArray
+    static QByteArray intsToBlob(const int *arr, const QVector<int> &idx);
+    // Encodes an int array reordered by idx as a comma-separated string (e.g. "0,1,2,")
+    static QString    intsToString(const int *arr, const QVector<int> &idx);
 
     void insertChemical(int id, const CifCrystalInfo &info);
     void insertId      (int id, const CifCrystalInfo &info);

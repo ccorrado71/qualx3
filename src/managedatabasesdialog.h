@@ -9,9 +9,10 @@ class ManageDatabasesDialog;
 }
 
 struct DatabaseEntry {
-    bool    inUse   = false;
+    bool    inUse       = false;
     QString name;
-    int     entries = 0;
+    int     entries     = 0;
+    QString contentType;
     QString path;
 };
 

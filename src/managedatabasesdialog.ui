@@ -39,6 +39,11 @@
      </column>
      <column>
       <property name="text">
+       <string>Content type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
        <string>Path of database files</string>
       </property>
      </column>

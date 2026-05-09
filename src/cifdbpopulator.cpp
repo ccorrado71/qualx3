@@ -173,10 +173,12 @@ void CifDbPopulator::insertSubfile(int id, const CifCrystalInfo &info)
 
 void CifDbPopulator::insertInfo(int id, const CifCrystalInfo &info)
 {
-    const QByteArray hBlob   = intsToBlob(info.refl_h,    info.nrefl_print);
-    const QByteArray kBlob   = intsToBlob(info.refl_k,    info.nrefl_print);
-    const QByteArray lBlob   = intsToBlob(info.refl_l,    info.nrefl_print);
-    const QByteArray mulBlob = intsToBlob(info.refl_mult, info.nrefl_print);
+    // Same d-spacing order as dvalue/intensita in the id table; text format as in legacy db
+    const QVector<int> idx = sortedByD(info);
+    const QString hStr   = intsToString(info.refl_h,    idx);
+    const QString kStr   = intsToString(info.refl_k,    idx);
+    const QString lStr   = intsToString(info.refl_l,    idx);
+    const QString mulStr = intsToString(info.refl_mult, idx);
 
     m_infoQuery.addBindValue(QString::number(id));               // id VARCHAR(15)
     m_infoQuery.addBindValue(QStringLiteral(""));                // authors – not available
@@ -207,10 +209,10 @@ void CifDbPopulator::insertInfo(int id, const CifCrystalInfo &info)
     m_infoQuery.addBindValue(info.rir > 0.0f
                              ? QString::number(double(info.rir), 'f', 4)
                              : QStringLiteral(""));
-    m_infoQuery.addBindValue(hBlob);
-    m_infoQuery.addBindValue(kBlob);
-    m_infoQuery.addBindValue(lBlob);
-    m_infoQuery.addBindValue(mulBlob);
+    m_infoQuery.addBindValue(hStr);
+    m_infoQuery.addBindValue(kStr);
+    m_infoQuery.addBindValue(lStr);
+    m_infoQuery.addBindValue(mulStr);
 
     if (!m_infoQuery.exec())
         qWarning() << "info INSERT error:" << m_infoQuery.lastError().text() << "id=" << id;
@@ -461,4 +463,24 @@ QByteArray CifDbPopulator::intsToBlob(const int *arr, int n)
     for (int i = 0; i < n; ++i)
         dst[i] = static_cast<qint32>(arr[i]);
     return blob;
+}
+
+QByteArray CifDbPopulator::intsToBlob(const int *arr, const QVector<int> &idx)
+{
+    if (idx.isEmpty()) return QByteArray(1, '\0');
+    QByteArray blob(idx.size() * static_cast<int>(sizeof(qint32)), Qt::Uninitialized);
+    qint32 *dst = reinterpret_cast<qint32 *>(blob.data());
+    for (int i = 0; i < idx.size(); ++i)
+        dst[i] = static_cast<qint32>(arr[idx[i]]);
+    return blob;
+}
+
+QString CifDbPopulator::intsToString(const int *arr, const QVector<int> &idx)
+{
+    if (idx.isEmpty()) return {};
+    QString result;
+    result.reserve(idx.size() * 4);
+    for (int i : idx)
+        result += QString::number(arr[i]) + QLatin1Char(',');
+    return result;
 }
