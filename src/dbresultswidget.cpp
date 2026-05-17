@@ -18,7 +18,7 @@
 // Maps a card ID string to a visually distinct, stable HSV colour.
 // Uses the golden-ratio method so sequential IDs spread evenly around
 // the hue wheel.
-static QColor cardColor(const QString &id)
+QColor cardColor(const QString &id)
 {
     bool ok;
     quint64 n = id.toULongLong(&ok);

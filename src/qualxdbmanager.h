@@ -2,11 +2,14 @@
 #define QUALXDBMANAGER_H
 
 #include <QString>
+#include <QVector>
 
 struct CardInfo {
     // id table
     QString id, name, mineralName, chemicalFormula, spaceGroup, quality, rir;
     int     nrec = 0, nd = 0;
+    QVector<double> dvalues;
+    QVector<double> intensities;
     // info table
     QString authors, journal, journalVolume, pageStart, pageEnd, color, type;
     int     journalYear = 0, z = 0;
@@ -14,6 +17,7 @@ struct CardInfo {
     double  a = 0.0, b = 0.0, c = 0.0;
     double  alpha = 0.0, beta = 0.0, gamma = 0.0;
     double  muCuKa = 0.0;
+    QVector<int> h, k, l;
     bool    valid = false;
 };
 

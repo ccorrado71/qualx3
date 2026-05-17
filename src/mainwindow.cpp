@@ -8,6 +8,8 @@
 #include "savedialog.h"
 #include "searchoptionsdialog.h"
 #include "fileutils.h"
+#include "xpdutils.h"
+#include "dbresultswidget.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -894,7 +896,8 @@ void MainWindow::onCardSelected(const QString &id)
     }
 
     QString html = "<html><body style='font-family:sans-serif;font-size:9pt'>";
-    html += "<h3 style='margin:4px 0'>" + info.id + "</h3>";
+    const QString idColor = cardColor(info.id).name();
+    html += QString("<h3 style='margin:4px 0;color:%1'>%2</h3>").arg(idColor, info.id);
     html += "<table cellspacing='2' cellpadding='2'>";
     html += row("Name",             info.name);
     html += row("Mineral Name",     info.mineralName);
@@ -913,7 +916,49 @@ void MainWindow::onCardSelected(const QString &id)
     html += row("Type",             info.type);
     if (!ref.isEmpty())
         html += "<tr><td><b>Reference</b></td><td>" + ref + "</td></tr>";
-    html += "</table></body></html>";
+    html += "</table>";
+
+    // --- Reflections table ---
+    const QVector<double> &dv = info.dvalues;
+    if (!dv.isEmpty()) {
+        const QVector<double> &pw = xpdViewer()->plotWave;
+        const double wave = pw.isEmpty() ? 1.54056 : pw.first();
+
+        const QVector<double> tth = xpdutils::tthvalue_safe(dv, wave);
+
+        const bool hasI   = (info.intensities.size() == dv.size());
+        const bool hasHKL = (info.h.size() == dv.size() &&
+                             info.k.size() == dv.size() &&
+                             info.l.size() == dv.size());
+
+        html += QString("<h4 style='margin:6px 0 2px 0'>Reflections "
+                        "(&lambda; = %1 &Aring;)</h4>").arg(wave, 0, 'f', 5);
+        html += "<table border='1' cellspacing='0' cellpadding='3' "
+                "style='border-collapse:collapse;font-size:8pt'>";
+        html += "<tr style='background:#ddd'>"
+                "<th>#</th><th>2&theta;</th><th>d (&Aring;)</th><th>I (%)</th>";
+        if (hasHKL) html += "<th>h</th><th>k</th><th>l</th>";
+        html += "</tr>";
+
+        for (int i = 0; i < dv.size(); ++i) {
+            html += "<tr>";
+            html += "<td align='right'>"  + QString::number(i + 1)                     + "</td>";
+            html += "<td align='right'>"  + (i < tth.size()
+                        ? QString::number(tth[i], 'f', 3) : QStringLiteral("-"))       + "</td>";
+            html += "<td align='right'>"  + QString::number(dv[i], 'f', 4)             + "</td>";
+            html += "<td align='right'>"  + (hasI
+                        ? QString::number(info.intensities[i], 'f', 1) : QStringLiteral("-")) + "</td>";
+            if (hasHKL) {
+                html += "<td align='center'>" + QString::number(info.h[i]) + "</td>";
+                html += "<td align='center'>" + QString::number(info.k[i]) + "</td>";
+                html += "<td align='center'>" + QString::number(info.l[i]) + "</td>";
+            }
+            html += "</tr>";
+        }
+        html += "</table>";
+    }
+
+    html += "</body></html>";
 
     ui->cardBrowser->setHtml(html);
     ui->dockWidgetCard->setWindowTitle(id);

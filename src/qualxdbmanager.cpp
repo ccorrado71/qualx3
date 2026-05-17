@@ -43,8 +43,8 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
     CardInfo info;
 
     QSqlQuery q1(dbMain.db());
-    q1.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, nd "
-               "FROM id WHERE id=" + idCard);
+    q1.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, nd, "
+               "dvalue, intensita FROM id WHERE id=" + idCard);
     if (q1.exec() && q1.first()) {
         info.id              = q1.value(0).toString();
         info.name            = q1.value(1).toString().trimmed();
@@ -55,13 +55,15 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
         info.rir             = q1.value(6).toString().trimmed();
         info.nrec            = q1.value(7).toInt();
         info.nd              = q1.value(8).toInt();
+        info.dvalues         = blobToDoubleVector(q1.value(9).toByteArray());
+        info.intensities     = blobToDoubleVector(q1.value(10).toByteArray());
         info.valid           = true;
     }
 
     QSqlQuery q2(dbInfo.db());
     q2.prepare("SELECT authors, journal, journal_year, journal_volume, page_start, page_end, "
                "color, crystal_density, type, volume, density, z, a, b, c, alpha, beta, gamma, "
-               "`mu(CuKa)` FROM info WHERE id=" + idCard);
+               "`mu(CuKa)`, h, k, l FROM info WHERE id=" + idCard);
     if (q2.exec() && q2.first()) {
         info.authors        = q2.value(0).toString().trimmed();
         info.journal        = q2.value(1).toString().trimmed();
@@ -82,6 +84,16 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
         info.beta           = q2.value(16).toDouble();
         info.gamma          = q2.value(17).toDouble();
         info.muCuKa         = q2.value(18).toDouble();
+
+        auto parseInts = [](const QString &s) {
+            QVector<int> v;
+            for (const QString &t : s.split(QLatin1Char(','), Qt::SkipEmptyParts))
+                v.append(t.trimmed().toInt());
+            return v;
+        };
+        info.h = parseInts(q2.value(19).toString());
+        info.k = parseInts(q2.value(20).toString());
+        info.l = parseInts(q2.value(21).toString());
     }
 
     return info;

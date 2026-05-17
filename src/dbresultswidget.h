@@ -3,7 +3,12 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QColor>
 #include "cardtype.h"
+
+// Returns the display color associated with a card ID (same golden-ratio hue mapping
+// used in DbResultsWidget and cardBrowser).
+QColor cardColor(const QString &id);
 
 class QStandardItemModel;
 class TextFilterProxyModel;
