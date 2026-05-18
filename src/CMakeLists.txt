@@ -69,6 +69,8 @@ set(PROJECT_SOURCES
     nr.h
     paginationmodel.cpp
     paginationmodel.h
+    piechartwidget.cpp
+    piechartwidget.h
     pdf2reader.cpp
     pdf2reader.h
     peaklistwidget.cpp
@@ -90,6 +92,9 @@ set(PROJECT_SOURCES
     qualxdbcreator.cpp
     qualxdbmanager.h
     qualxdbmanager.cpp
+    quantwidget.cpp
+    quantwidget.h
+    quantwidget.ui
     qualxdbpopulator.h
     qualxdbpopulator.cpp
     restraintsdialog.cpp

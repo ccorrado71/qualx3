@@ -13,6 +13,7 @@
 #include <QItemSelectionModel>
 #include <QSet>
 
+#include <algorithm>
 #include <cmath>
 
 // Maps a card ID string to a visually distinct, stable HSV colour.
@@ -97,6 +98,8 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     connect(ui->table->horizontalHeader(), &QHeaderView::sectionClicked,
             this, &DbResultsWidget::onHeaderSectionClicked);
 
+    connect(ui->acceptButton, &QToolButton::clicked, this, &DbResultsWidget::onAcceptClicked);
+
     // Selezione card: emette l'id dalla colonna 2 (mouse e tastiera)
     connect(ui->table->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &) {
@@ -141,6 +144,7 @@ void DbResultsWidget::populateRow(int row, const CardType &card)
     auto *colorItem = new QStandardItem();
     colorItem->setBackground(QBrush(cardColor(card.getId())));
     colorItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    colorItem->setData(QVariant::fromValue(card), Qt::UserRole);
     sourceModel->setItem(row, 0, colorItem);
     sourceModel->setItem(row, 1, new QStandardItem(card.getQuality()));
     sourceModel->setItem(row, 2, new QStandardItem(card.getId()));
@@ -220,6 +224,37 @@ void DbResultsWidget::updateButtons()
     ui->prevBtn->setEnabled(pageModel->canGoBack());
     ui->nextBtn->setEnabled(pageModel->canGoForward());
     ui->lastBtn->setEnabled(pageModel->canGoForward());
+}
+
+void DbResultsWidget::onAcceptClicked()
+{
+    const auto selected = ui->table->selectionModel()->selectedRows();
+    if (selected.isEmpty()) return;
+
+    // Map selected page-model indices → source model rows + card data
+    QVector<QPair<int, CardType>> rowCards;
+    rowCards.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        const QModelIndex srcIdx = filterModel->mapToSource(pageModel->mapToSource(idx));
+        auto *item = sourceModel->item(srcIdx.row(), 0);
+        if (item)
+            rowCards.append({srcIdx.row(), item->data(Qt::UserRole).value<CardType>()});
+    }
+    if (rowCards.isEmpty()) return;
+
+    // Remove rows from highest to lowest to keep indices valid
+    std::sort(rowCards.begin(), rowCards.end(),
+              [](const auto &a, const auto &b){ return a.first > b.first; });
+    for (const auto &rc : rowCards)
+        sourceModel->removeRow(rc.first);
+
+    // Emit phaseAccepted in ascending row order
+    std::sort(rowCards.begin(), rowCards.end(),
+              [](const auto &a, const auto &b){ return a.first < b.first; });
+    for (const auto &rc : rowCards)
+        emit phaseAccepted(rc.second);
+
+    emit hasResultsChanged(hasResults());
 }
 
 void DbResultsWidget::onHeaderSectionClicked(int column)

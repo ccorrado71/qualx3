@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCard);
+    tabifyDockWidget(ui->dockWidgetCard, ui->dockWidgetQuant);
     ui->peakDockWidget->raise();
 
     setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
@@ -205,6 +206,13 @@ void MainWindow::createDialogs()
 
     connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
             this, &MainWindow::onCardSelected);
+
+    connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
+            this, [this](const CardType &card) {
+        ui->quantWidget->addPhase(card);
+        ui->dockWidgetQuant->show();
+        ui->dockWidgetQuant->raise();
+    });
 }
 
 void MainWindow::actionsSetup()

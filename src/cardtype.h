@@ -2,6 +2,7 @@
 #define CARDTYPE_H
 
 #include <QVector>
+#include <QMetaType>
 
 class CardType
 {
@@ -56,5 +57,7 @@ private:
     QVector<double> tth;     // two-theta
     QVector<double> intensity; // intensity
 };
+
+Q_DECLARE_METATYPE(CardType)
 
 #endif // CARDTYPE_H

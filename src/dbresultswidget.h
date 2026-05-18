@@ -33,6 +33,7 @@ public:
 signals:
     void hasResultsChanged(bool hasResults);
     void cardSelected(const QString &id);
+    void phaseAccepted(const CardType &card);
 
 private slots:
     void currentPageChanged(int page);
@@ -40,6 +41,7 @@ private slots:
     void updateButtons();
     void onHeaderSectionClicked(int column);
     void populateRow(int row, const CardType &card);
+    void onAcceptClicked();
 
 private:
     Ui::DbResultsWidget* ui;

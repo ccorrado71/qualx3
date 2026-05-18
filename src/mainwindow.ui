@@ -149,7 +149,7 @@
    <addaction name="menuDatabase"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QDockWidget" name="dockWidget">
+  <widget class="QDockWidget" name="dockWidgetPeaks">
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
@@ -200,12 +200,39 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="layoutCard">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTextBrowser" name="cardBrowser"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetQuant">
+   <property name="windowTitle">
+    <string>Quantitative</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QVBoxLayout" name="layoutQuant">
      <property name="leftMargin"><number>0</number></property>
      <property name="topMargin"><number>0</number></property>
      <property name="rightMargin"><number>0</number></property>
      <property name="bottomMargin"><number>0</number></property>
      <item>
-      <widget class="QTextBrowser" name="cardBrowser"/>
+      <widget class="QuantWidget" name="quantWidget" native="true"/>
      </item>
     </layout>
    </widget>
@@ -355,6 +382,12 @@
    <class>DbResultsWidget</class>
    <extends>QWidget</extends>
    <header>dbresultswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QuantWidget</class>
+   <extends>QWidget</extends>
+   <header>quantwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

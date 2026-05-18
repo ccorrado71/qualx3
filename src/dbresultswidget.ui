@@ -17,6 +17,13 @@
    <item>
     <layout class="QHBoxLayout" name="topLayout">
      <item>
+      <widget class="QToolButton" name="acceptButton">
+       <property name="text">
+        <string>Accept</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="labelFilter">
        <property name="text">
         <string>Filter:</string>
