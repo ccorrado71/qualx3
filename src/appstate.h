@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QList>
+#include "experimentalpeaks.h"
 #include "managedatabasesdialog.h"  // DatabaseEntry
 #include "qualxdbmanager.h"
 
@@ -44,6 +45,9 @@ public:
     // The manager is opened automatically when the active database changes.
     static QualxDbManager &db();
 
+    // Returns the experimental peaks loaded from the last get_d_delta_values call.
+    static ExperimentalPeaks &peaks();
+
 private:
     // Opens the active database (closes any previously open one first).
     static void openActiveDatabase();
@@ -51,4 +55,5 @@ private:
     static QList<DatabaseEntry> s_databases;
     static QualxDbManager       s_db;
     static QString              s_openPath;   // path of the currently open database
+    static ExperimentalPeaks    s_peaks;
 };

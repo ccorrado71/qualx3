@@ -10,14 +10,15 @@ end type ass_type
 contains
 
    subroutine computeFOM(tth,intensity,tsize,cfom_tot,w2thetad,w_intensity,w_phases,delta2theta, &
-                         fompeakpos_out,fomintensity_out,scale_out)  bind(C,name="computeFOM")
+                         fompeakpos_out,fomintensity_out,scale_out, &
+                         exp_tth,exp_intensity,exp_size)  bind(C,name="computeFOM")
    use variables, only: dataset
-   use peak_mod, only: pkind, numpeaks
+!corr   use peak_mod, only: pkind, numpeaks
    use, intrinsic :: iso_c_binding, only: c_double, c_int
    use arrayutil, only: clocate
-   real(c_double), dimension(*), intent(in) :: tth       ! 2theta array for the card
-   real(c_double), dimension(*), intent(in) :: intensity ! intensity array
-   integer(c_int), intent(in), value        :: tsize     ! size of the 2theta array
+   real(c_double), dimension(*), intent(in) :: tth           ! 2theta array for the card
+   real(c_double), dimension(*), intent(in) :: intensity     ! intensity array for the card
+   integer(c_int), intent(in), value        :: tsize         ! size of the card arrays
    real(c_double), intent(out)              :: cfom_tot
    real(c_double), intent(in), value        :: w2thetad
    real(c_double), intent(in), value        :: w_intensity
@@ -26,12 +27,15 @@ contains
    real(c_double), intent(out)              :: fompeakpos_out
    real(c_double), intent(out)              :: fomintensity_out
    real(c_double), intent(out)              :: scale_out
+   real(c_double), dimension(*), intent(in) :: exp_tth       ! 2theta of experimental peaks
+   real(c_double), dimension(*), intent(in) :: exp_intensity ! intensity of experimental peaks
+   integer(c_int), intent(in), value        :: exp_size      ! number of experimental peaks
    type(ass_type), allocatable              :: ass(:)
    real                                     :: fomd, fomI, fomdb, foms, fom_tot
-   real, dimension(:), allocatable          :: xd, Id, Is, Idmult
+   real, dimension(:), allocatable          :: xd, Id, Idmult
    real                                     :: tthmin, tthmax
    real                                     :: diffss, sumId2, sumIoId, Idiff
-   integer                                  :: nd,ns
+   integer                                  :: nd
    integer                                  :: i, j, kd, natot, nlm, nassm, icl
    integer, allocatable                     :: pkas(:), pkad(:)
    logical, allocatable                     :: iass(:)  ! CONVERT TO LOGICAL
@@ -73,9 +77,8 @@ contains
    enddo
 !
 !  Allocate array to size of experimental peaks (ns)
-   ns = numpeaks(pkind)
-   allocate(pkas(ns), Idmult(ns), Is(ns))
-   Is(:) = pkind(:)%gety()
+!corr   ns = numpeaks(pkind)
+   allocate(pkas(exp_size), Idmult(exp_size))
 !
 !  Match one or more experimental peaks to the database reflection/peak.
    natot = 0
@@ -83,8 +86,10 @@ contains
    pkas(:) = 0
    pkad(:) = 0
    do i=1,nd
-      nlm = clocate(pkind%getx(),xd(i))
-      diffss = abs(pkind(nlm)%getx() - xd(i))
+!corr      nlm = clocate(pkind%getx(),xd(i))
+!corr      diffss = abs(pkind(nlm)%getx() - xd(i))
+      nlm = clocate(real(exp_tth(:exp_size)),xd(i))
+      diffss = abs(exp_tth(nlm) - xd(i))
       if (diffss < delta2theta) then
           natot = natot + 1
           fomd = fomd + diffss
@@ -95,8 +100,8 @@ contains
    enddo
 !
    if (natot > 0) then
-       allocate(iass(ns))
-       do i=1,ns
+       allocate(iass(exp_size))
+       do i=1,exp_size
           Idmult(i) = 0
           iass(i) = .false.
           do j=1,natot
@@ -111,10 +116,10 @@ contains
        if (kscal) then               
            sumId2 = 0.0
            sumIoId = 0.0
-           do i=1,ns
+           do i=1,exp_size
               if (iass(i)) then
                   sumId2  = sumId2 + Idmult(i)*Idmult(i)
-                  sumIoId = sumIoId + Is(i) * Idmult(i)
+                  sumIoId = sumIoId + exp_intensity(i) * Idmult(i)
               endif
            enddo
            if (sumId2 > 0) then
@@ -146,10 +151,10 @@ contains
        fomI = 0.0
        if (crd_scale > 0.0) then
            nassm = 0
-           do i=1,ns
+           do i=1,exp_size
               if (iass(i)) then
                   nassm = nassm + 1
-                  fomI = fomI + abs(Is(i) - Idmult(i)) / max(Is(i),Idmult(i))
+                  fomI = fomI + abs(exp_intensity(i) - Idmult(i)) / max(exp_intensity(i),Idmult(i))
               endif
            enddo
            fomI = 1.0 - fomI/nassm
@@ -172,7 +177,7 @@ contains
 !
 !      Calculate ntph = teoretical number of peaks per phase
        ntph = nint(-9*w_phases+10)  ! teoretical number of phases
-       nts = ns / ntph
+       nts = exp_size / ntph
        if (nts < 1) nts = 1
 !
 !      3) Fom that takes into account the contribution of associated database peaks
@@ -183,21 +188,21 @@ contains
        endif  
 !
 !      4) Fom that takes into account the contribution of associated sample peaks
-       foms = (nsa/real(ns))
+       foms = (nsa/real(exp_size))
 !
 !      Combine all contributions to the final FOM
        sumsa=0.0
        sumda = 0.0
        numass = 0
-       do i=1,ns
+       do i=1,exp_size
           if (iass(i)) then
-              sumsa = sumsa + Is(i)
+              sumsa = sumsa + exp_intensity(i)
               sumda = sumda + Idmult(i)
               numass=numass + 1
           endif
        enddo
        sumdtot = sum(Id(:)*crd_scale)
-       sumstot = sum(Is(:))
+       sumstot = sum(exp_intensity(:exp_size))
        SQRTDS = sqrt((sumsa/sumstot)*foms)
        SQRTDA = sqrt((sumda/sumdtot)*fomdb)
 

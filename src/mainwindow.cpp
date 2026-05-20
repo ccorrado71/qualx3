@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "appstate.h"
+#include "experimentalpeaks.h"
+#include "peakassoc.h"
 #include "dbquerybuilder.h"
 #include "managedatabasesdialog.h"
 #include "progkeysettings.h"
@@ -26,7 +28,12 @@ extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier)
 extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 extern "C" void apply_background_subtraction();
 extern "C" int peak_number();
-extern "C" void get_d_delta_values(float dval[], float deltadval[], double *wave);
+extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave);
+extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
+                           double w2thetad, double w_intensity, double w_phases, double delta2theta,
+                           double *fompeakpos_out, double *fomintensity_out, double *scale_out,
+                           double exp_tth[], double exp_intensity[], int exp_size);
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -207,11 +214,21 @@ void MainWindow::createDialogs()
     connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
             this, &MainWindow::onCardSelected);
 
+    connect(ui->resultsWidget, &DbResultsWidget::cardDataSelected,
+            this, [this](const CardType &card) {
+        ui->peakCompareWidget->setSelectedCard(
+            card, card.getId(), SearchOptionsDialog::savedDelta2theta());
+        ui->peakTabWidget->setCurrentIndex(1);
+    });
+
     connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
             this, [this](const CardType &card) {
         ui->quantWidget->addPhase(card);
+        ui->peakCompareWidget->addAcceptedPhase(card);
         ui->dockWidgetQuant->show();
         ui->dockWidgetQuant->raise();
+        if (SearchOptionsDialog::savedResidualSearching())
+            performResidualSearch(card);
     });
 }
 
@@ -544,6 +561,39 @@ void MainWindow::updatePeakListTable()
 //  Search Menu
 //
 
+// Reads experimental peaks from Fortran and stores them in AppState::peaks().
+// Returns the number of peaks (0 if none).
+static int loadExperimentalPeaks()
+{
+    const int n = peak_number();
+    if (n <= 0) {
+        AppState::peaks().clear();
+        return 0;
+    }
+    float *dval      = new float[n];
+    float *deltadval = new float[n];
+    float *tthval    = new float[n];
+    float *intval    = new float[n];
+    float *fwhmval   = new float[n];
+    double wave;
+    get_d_delta_values(dval, deltadval, tthval, intval, fwhmval, &wave);
+
+    ExperimentalPeaks &ep = AppState::peaks();
+    ep.d.resize(n); ep.deltaD.resize(n);
+    ep.tth.resize(n); ep.intensity.resize(n); ep.fwhm.resize(n);
+    ep.wave  = wave;
+    ep.valid = true;
+    for (int i = 0; i < n; ++i) {
+        ep.d[i]         = dval[i];
+        ep.deltaD[i]    = deltadval[i];
+        ep.tth[i]       = tthval[i];
+        ep.intensity[i] = intval[i];
+        ep.fwhm[i]      = fwhmval[i];
+    }
+    delete[] dval; delete[] deltadval; delete[] tthval; delete[] intval; delete[] fwhmval;
+    return n;
+}
+
 void MainWindow::onActionSearchMatchTriggered()
 {
     int npeaks = peak_number();
@@ -556,25 +606,13 @@ void MainWindow::onActionSearchMatchTriggered()
         return;
     }
 
-    float *dval = new float[npeaks];
-    float *deltadval = new float[npeaks];
-    double wave;
-    get_d_delta_values(dval, deltadval, &wave);
-
-    QVector<double> dValues(npeaks);
-    QVector<double> deltaValues(npeaks);
-    for (int i = 0; i < npeaks; i++) {
-        dValues[i] = dval[i];
-        deltaValues[i] = deltadval[i];
-    }
-
-    delete [] dval;
-    delete [] deltadval;
+    loadExperimentalPeaks();
+    const ExperimentalPeaks &ep0 = AppState::peaks();
 
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
-    builder.setDValues(dValues, deltaValues);
-    builder.setWave(wave);
+    builder.setDValues(ep0.d, ep0.deltaD);
+    builder.setWave(ep0.wave);
     builder.setCalcFom(true);
     builder.setMinFom(SearchOptionsDialog::savedMinFom());
     builder.setWeight2thetaD(SearchOptionsDialog::savedWeight2thetaD());
@@ -620,6 +658,9 @@ void MainWindow::onActionSearchMatchTriggered()
 
     setStatusMessage(tr("Found %1 card(s)").arg(acceptedCards.size()));
     ui->resultsWidget->setResults(acceptedCards);
+    ui->peakCompareWidget->clearAcceptedPhases();
+    ui->peakCompareWidget->clearCard();
+    ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
 }
 
 void MainWindow::onActionSearchMatchOptionsTriggered()
@@ -654,6 +695,11 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
         ui->resultsWidget->mergeResults(cards);
     else
         ui->resultsWidget->setResults(cards);
+
+    // Refresh the peak compare widget with the current experimental peaks
+    ui->peakCompareWidget->clearAcceptedPhases();
+    ui->peakCompareWidget->clearCard();
+    ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
 }
 
 void MainWindow::actionRestraintsTriggered()
@@ -729,23 +775,10 @@ void MainWindow::onRestraintsSearch(bool merge)
     builder.setPrintEnabled(true);
     applyDialogRestraints(builder);
 
-    int npeaks = peak_number();
-    if (npeaks > 0) {
-        float *dval      = new float[npeaks];
-        float *deltadval = new float[npeaks];
-        double wave;
-        get_d_delta_values(dval, deltadval, &wave);
-
-        QVector<double> dValues(npeaks), deltaValues(npeaks);
-        for (int i = 0; i < npeaks; i++) {
-            dValues[i]     = dval[i];
-            deltaValues[i] = deltadval[i];
-        }
-        delete[] dval;
-        delete[] deltadval;
-
-        builder.setDValues(dValues, deltaValues);
-        builder.setWave(wave);
+    if (loadExperimentalPeaks() > 0) {
+        const ExperimentalPeaks &ep1 = AppState::peaks();
+        builder.setDValues(ep1.d, ep1.deltaD);
+        builder.setWave(ep1.wave);
         builder.setCalcFom(true);
         builder.setMinFom(-1.0);
     } else {
@@ -762,23 +795,13 @@ void MainWindow::onRestraintsSearchMatch()
     const int npeaks = peak_number();
     if (npeaks == 0) return;
 
-    float *dval      = new float[npeaks];
-    float *deltadval = new float[npeaks];
-    double wave;
-    get_d_delta_values(dval, deltadval, &wave);
-
-    QVector<double> dValues(npeaks), deltaValues(npeaks);
-    for (int i = 0; i < npeaks; i++) {
-        dValues[i]     = dval[i];
-        deltaValues[i] = deltadval[i];
-    }
-    delete[] dval;
-    delete[] deltadval;
+    loadExperimentalPeaks();
+    const ExperimentalPeaks &ep2 = AppState::peaks();
 
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
-    builder.setDValues(dValues, deltaValues);
-    builder.setWave(wave);
+    builder.setDValues(ep2.d, ep2.deltaD);
+    builder.setWave(ep2.wave);
     builder.setCalcFom(true);
     builder.setMinFom(SearchOptionsDialog::savedMinFom());
     applyDialogRestraints(builder);
@@ -813,6 +836,8 @@ void MainWindow::onRestraintsSearchMatch()
     }
 
     ui->resultsWidget->setResults(acceptedCards);
+    ui->peakCompareWidget->clearCard();
+    ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
 }
 
 void MainWindow::runSearch(const SearchOptions &opts)
@@ -970,6 +995,91 @@ void MainWindow::onCardSelected(const QString &id)
 
     ui->cardBrowser->setHtml(html);
     ui->dockWidgetCard->setWindowTitle(id);
-    ui->dockWidgetCard->show();
-    ui->dockWidgetCard->raise();
+    if (ui->peakTabWidget->currentIndex() != 1) {
+        ui->dockWidgetCard->show();
+        ui->dockWidgetCard->raise();
+    }
+}
+
+void MainWindow::performResidualSearch(const CardType &acceptedCard)
+{
+    ExperimentalPeaks &ep = AppState::peaks();
+    if (!ep.valid || ep.tth.isEmpty()) return;
+
+    const double delta   = SearchOptionsDialog::savedDelta2theta();
+    const double wIntens = SearchOptionsDialog::savedWeightIntensity();
+
+    // ── Step 1: associate experimental peaks with the accepted card ──
+    // Scale the accepted card intensities to represent the actual pattern contribution.
+    const QVector<double> &rawI  = acceptedCard.getIntensity();
+    const double           cscale = acceptedCard.getScale();
+    QVector<double> scaledI(rawI.size());
+    for (int j = 0; j < rawI.size(); ++j)
+        scaledI[j] = rawI[j] * cscale;
+
+    const QVector<PeakAssociation> assoc = associatePeaks(
+        ep.tth, ep.intensity, acceptedCard.getTth(), scaledI, delta);
+
+    // ── Step 2: subtract the accepted card's contribution from experimental intensities ──
+    // ranI defines the noise threshold: peaks whose residual is within ranI of the
+    // original intensity are treated as fully explained and zeroed.
+    const double           ranI  = 0.2 * (1.0 - wIntens);
+    const QVector<double>  origI = ep.intensity; // snapshot of intensities before modification
+
+    for (int i = 0; i < ep.intensity.size(); ++i) {
+        if (assoc[i].dbPeakIndex < 0) continue;
+        ep.intensity[i] -= scaledI[assoc[i].dbPeakIndex];
+        if (ep.intensity[i] < 0.0) ep.intensity[i] = 0.0;
+        // Zero out residual peaks within the user-defined noise range
+        if (origI[i] > 0.0 && ep.intensity[i] / origI[i] <= ranI)
+            ep.intensity[i] = 0.0;
+    }
+
+    // ── Step 3: remove experimental peaks with intensity <= 0 ──
+    QVector<double> newTth, newI, newD, newDD;
+    for (int i = 0; i < ep.intensity.size(); ++i) {
+        if (ep.intensity[i] > 0.0) {
+            newTth.append(ep.tth[i]);
+            newI.append(ep.intensity[i]);
+            newD.append(ep.d[i]);
+            newDD.append(ep.deltaD[i]);
+        }
+    }
+    ep.tth = newTth; ep.intensity = newI; ep.d = newD; ep.deltaD = newDD;
+
+    // ── Step 4: recompute FOMs for all remaining cards ──
+    QVector<CardType> cards = ui->resultsWidget->allCards();
+    const int expSize = ep.tth.size();
+
+    for (CardType &card : cards) {
+        if (expSize == 0) {
+            // No experimental peaks remain: FOM is meaningless
+            card.setFom(0.0);
+            continue;
+        }
+        const int sz = card.getTth().size();
+        if (sz == 0) { card.setFom(0.0); continue; }
+
+        double fom = 0.0, fompeakpos = 0.0, fomintensity = 0.0, cardscale = 0.0;
+        computeFOM(card.getTth().data(), card.getIntensity().data(), sz, &fom,
+                   SearchOptionsDialog::savedWeight2thetaD(), wIntens,
+                   SearchOptionsDialog::savedWeightPhases(), delta,
+                   &fompeakpos, &fomintensity, &cardscale,
+                   ep.tth.data(), ep.intensity.data(), expSize);
+        card.setFom(fom);
+        card.setFomPeakPos(fompeakpos);
+        card.setFomIntensity(fomintensity);
+        // Note: card scale is intentionally not updated here
+    }
+
+    // ── Step 5: discard cards whose FOM is <= 0 ──
+    cards.erase(std::remove_if(cards.begin(), cards.end(),
+                               [](const CardType &c){ return c.getFom() <= 0.0; }),
+                cards.end());
+
+    // ── Step 6: update the results widget and statusbar ──
+    std::sort(cards.begin(), cards.end(),
+              [](const CardType &a, const CardType &b){ return a.getFom() > b.getFom(); });
+    ui->resultsWidget->setResults(cards);
+    setStatusMessage(tr("%1 card(s) after residual search").arg(cards.size()));
 }

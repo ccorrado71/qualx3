@@ -23,6 +23,7 @@ public:
     static double savedWeightIntensity();
     static double savedWeightPhases();
     static double savedDelta2theta();
+    static bool   savedResidualSearching();
 
     double minFom()              const;
     double weight2thetaD()       const;

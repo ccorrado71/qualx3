@@ -6,7 +6,7 @@ implicit none
 
 contains
 
-   subroutine get_d_delta_values(dval, delta_d, wave) bind(C, name='get_d_delta_values')
+   subroutine get_d_delta_values(dval, delta_d, tthval, intval, fwhm, wave) bind(C, name='get_d_delta_values')
    use iso_c_binding
    use peak_mod
    use counts
@@ -14,13 +14,18 @@ contains
    implicit none
    real(c_float), intent(out), dimension(*) :: dval
    real(c_float), intent(out), dimension(*) :: delta_d
+   real(c_float), intent(out), dimension(*) :: tthval
+   real(c_float), intent(out), dimension(*) :: intval
+   real(c_float), intent(out), dimension(*) :: fwhm
    real(c_double), intent(out)              :: wave
    integer :: npk
 
    npk = numpeaks(pkind)
-   dval(:npk) = pkind(:)%getd()
-!!!FIX 0.16 and wave(1)
+   dval(:npk)    = pkind(:)%getd()
+   tthval(:npk)  = pkind(:)%getx()
+   intval(:npk)  = pkind(:)%gety()
    delta_d(:npk) = deltatval(dval(:npk), 0.16, dataset(1)%wave(1))
+   fwhm(:npk)    = pkind(:)%fwhm
    wave = real(dataset(1)%wave(1),c_double)
 
    end subroutine get_d_delta_values

@@ -1,4 +1,5 @@
 #include "qualxdbmanager.h"
+#include "appstate.h"
 #include "searchutil.h"
 #include "scopedtimer.h"
 #include "cardtype.h"
@@ -8,7 +9,8 @@
 
 extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
                            double w2thetad, double w_intensity, double w_phases, double delta2theta,
-                           double *fompeakpos_out, double *fomintensity_out, double *scale_out);
+                           double *fompeakpos_out, double *fomintensity_out, double *scale_out,
+                           double exp_tth[], double exp_intensity[], int exp_size);
 
 QualxDbManager::QualxDbManager()
     : nStrongest(3)
@@ -257,6 +259,7 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
     int nId = 0;
     int lastProg = -1;
     double fomLim = builder.getMinFom();
+    ExperimentalPeaks &ep = AppState::peaks();
     if (queryIds.exec()) {
         if (builder.getCalcFom()) {
             while (queryIds.next()) {
@@ -283,7 +286,8 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
                     computeFOM(card.getTth().data(), card.getIntensity().data(), size, &fom,
                                builder.getWeight2thetaD(), builder.getWeightIntensity(),
                                builder.getWeightPhases(),  builder.getDelta2theta(),
-                               &fompeakpos, &fomintensity, &cardscale);
+                               &fompeakpos, &fomintensity, &cardscale,
+                               ep.tth.data(), ep.intensity.data(), ep.tth.size());
                     if (fom > fomLim) {
                         card.setId(queryIds.value(0).toString());
                         card.setChemicalName(queryIds.value(1).toString());

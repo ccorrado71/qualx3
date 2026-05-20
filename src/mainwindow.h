@@ -6,6 +6,7 @@
 #include "backgrounddialog.h"
 #include "restraintsdialog.h"
 #include "dbquerybuilder.h"
+#include "cardtype.h"
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
 #include "commandline.h"
@@ -124,5 +125,6 @@ private:
     void onRestraintsSearchMatch();
     void onCardSelected(const QString &id);
     void applyDialogRestraints(DbQueryBuilder &builder);
+    void performResidualSearch(const CardType &acceptedCard);
 };
 #endif // MAINWINDOW_H

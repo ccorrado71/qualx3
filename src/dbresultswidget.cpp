@@ -100,13 +100,16 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
 
     connect(ui->acceptButton, &QToolButton::clicked, this, &DbResultsWidget::onAcceptClicked);
 
-    // Selezione card: emette l'id dalla colonna 2 (mouse e tastiera)
+    // Card selection: emit id (for info panel) and full CardType (for peak compare)
     connect(ui->table->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &) {
         if (!current.isValid()) return;
         const QString id = ui->table->model()->index(current.row(), 2).data().toString();
-        if (!id.isEmpty())
-            emit cardSelected(id);
+        if (id.isEmpty()) return;
+        emit cardSelected(id);
+        const QVariant v = ui->table->model()->index(current.row(), 0).data(Qt::UserRole);
+        if (v.isValid())
+            emit cardDataSelected(v.value<CardType>());
     });
 
     updateButtons();
@@ -138,8 +141,12 @@ void DbResultsWidget::populateRow(int row, const CardType &card)
 {
     QString chemName = card.getChemicalName();
     const QString mineral = card.getMineralName();
-    if (!mineral.isEmpty())
-        chemName += QStringLiteral(" [") + mineral + QLatin1Char(']');
+    if (!mineral.isEmpty()) {
+        if (chemName.isEmpty())
+            chemName = mineral;
+        else
+            chemName += QStringLiteral(" [") + mineral + QLatin1Char(']');
+    }
 
     auto *colorItem = new QStandardItem();
     colorItem->setBackground(QBrush(cardColor(card.getId())));
@@ -203,6 +210,18 @@ void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
 bool DbResultsWidget::hasResults() const
 {
     return sourceModel->rowCount() > 0;
+}
+
+QVector<CardType> DbResultsWidget::allCards() const
+{
+    QVector<CardType> result;
+    result.reserve(sourceModel->rowCount());
+    for (int r = 0; r < sourceModel->rowCount(); ++r) {
+        auto *item = sourceModel->item(r, 0);
+        if (item)
+            result.append(item->data(Qt::UserRole).value<CardType>());
+    }
+    return result;
 }
 
 void DbResultsWidget::currentPageChanged(int page)

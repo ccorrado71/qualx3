@@ -12,5 +12,9 @@
         <file>images/rename.png</file>
         <file>images/search_match_options.png</file>
         <file>images/search_match.png</file>
+        <file>images/first_view.png</file>
+        <file>images/last_view.png</file>
+        <file>images/go_next.png</file>
+        <file>images/go_previous.png</file>
     </qresource>
 </RCC>

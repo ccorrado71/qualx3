@@ -159,6 +159,7 @@ double SearchOptionsDialog::savedDelta2theta()
         return delta2thetaPeaks();
     return QSettings().value(SK_DELTA, 0.08).toDouble();
 }
+bool SearchOptionsDialog::savedResidualSearching() { return QSettings().value(SK_RESIDUAL, true).toBool(); }
 
 double SearchOptionsDialog::minFom()              const { return ui->spinFom->value(); }
 double SearchOptionsDialog::weight2thetaD()       const { return ui->spinTwothetaD->value(); }

@@ -14,36 +14,65 @@
    <string>Database Results Widget</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="topLayout">
      <item>
       <widget class="QToolButton" name="acceptButton">
+       <property name="toolTip">
+        <string>Accept selected phases for quantitative analysis</string>
+       </property>
        <property name="text">
         <string>Accept</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="labelFilter">
-       <property name="text">
-        <string>Filter:</string>
+      <widget class="QLineEdit" name="textFilterEdit">
+       <property name="placeholderText">
+        <string>Filter data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="textFilterEdit"/>
-     </item>
-     <item>
       <widget class="QToolButton" name="firstBtn">
+       <property name="toolTip">
+        <string>Go to first page</string>
+       </property>
        <property name="text">
         <string>First</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/first_view.png</normaloff>:/images/images/first_view.png</iconset>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="prevBtn">
+       <property name="toolTip">
+        <string>Go to previous page</string>
+       </property>
        <property name="text">
         <string>Prev</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/go_previous.png</normaloff>:/images/images/go_previous.png</iconset>
        </property>
       </widget>
      </item>
@@ -62,15 +91,29 @@
      </item>
      <item>
       <widget class="QToolButton" name="nextBtn">
+       <property name="toolTip">
+        <string>Go to next page</string>
+       </property>
        <property name="text">
         <string>Next</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/go_next.png</normaloff>:/images/images/go_next.png</iconset>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="lastBtn">
+       <property name="toolTip">
+        <string>Go to last page</string>
+       </property>
        <property name="text">
         <string>Last</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/images/images/last_view.png</normaloff>:/images/images/last_view.png</iconset>
        </property>
       </widget>
      </item>
@@ -104,6 +147,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

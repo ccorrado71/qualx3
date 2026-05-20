@@ -29,10 +29,12 @@ public:
     void setResults(const QVector<CardType>& results);
     void mergeResults(const QVector<CardType>& newCards);
     bool hasResults() const;
+    QVector<CardType> allCards() const;
 
 signals:
     void hasResultsChanged(bool hasResults);
     void cardSelected(const QString &id);
+    void cardDataSelected(const CardType &card);
     void phaseAccepted(const CardType &card);
 
 private slots:

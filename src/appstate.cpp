@@ -8,6 +8,7 @@
 QList<DatabaseEntry> AppState::s_databases;
 QualxDbManager       AppState::s_db;
 QString              AppState::s_openPath;
+ExperimentalPeaks    AppState::s_peaks;
 
 void AppState::load()
 {
@@ -57,6 +58,11 @@ const DatabaseEntry *AppState::activeDatabase()
 QualxDbManager &AppState::db()
 {
     return s_db;
+}
+
+ExperimentalPeaks &AppState::peaks()
+{
+    return s_peaks;
 }
 
 void AppState::openActiveDatabase()

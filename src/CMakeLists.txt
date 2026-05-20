@@ -33,6 +33,7 @@ set(PROJECT_SOURCES
     dbresultswidget.ui
     elementbutton.cpp
     elementbutton.h
+    experimentalpeaks.h
     exportqualx.F90
     fileselectorwidget.cpp
     fileselectorwidget.h
@@ -69,6 +70,11 @@ set(PROJECT_SOURCES
     nr.h
     paginationmodel.cpp
     paginationmodel.h
+    peakassoc.cpp
+    peakassoc.h
+    peakcomparewidget.cpp
+    peakcomparewidget.h
+    peakcomparewidget.ui
     piechartwidget.cpp
     piechartwidget.h
     pdf2reader.cpp

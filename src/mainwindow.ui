@@ -170,8 +170,39 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing"><number>0</number></property>
+     <property name="leftMargin"><number>0</number></property>
+     <property name="topMargin"><number>0</number></property>
+     <property name="rightMargin"><number>0</number></property>
+     <property name="bottomMargin"><number>0</number></property>
      <item>
-      <widget class="PeakListWidget" name="peakListWidget" native="true"/>
+      <widget class="QTabWidget" name="peakTabWidget">
+       <property name="currentIndex"><number>0</number></property>
+       <widget class="QWidget" name="tabPeakList">
+        <attribute name="title"><string>Peak List</string></attribute>
+        <layout class="QVBoxLayout" name="layoutPeakList">
+         <property name="leftMargin"><number>0</number></property>
+         <property name="topMargin"><number>0</number></property>
+         <property name="rightMargin"><number>0</number></property>
+         <property name="bottomMargin"><number>0</number></property>
+         <item>
+          <widget class="PeakListWidget" name="peakListWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabPeakCompare">
+        <attribute name="title"><string>Compare</string></attribute>
+        <layout class="QVBoxLayout" name="layoutPeakCompare">
+         <property name="leftMargin"><number>0</number></property>
+         <property name="topMargin"><number>0</number></property>
+         <property name="rightMargin"><number>0</number></property>
+         <property name="bottomMargin"><number>0</number></property>
+         <item>
+          <widget class="PeakCompareWidget" name="peakCompareWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -382,6 +413,12 @@
    <class>DbResultsWidget</class>
    <extends>QWidget</extends>
    <header>dbresultswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PeakCompareWidget</class>
+   <extends>QWidget</extends>
+   <header>peakcomparewidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
