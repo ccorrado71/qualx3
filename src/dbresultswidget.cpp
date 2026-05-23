@@ -207,6 +207,65 @@ void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
     emit hasResultsChanged(hasResults());
 }
 
+void DbResultsWidget::addCard(const CardType &card)
+{
+    // If already present, just select it
+    for (int r = 0; r < sourceModel->rowCount(); ++r) {
+        if (auto *item = sourceModel->item(r, 2); item && item->text() == card.getId()) {
+            selectCard(card.getId());
+            return;
+        }
+    }
+
+    const int row = sourceModel->rowCount();
+    sourceModel->insertRow(row);
+    populateRow(row, card);
+
+    // Re-apply the current sort if any
+    if (m_sortColumn >= 0)
+        sourceModel->sort(m_sortColumn, m_sortOrder);
+
+    emit hasResultsChanged(true);
+    selectCard(card.getId());
+}
+
+void DbResultsWidget::selectCard(const QString &id)
+{
+    // Scan the source model to find the row with the given ID
+    int sourceRow = -1;
+    for (int r = 0; r < sourceModel->rowCount(); ++r) {
+        if (auto *item = sourceModel->item(r, 2); item && item->text() == id) {
+            sourceRow = r;
+            break;
+        }
+    }
+    if (sourceRow < 0) return;
+
+    // Map through filter and page models
+    const QModelIndex srcIdx    = sourceModel->index(sourceRow, 0);
+    const QModelIndex filterIdx = filterModel->mapFromSource(srcIdx);
+    if (!filterIdx.isValid()) return;
+
+    // Ensure the page containing this row is visible
+    const QModelIndex pageIdx = pageModel->mapFromSource(filterIdx);
+    if (pageIdx.isValid()) {
+        ui->table->selectionModel()->setCurrentIndex(
+            pageIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        ui->table->scrollTo(pageIdx);
+    } else {
+        // Row may be on a different page — navigate there first
+        const int filterRow = filterIdx.row();
+        const int targetPage = filterRow / pageModel->maxRows();
+        pageModel->setCurrentPage(targetPage);
+        const QModelIndex newPageIdx = pageModel->mapFromSource(filterIdx);
+        if (newPageIdx.isValid()) {
+            ui->table->selectionModel()->setCurrentIndex(
+                newPageIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            ui->table->scrollTo(newPageIdx);
+        }
+    }
+}
+
 bool DbResultsWidget::hasResults() const
 {
     return sourceModel->rowCount() > 0;

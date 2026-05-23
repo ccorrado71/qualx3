@@ -15,6 +15,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QInputDialog>
 #include <QMessageBox>
 
 #include <algorithm>
@@ -256,6 +257,7 @@ void MainWindow::actionsSetup()
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
     connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
     connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
+    connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
 }
 
@@ -912,6 +914,62 @@ void MainWindow::onActionGetCardTriggered()
     //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
     AppState::db().getCardInfo(idCard);
     AppState::db().getCardAdditionalInfo(idCard);
+}
+
+void MainWindow::onActionLoadAddTriggered()
+{
+    bool ok = false;
+    const QString id = QInputDialog::getText(this, tr("Load Card by ID"),
+                                             tr("Card ID:"), QLineEdit::Normal,
+                                             QString(), &ok).trimmed();
+    if (!ok || id.isEmpty()) return;
+
+    const CardInfo info = AppState::db().queryCard(id);
+    if (!info.valid) {
+        QMessageBox::warning(this, tr("Card Not Found"),
+                             tr("No card with ID \"%1\" found in the database.").arg(id));
+        return;
+    }
+
+    // Build CardType from CardInfo
+    const QVector<double> &pw = xpdViewer()->plotWave;
+    const double wave = pw.isEmpty() ? 1.54056 : pw.first();
+
+    CardType card;
+    card.setId(info.id);
+    card.setChemicalName(info.name);
+    card.setMineralName(info.mineralName);
+    card.setChemicalFormula(info.chemicalFormula);
+    card.setQuality(info.quality);
+    card.setRIR(info.rir);
+    card.setSpaceGroup(info.spaceGroup);
+    card.setD(info.dvalues, wave);
+    card.setIntensity(info.intensities);
+
+    // Compute FOM if experimental peaks are available
+    ExperimentalPeaks &ep = AppState::peaks();
+    if (ep.valid && !ep.tth.isEmpty() && !card.getTth().isEmpty()) {
+        double fom = 0.0, fompeakpos = 0.0, fomintensity = 0.0, cardscale = 0.0;
+        computeFOM(card.getTth().data(), card.getIntensity().data(), card.getTth().size(),
+                   &fom,
+                   SearchOptionsDialog::savedWeight2thetaD(),
+                   SearchOptionsDialog::savedWeightIntensity(),
+                   SearchOptionsDialog::savedWeightPhases(),
+                   SearchOptionsDialog::savedDelta2theta(),
+                   &fompeakpos, &fomintensity, &cardscale,
+                   ep.tth.data(), ep.intensity.data(), ep.tth.size());
+        card.setFom(fom);
+        card.setFomPeakPos(fompeakpos);
+        card.setFomIntensity(fomintensity);
+        card.setScale(cardscale);
+    }
+
+    ui->resultsWidget->addCard(card);
+    setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
+
+    // Force the card info dock visible
+    ui->dockWidgetCard->show();
+    ui->dockWidgetCard->raise();
 }
 
 void MainWindow::actionManageDatabasesTriggered()

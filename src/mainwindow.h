@@ -96,6 +96,7 @@ private slots:
     void onActionTestDatabaseTriggered();
     void onActionDatabaseInfoTriggered();
     void onActionGetCardTriggered();
+    void onActionLoadAddTriggered();
 private:
     void createDialogs();
     void actionsSetup();

@@ -28,9 +28,11 @@ public:
 
     void setResults(const QVector<CardType>& results);
     void mergeResults(const QVector<CardType>& newCards);
+    void addCard(const CardType &card);
     bool hasResults() const;
     QVector<CardType> allCards() const;
     void selectFirstCard();
+    void selectCard(const QString &id);
 
 signals:
     void hasResultsChanged(bool hasResults);

@@ -104,6 +104,7 @@
     <addaction name="actionSearch_Match"/>
     <addaction name="actionSearch_Match_Options"/>
     <addaction name="actionRestraints"/>
+    <addaction name="actionLoad_Add"/>
     <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
     <addaction name="actionGetCard"/>
@@ -322,6 +323,11 @@
   <action name="actionGetCard">
    <property name="text">
     <string>Get Card</string>
+   </property>
+  </action>
+  <action name="actionLoad_Add">
+   <property name="text">
+    <string>Load Card by ID...</string>
    </property>
   </action>
   <action name="actionExit">
