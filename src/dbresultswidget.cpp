@@ -212,6 +212,14 @@ bool DbResultsWidget::hasResults() const
     return sourceModel->rowCount() > 0;
 }
 
+void DbResultsWidget::selectFirstCard()
+{
+    if (pageModel->rowCount() == 0) return;
+    const QModelIndex first = pageModel->index(0, 0);
+    ui->table->selectionModel()->setCurrentIndex(
+        first, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+}
+
 QVector<CardType> DbResultsWidget::allCards() const
 {
     QVector<CardType> result;

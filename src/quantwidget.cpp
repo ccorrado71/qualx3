@@ -80,6 +80,7 @@ void QuantWidget::updateQuant()
     if (valid && sum > 0.0)
         for (int i = 0; i < n; ++i)
             quant[i] = 100.0 * rap[i] / sum;
+    m_quant = (valid && sum > 0.0) ? quant : QVector<double>();
 
     // Rebuild table and pie slices
     m_model->setRowCount(n);

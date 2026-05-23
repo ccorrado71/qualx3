@@ -67,10 +67,10 @@ void PeakCompareWidget::clearAcceptedPhases()
 
 void PeakCompareWidget::updateDelegates(int totalColumns)
 {
-    // Pattern: col 0 = 2θ exp (4 dec), col 1 = I exp (2 dec), col 2 = FWHM (4 dec)
-    // For col >= 3: even offset = 2theta (4 dec), odd offset = intensity (2 dec)
+    // Pattern: col 0 = 2θ exp (4 dec), col 1 = I exp (2 dec)
+    // For col >= 2: even offset = 2theta (4 dec), odd offset = intensity (2 dec)
     for (int col = 0; col < totalColumns; ++col) {
-        const int dec = (col == 1 || (col >= 3 && (col - 3) % 2 == 1)) ? 2 : 4;
+        const int dec = (col == 1 || (col >= 2 && (col - 2) % 2 == 1)) ? 2 : 4;
         ui->tableView->setItemDelegateForColumn(col, new FloatDelegate(this, dec));
     }
 }
@@ -135,7 +135,7 @@ void PeakCompareWidget::rebuild()
     struct Match { double tth = 0, intensity = 0, quality = 0; bool has = false; };
     struct Row {
         double         sortKey;
-        double         tthExp = 0, iExp = 0, fwhm = 0;
+        double         tthExp = 0, iExp = 0;
         bool           hasExp      = false;
         bool           isSelAssoc  = false;
         bool           compensated = false; // exp intensity fully covered by accepted phases
@@ -151,7 +151,6 @@ void PeakCompareWidget::rebuild()
         Row r;
         r.tthExp = m_ep.tth[i];
         r.iExp   = m_ep.intensity[i];
-        r.fwhm   = (i < m_ep.fwhm.size()) ? m_ep.fwhm[i] : 0.0;
         r.hasExp = true;
         r.accepted.resize(nAcc);
 
@@ -191,11 +190,11 @@ void PeakCompareWidget::rebuild()
                      [](const Row &a, const Row &b){ return a.sortKey < b.sortKey; });
 
     // ── Columns ────────────────────────────────────────────────────────────
-    const int totalCols = 3 + 2 * nAcc + (m_hasCard ? 2 : 0);
+    const int totalCols = 2 + 2 * nAcc + (m_hasCard ? 2 : 0);
     m_model->clear();
     m_model->setColumnCount(totalCols);
 
-    QStringList headers = { "2θ exp", "I exp", "FWHM" };
+    QStringList headers = { "2θ exp", "I exp" };
     for (int j = 0; j < nAcc; ++j) {
         const QString id = m_acceptedPhases[j].getId();
         headers << "2θ [" + id + ']' << "I [" + id + ']';
@@ -230,15 +229,13 @@ void PeakCompareWidget::rebuild()
             static const QColor gray(180, 180, 180);
             m_model->setItem(r, 0, coloredNumItem(row.tthExp, gray));
             m_model->setItem(r, 1, coloredNumItem(row.iExp,   gray));
-            m_model->setItem(r, 2, coloredNumItem(row.fwhm,   gray));
         } else {
             m_model->setItem(r, 0, row.hasExp ? numItem(row.tthExp) : naItem());
             m_model->setItem(r, 1, row.hasExp ? numItem(row.iExp)   : naItem());
-            m_model->setItem(r, 2, row.hasExp ? numItem(row.fwhm)   : naItem());
         }
 
         for (int j = 0; j < nAcc; ++j) {
-            const int   col = 3 + 2 * j;
+            const int   col = 2 + 2 * j;
             const Match &m  = row.accepted[j];
             if (m.has) {
                 const QColor c = assocColor(accColors[j], m.quality);
@@ -251,7 +248,7 @@ void PeakCompareWidget::rebuild()
         }
 
         if (m_hasCard) {
-            const int col = 3 + 2 * nAcc;
+            const int col = 2 + 2 * nAcc;
             if (row.isSelAssoc) {
                 const QColor c = assocColor(selColor, row.selected.quality);
                 m_model->setItem(r, col,     coloredNumItem(row.selected.tth,       c));

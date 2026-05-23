@@ -103,6 +103,9 @@ set(PROJECT_SOURCES
     quantwidget.ui
     qualxdbpopulator.h
     qualxdbpopulator.cpp
+    reportwidget.cpp
+    reportwidget.h
+    reportwidget.ui
     restraintsdialog.cpp
     restraintsdialog.h
     restraintsdialog.ui

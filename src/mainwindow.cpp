@@ -43,8 +43,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCard);
+    tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCompare);
+    tabifyDockWidget(ui->dockWidgetCompare, ui->dockWidgetCard);
     tabifyDockWidget(ui->dockWidgetCard, ui->dockWidgetQuant);
+    tabifyDockWidget(ui->dockWidgetQuant, ui->dockWidgetReport);
     ui->peakDockWidget->raise();
 
     setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
@@ -218,13 +220,14 @@ void MainWindow::createDialogs()
             this, [this](const CardType &card) {
         ui->peakCompareWidget->setSelectedCard(
             card, card.getId(), SearchOptionsDialog::savedDelta2theta());
-        ui->peakTabWidget->setCurrentIndex(1);
     });
 
     connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
             this, [this](const CardType &card) {
         ui->quantWidget->addPhase(card);
         ui->peakCompareWidget->addAcceptedPhase(card);
+        ui->reportWidget->updateQuantitative(
+            ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
         ui->dockWidgetQuant->show();
         ui->dockWidgetQuant->raise();
         if (SearchOptionsDialog::savedResidualSearching())
@@ -580,15 +583,16 @@ static int loadExperimentalPeaks()
 
     ExperimentalPeaks &ep = AppState::peaks();
     ep.d.resize(n); ep.deltaD.resize(n);
-    ep.tth.resize(n); ep.intensity.resize(n); ep.fwhm.resize(n);
+    ep.tth.resize(n); ep.intensity.resize(n); ep.intensityOrig.resize(n); ep.fwhm.resize(n);
     ep.wave  = wave;
     ep.valid = true;
     for (int i = 0; i < n; ++i) {
-        ep.d[i]         = dval[i];
-        ep.deltaD[i]    = deltadval[i];
-        ep.tth[i]       = tthval[i];
-        ep.intensity[i] = intval[i];
-        ep.fwhm[i]      = fwhmval[i];
+        ep.d[i]             = dval[i];
+        ep.deltaD[i]        = deltadval[i];
+        ep.tth[i]           = tthval[i];
+        ep.intensity[i]     = intval[i];
+        ep.intensityOrig[i] = intval[i]; // original value, never subtracted
+        ep.fwhm[i]          = fwhmval[i];
     }
     delete[] dval; delete[] deltadval; delete[] tthval; delete[] intval; delete[] fwhmval;
     return n;
@@ -661,6 +665,13 @@ void MainWindow::onActionSearchMatchTriggered()
     ui->peakCompareWidget->clearAcceptedPhases();
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
+    ui->reportWidget->clearQuantitative();
+    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    if (ui->resultsWidget->hasResults()) {
+        ui->resultsWidget->selectFirstCard();
+        ui->dockWidgetCompare->show();
+        ui->dockWidgetCompare->raise();
+    }
 }
 
 void MainWindow::onActionSearchMatchOptionsTriggered()
@@ -700,6 +711,13 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
     ui->peakCompareWidget->clearAcceptedPhases();
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
+    ui->reportWidget->clearQuantitative();
+    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    if (ui->resultsWidget->hasResults()) {
+        ui->resultsWidget->selectFirstCard();
+        ui->dockWidgetCompare->show();
+        ui->dockWidgetCompare->raise();
+    }
 }
 
 void MainWindow::actionRestraintsTriggered()
@@ -836,8 +854,16 @@ void MainWindow::onRestraintsSearchMatch()
     }
 
     ui->resultsWidget->setResults(acceptedCards);
+    ui->peakCompareWidget->clearAcceptedPhases();
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
+    ui->reportWidget->clearQuantitative();
+    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    if (ui->resultsWidget->hasResults()) {
+        ui->resultsWidget->selectFirstCard();
+        ui->dockWidgetCompare->show();
+        ui->dockWidgetCompare->raise();
+    }
 }
 
 void MainWindow::runSearch(const SearchOptions &opts)
@@ -995,10 +1021,6 @@ void MainWindow::onCardSelected(const QString &id)
 
     ui->cardBrowser->setHtml(html);
     ui->dockWidgetCard->setWindowTitle(id);
-    if (ui->peakTabWidget->currentIndex() != 1) {
-        ui->dockWidgetCard->show();
-        ui->dockWidgetCard->raise();
-    }
 }
 
 void MainWindow::performResidualSearch(const CardType &acceptedCard)
@@ -1023,29 +1045,35 @@ void MainWindow::performResidualSearch(const CardType &acceptedCard)
     // ── Step 2: subtract the accepted card's contribution from experimental intensities ──
     // ranI defines the noise threshold: peaks whose residual is within ranI of the
     // original intensity are treated as fully explained and zeroed.
-    const double           ranI  = 0.2 * (1.0 - wIntens);
-    const QVector<double>  origI = ep.intensity; // snapshot of intensities before modification
+    // ranI defines the noise threshold: peaks whose residual is within ranI of the
+    // ORIGINAL intensity (ep.intensityOrig, set at load time) are treated as fully explained.
+    const double ranI = 0.2 * (1.0 - wIntens);
 
     for (int i = 0; i < ep.intensity.size(); ++i) {
         if (assoc[i].dbPeakIndex < 0) continue;
         ep.intensity[i] -= scaledI[assoc[i].dbPeakIndex];
         if (ep.intensity[i] < 0.0) ep.intensity[i] = 0.0;
         // Zero out residual peaks within the user-defined noise range
-        if (origI[i] > 0.0 && ep.intensity[i] / origI[i] <= ranI)
+        if (ep.intensityOrig[i] > 0.0 && ep.intensity[i] / ep.intensityOrig[i] <= ranI)
             ep.intensity[i] = 0.0;
     }
 
     // ── Step 3: remove experimental peaks with intensity <= 0 ──
-    QVector<double> newTth, newI, newD, newDD;
+    // All parallel arrays (including intensityOrig and fwhm) are filtered in sync
+    // so that index i always refers to the same peak across all arrays.
+    QVector<double> newTth, newI, newIOrig, newD, newDD, newFwhm;
     for (int i = 0; i < ep.intensity.size(); ++i) {
         if (ep.intensity[i] > 0.0) {
             newTth.append(ep.tth[i]);
             newI.append(ep.intensity[i]);
+            newIOrig.append(ep.intensityOrig[i]);
             newD.append(ep.d[i]);
             newDD.append(ep.deltaD[i]);
+            newFwhm.append(ep.fwhm[i]);
         }
     }
-    ep.tth = newTth; ep.intensity = newI; ep.d = newD; ep.deltaD = newDD;
+    ep.tth = newTth; ep.intensity = newI; ep.intensityOrig = newIOrig;
+    ep.d = newD; ep.deltaD = newDD; ep.fwhm = newFwhm;
 
     // ── Step 4: recompute FOMs for all remaining cards ──
     QVector<CardType> cards = ui->resultsWidget->allCards();

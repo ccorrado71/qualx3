@@ -22,12 +22,17 @@ public:
 public slots:
     void addPhase(const CardType &card);
 
+public:
+    const QVector<CardType>  &phases()            const { return m_phases; }
+    const QVector<double>    &quantPercentages()  const { return m_quant;  }
+
 private:
     void updateQuant();
 
     Ui::QuantWidget      *ui;
     QStandardItemModel   *m_model;
     QVector<CardType>     m_phases;
+    QVector<double>       m_quant;   // computed percentages (empty if RIR unavailable)
 };
 
 #endif // QUANTWIDGET_H

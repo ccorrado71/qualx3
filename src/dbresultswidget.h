@@ -30,6 +30,7 @@ public:
     void mergeResults(const QVector<CardType>& newCards);
     bool hasResults() const;
     QVector<CardType> allCards() const;
+    void selectFirstCard();
 
 signals:
     void hasResultsChanged(bool hasResults);
