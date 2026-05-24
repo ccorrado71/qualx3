@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -104,10 +104,8 @@
     <addaction name="actionSearch_Match"/>
     <addaction name="actionSearch_Match_Options"/>
     <addaction name="actionRestraints"/>
-    <addaction name="actionLoad_Add"/>
     <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
-    <addaction name="actionGetCard"/>
     <addaction name="separator"/>
     <addaction name="actionManage_Databases"/>
    </widget>
@@ -145,9 +143,16 @@
     <addaction name="menuBackground"/>
     <addaction name="menuPeaks"/>
    </widget>
+   <widget class="QMenu" name="menuEntry">
+    <property name="title">
+     <string>Entry</string>
+    </property>
+    <addaction name="actionLoad_Add"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPattern"/>
    <addaction name="menuDatabase"/>
+   <addaction name="menuEntry"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetResults">
@@ -300,10 +305,18 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_8">
     <layout class="QVBoxLayout" name="layoutReport">
-     <property name="leftMargin"><number>0</number></property>
-     <property name="topMargin"><number>0</number></property>
-     <property name="rightMargin"><number>0</number></property>
-     <property name="bottomMargin"><number>0</number></property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
       <widget class="ReportWidget" name="reportWidget" native="true"/>
      </item>
@@ -320,14 +333,9 @@
     <string>Test Database</string>
    </property>
   </action>
-  <action name="actionGetCard">
-   <property name="text">
-    <string>Get Card</string>
-   </property>
-  </action>
   <action name="actionLoad_Add">
    <property name="text">
-    <string>Load Card by ID...</string>
+    <string>Load/Add Card by ID...</string>
    </property>
   </action>
   <action name="actionExit">

@@ -101,43 +101,43 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
     return info;
 }
 
-void QualxDbManager::getCardInfo(const QString &idCard)
-{
-    QSqlQuery queryId(dbMain.db());
-    queryId.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, intensita, dvalue, nd FROM id WHERE id="+idCard);
-    if (queryId.exec()) {
-        if (queryId.first()) {
-            qInfo() << "QUERY ID" << "id: " << queryId.value(0).toString() << Qt::endl <<
-                //                       "name: " << queryId.value(1).toString() << Qt::endl <<
-                //                       "mineralname: " << queryId.value(2).toString() << Qt::endl <<
-                //                       "chemical_formula: " << queryId.value(3).toString() << Qt::endl <<
-                //                       "spacegroup: " << queryId.value(4).toString() << Qt::endl <<
-                //                       "quality: " << queryId.value(5).toString() << Qt::endl <<
-                //                       "RIR: " << queryId.value(6).toFloat() << Qt::endl <<
-                //                       "nrec: " << queryId.value(7).toInt() << Qt::endl <<
-                //                       "intensita: " << queryId.value(8).toString() << Qt::endl <<
-                //                       "dvalue: " << queryId.value(9).toString() << Qt::endl <<
-                "nd: " << queryId.value(10).toInt();
-        } else {
-            qInfo() << "ERROR: id non trovato";
-        }
-    }
-}
+// void QualxDbManager::getCardInfo(const QString &idCard)
+// {
+//     QSqlQuery queryId(dbMain.db());
+//     queryId.prepare("SELECT id, name, mineralname, chemical_formula, spacegroup, quality, rir, nrec, intensita, dvalue, nd FROM id WHERE id="+idCard);
+//     if (queryId.exec()) {
+//         if (queryId.first()) {
+//             qInfo() << "QUERY ID" << "id: " << queryId.value(0).toString() << Qt::endl <<
+//                 //                       "name: " << queryId.value(1).toString() << Qt::endl <<
+//                 //                       "mineralname: " << queryId.value(2).toString() << Qt::endl <<
+//                 //                       "chemical_formula: " << queryId.value(3).toString() << Qt::endl <<
+//                 //                       "spacegroup: " << queryId.value(4).toString() << Qt::endl <<
+//                 //                       "quality: " << queryId.value(5).toString() << Qt::endl <<
+//                 //                       "RIR: " << queryId.value(6).toFloat() << Qt::endl <<
+//                 //                       "nrec: " << queryId.value(7).toInt() << Qt::endl <<
+//                 //                       "intensita: " << queryId.value(8).toString() << Qt::endl <<
+//                 //                       "dvalue: " << queryId.value(9).toString() << Qt::endl <<
+//                 "nd: " << queryId.value(10).toInt();
+//         } else {
+//             qInfo() << "ERROR: id non trovato";
+//         }
+//     }
+// }
 
-void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
-{
-    QSqlQuery queryId(dbInfo.db());
-    queryId.prepare("SELECT id, authors, journal, journal_year, journal_volume, page_start, "
-                    "page_end, color, crystal_density, spacegroup, type, volume, density, z, "
-                    "rir, a, b, c, alpha, beta, gamma, h, k, l, mul, `mu(CuKa)` FROM info WHERE id="+idCard);
-    if (queryId.exec()) {
-        if (queryId.first()) {
-            qInfo() << "QUERY ADD. INFO: " << queryId.value(0).toString();
-        } else {
-            qInfo() << "ERROR: id non trovato";
-        }
-    }
-}
+// void QualxDbManager::getCardAdditionalInfo(const QString &idCard)
+// {
+//     QSqlQuery queryId(dbInfo.db());
+//     queryId.prepare("SELECT id, authors, journal, journal_year, journal_volume, page_start, "
+//                     "page_end, color, crystal_density, spacegroup, type, volume, density, z, "
+//                     "rir, a, b, c, alpha, beta, gamma, h, k, l, mul, `mu(CuKa)` FROM info WHERE id="+idCard);
+//     if (queryId.exec()) {
+//         if (queryId.first()) {
+//             qInfo() << "QUERY ADD. INFO: " << queryId.value(0).toString();
+//         } else {
+//             qInfo() << "ERROR: id non trovato";
+//         }
+//     }
+// }
 
 QVector<double> QualxDbManager::blobToDoubleVector(const QByteArray &blob)
 {

@@ -45,8 +45,8 @@ public:
     void makeQueryWithoutStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
                                    ProgressCallback progress = nullptr);
     void getInfo(int &ncard, QString &type);
-    void getCardInfo(const QString &idCard);
-    void getCardAdditionalInfo(const QString &idCard);
+    // void getCardInfo(const QString &idCard);
+    // void getCardAdditionalInfo(const QString &idCard);
     CardInfo queryCard(const QString &idCard) const;
     QList<QPair<QString,int>> querySpaceGroups() const;
     QList<QPair<QString,int>> queryColors() const;
