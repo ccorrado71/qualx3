@@ -63,6 +63,11 @@ void PeakCompareWidget::clearAcceptedPhases()
     rebuild();
 }
 
+void PeakCompareWidget::refresh()
+{
+    rebuild();
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 void PeakCompareWidget::updateDelegates(int totalColumns)

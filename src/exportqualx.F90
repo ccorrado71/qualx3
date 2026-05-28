@@ -294,4 +294,92 @@ CONTAINS
 
    end subroutine write_intensity_file
 
+!-------------------------------------------------------------------------------------------------------  
+
+   subroutine esportanew(iCod, filnam, len_file) bind(C,name='esportanew')
+   USE variables, only: cryst,dataset
+   USE prog_constants
+   USE iso_c_binding
+   USE strutil
+   USE cif_frm
+   USE errormod
+!
+   integer(c_int), intent(in), value                :: iCod
+   character(c_char)                                :: filnam
+   integer(c_int), value                            :: len_file
+   character(len=256)                               :: filename
+   integer                                          :: ier
+   type(error_type)                                 :: err
+!
+   filename = toFortranString(filnam,len_file)
+   select case (iCod)
+     case (16)     ! Powder Pattern (cif format)
+       call export_data_cif(filename,dataset(1))
+
+     case (17)     ! Powder Pattern (xy format)
+       call export_file(filename,0,0.0,ier,'XY')
+
+     case (19)     ! Background (xy format)
+       call export_file(filename,0,0.0,ier,'BK')
+
+   end select
+!
+   end subroutine esportanew
+
+!-------------------------------------------------------------------------------------------------------  
+
+   subroutine export_file(filename,sftype,reshkl,ier,stype)
+   USE reflection_type_util
+   USE fileutil
+   USE variables, only: dataset
+   USE strutil
+   USE filereading
+   USE datasetmod
+   character(len=*), intent(in)                     :: filename
+   integer, intent(in)                              :: sftype
+   real, intent(in)                                 :: reshkl
+   integer, intent(out)                             :: ier
+   character(len=*), intent(in), optional           :: stype
+   character(len=:), allocatable                    :: ext
+   type(reflection_type), dimension(:), allocatable :: reflb
+   integer                                          :: nph
+!
+   ier = 0
+   if (present(stype)) then
+       ext = stype
+   else
+       ext = get_extension(filename)
+       if (len_trim(ext) == 0) then
+           ier = 1
+           return
+       endif
+   endif
+
+   select case (upper(trim(ext)))
+
+      case ('XY')
+          if (allocated(dataset)) then
+              if (dataset(1)%npoints() > 0) then
+                  if (allocated(dataset(1)%yc)) then
+                      call export_profile(filename,dataset(1)%x0,                     &
+                           dataset(1)%y,dataset(1)%yc+dataset(1)%yb,dataset(1)%yb,    &
+                           '#      2theta    yoss     ycalc    yback    ydiff')
+                  else
+                      call export_profile(filename,dataset(1)%x,dataset(1)%y,string='#      2theta    yoss')
+                  endif
+              endif
+          endif
+
+      case ('BK')
+          if (allocated(dataset)) then
+              if (dataset(1)%has_back()) then
+                  call export_profile(filename,dataset(1)%x0,dataset(1)%yb, &
+                  string='#      2theta    yback')
+              endif
+          endif
+
+   end select
+!
+   end subroutine export_file
+
 END MODULE exportfiles

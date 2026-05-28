@@ -10,8 +10,14 @@
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
 #include "commandline.h"
+#include "smoothingdialog.h"
 
 #include <QMainWindow>
+
+typedef struct {
+    QString fileName;
+    QString fileType;
+} RecentFileInfo;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,6 +40,9 @@ public:
         NoAction
     };
     Q_ENUM(MouseAction)
+
+    enum RecentFileType {Input, Data, Structure, Project};
+    Q_ENUM(RecentFileType)
 
     enum EnabledActions {
         InitAction,
@@ -60,6 +69,7 @@ public:
     ~MainWindow();
     XpdViewWidget *xpdViewer() const;
     void setAction(const MouseAction &action, bool writeConfig = true);
+    void setCurrentFile(const QString &fullFileName, const QString &fileType);
     void setStatusMessage(const QString &message);
     void clearStatusMessage();
     QProgressBar *getStatusProgressBar() const;
@@ -78,11 +88,14 @@ private slots:
     void closeEvent(QCloseEvent *event);
 
     //File
+    void openRecentFile();
     void onActionImportDiffractionPatternTriggered();
 
     //Pattern
     void onActionBackgroundTriggered();
+    void onActionBackgroundExportTriggered();
     void onActionSubtractBackgroundTriggered();
+    void onActionSmoothingTriggered();
     void onActionPeakSearchTriggered();
     void onActionPeakSearchConditionsTriggered();
     void onActionLoadPeaksTriggered();
@@ -95,6 +108,8 @@ private slots:
     void actionManageDatabasesTriggered();
     void onActionTestDatabaseTriggered();
     void onActionDatabaseInfoTriggered();
+
+    //Entry
     void onActionLoadAddTriggered();
 private:
     void createDialogs();
@@ -114,10 +129,17 @@ private:
     PeakSearchDialog  *peakSearchDialog  = nullptr;
     BackgroundDialog  *backgroundDialog  = nullptr;
     RestraintsDialog  *m_restraintsDialog = nullptr;
+    SmoothingDialog *smoothingDialog = nullptr;
 
     //Files
     QString currentFile;
     static QString pathDataFiles;
+    enum { maxFileNr = 10 };
+    QList<QAction*> recentFileActionList;
+    //void saveFile(const QString &fileName);
+    void createRecentActions();
+    void updateRecentFileActions();
+    void setRecentFiles(const QString &fullFileName, const QString &fileType);
 
     void testSelection(DbQueryBuilder &builder, int testCase);
     void executeSearch(DbQueryBuilder &builder, bool merge = false);

@@ -32,16 +32,6 @@
    <item>
     <layout class="QHBoxLayout" name="topLayout">
      <item>
-      <widget class="QToolButton" name="acceptButton">
-       <property name="toolTip">
-        <string>Accept selected phases for quantitative analysis</string>
-       </property>
-       <property name="text">
-        <string>Accept</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QLineEdit" name="textFilterEdit">
        <property name="placeholderText">
         <string>Filter data</string>

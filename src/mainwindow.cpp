@@ -23,6 +23,7 @@
 MainWindow *mMainWindow;
 QString MainWindow::pathDataFiles = "";
 
+extern "C" void esportanew(int iCod, const char *filename, int len);
 extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char *fileOut, int lenOut, int addData, int *err);
 extern "C" void run_peaksearchwin();
 extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier);
@@ -43,6 +44,14 @@ MainWindow::MainWindow(QWidget *parent)
     , savedZoomAction(mAction)
 {
     ui->setupUi(this);
+    ui->resultsWidget->setEntryToolBar(ui->toolBarEntry);
+    ui->resultsWidget->setContextMenuActions({
+        ui->actionLoad_Add,
+        nullptr,  // separator
+        ui->actionAccept_Selected_Entries,
+        ui->actionDelete,
+        ui->actionChange_Color
+    });
 
     tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCompare);
     tabifyDockWidget(ui->dockWidgetCompare, ui->dockWidgetCard);
@@ -75,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     // }
 
     readSettings();
+    createRecentActions();
     mMainWindow = this;
 }
 
@@ -200,9 +210,10 @@ void MainWindow::restoreEnabledActions()
 
 void MainWindow::createDialogs()
 {
-    peakSearchDialog    = new PeakSearchDialog(this);
-    backgroundDialog    = new BackgroundDialog(this);
-    m_restraintsDialog  = new RestraintsDialog(this);
+    peakSearchDialog   = new PeakSearchDialog(this);
+    backgroundDialog   = new BackgroundDialog(this);
+    m_restraintsDialog = new RestraintsDialog(this);
+    smoothingDialog    = new SmoothingDialog(this);
 
     connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
             m_restraintsDialog, &RestraintsDialog::setMergeEnabled);
@@ -244,7 +255,9 @@ void MainWindow::actionsSetup()
 
     //Pattern menu
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
+    connect(ui->actionExport_Background, &QAction::triggered, this, &MainWindow::onActionBackgroundExportTriggered);
     connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
+    connect(ui->actionSmoothing, &QAction::triggered, this, &MainWindow::onActionSmoothingTriggered);
     connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
     connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
     connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
@@ -259,6 +272,39 @@ void MainWindow::actionsSetup()
     //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
+
+    //Entry menu
+    ui->actionAccept_Selected_Entries->setEnabled(false);
+    ui->actionDelete->setEnabled(false);
+    ui->actionChange_Color->setEnabled(false);
+
+    auto updateEntryActions = [this]() {
+        const bool on = ui->resultsWidget->hasResults() && ui->resultsWidget->hasSelection();
+        ui->actionAccept_Selected_Entries->setEnabled(on);
+        ui->actionDelete->setEnabled(on);
+        ui->actionChange_Color->setEnabled(on);
+    };
+    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
+            this, [updateEntryActions](bool) { updateEntryActions(); });
+    connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
+            this, [updateEntryActions](bool) { updateEntryActions(); });
+
+    connect(ui->actionAccept_Selected_Entries, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->acceptSelectedCards();
+    });
+    connect(ui->actionChange_Color, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->changeSelectedCardColor();
+    });
+    connect(ui->resultsWidget, &DbResultsWidget::cardColorChanged,
+            this, [this](const QString &id) {
+        onCardSelected(id);
+        if (ui->dockWidgetCompare->isVisible())
+            ui->peakCompareWidget->refresh();
+    });
+    connect(ui->actionDelete, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->deleteSelectedCards();
+        setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
+    });
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -442,6 +488,58 @@ void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
 //  File Menu
 //
 
+
+
+void MainWindow::openRecentFile()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QString fileIn = action->data().toString();
+        if (!QFile::exists(fileIn)) {
+            QMessageBox::critical(this,"Error",fileIn + " does not exist.");
+            return;
+        }
+
+        //Extract the fileType from action text and settings
+        int index = action->text().section(".",0,0).toInt()-1;
+        QSettings settings;
+        settings.beginReadArray(QUALX_RECENT_FILES_KEY);
+        settings.setArrayIndex(index);
+        QString fileType = settings.value("FileType").toString();
+        settings.endArray();
+
+        QMetaEnum metaEnum = QMetaEnum::fromType<RecentFileType>();
+        int type = metaEnum.keyToValue(fileType.toStdString().c_str());
+        int err;
+        switch (type) {
+        case RecentFileType::Input:
+            break;
+
+        case RecentFileType::Data:
+        {
+            fileIn = QDir::toNativeSeparators(fileIn);
+            QString fileOut = fileutils::removeExtension(fileIn)+".out";
+            fileutils::setFileForWritable(fileOut);
+            fileutils::setCurrentDirFromFile(fileIn);
+            open_diffraction_patt(fileIn.toLocal8Bit().constData(), fileIn.toLocal8Bit().size(),
+                                  fileOut.toLocal8Bit().constData(), fileOut.toLocal8Bit().size(),
+                                  0, &err);
+            if (!err) {
+                currentFile = fileIn;
+//                outputFileName = fileOut;
+                setWindowTitle(currentFile);
+            }
+            break;
+        }
+        case RecentFileType::Structure:
+            break;
+
+        case RecentFileType::Project:
+            break;
+        }
+    }
+}
+
 void MainWindow::onActionImportDiffractionPatternTriggered()
 {
     QSettings settings;
@@ -484,12 +582,103 @@ void MainWindow::onActionImportDiffractionPatternTriggered()
                 nerr++;
             }
         }
-    //     if (nerr < files.size()) {
-    //         QString filename = QDir::toNativeSeparators(files.at(0));
-    //         settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
-    //         outputFileName = outFile;
-    //         setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
-    //     }
+        if (nerr < files.size()) {
+            QString filename = QDir::toNativeSeparators(files.at(0));
+            settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
+//            outputFileName = outFile;
+            setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
+        }
+    }
+}
+
+void MainWindow::createRecentActions()
+{
+    QAction* recentFileAction;
+    for(int i = 0; i < maxFileNr; i++) {
+        recentFileAction = new QAction(this);
+        recentFileAction->setVisible(false);
+        connect(recentFileAction,SIGNAL(triggered()),this,SLOT(openRecentFile()));
+        //ui->menuRecent->addAction(recentFileAction);
+        ui->menuRecent->addAction(recentFileAction);
+        recentFileActionList.append(recentFileAction);
+    }
+
+    updateRecentFileActions();
+}
+
+void MainWindow::updateRecentFileActions()
+{
+    QSettings settings;
+
+    QVector<RecentFileInfo> recentFiles;
+    int size = settings.beginReadArray(QUALX_RECENT_FILES_KEY);
+    for (int i = 0; i < size; i++) {
+        settings.setArrayIndex(i);
+        RecentFileInfo info;
+        info.fileName = settings.value("FileName").toString();
+        info.fileType = settings.value("FileType").toString();
+        recentFiles.append(info);
+    }
+    settings.endArray();
+
+    int numRecentFiles = qMin(recentFiles.size(),static_cast<int>(maxFileNr));
+
+    for(int i = 0; i < numRecentFiles; ++i) {
+        recentFileActionList.at(i)->setText(QString::number(i+1)+". "+recentFiles.at(i).fileName);
+        recentFileActionList.at(i)->setData(recentFiles.at(i).fileName);
+        recentFileActionList.at(i)->setVisible(true);
+    }
+
+    for(int i = numRecentFiles; i < maxFileNr; i++) {
+        recentFileActionList.at(i)->setVisible(false);
+    }
+}
+
+void MainWindow::setRecentFiles(const QString &fullFileName, const QString &fileType)
+{
+    QSettings settings;
+    QVector<RecentFileInfo> recentFiles;
+    int size = settings.beginReadArray(QUALX_RECENT_FILES_KEY);
+    for (int i = 0; i < size; i++) {
+        settings.setArrayIndex(i);
+        RecentFileInfo info;
+        info.fileName = settings.value("FileName").toString();
+        info.fileType = settings.value("FileType").toString();
+        if (info.fileName != fullFileName) {
+            recentFiles.append(info);
+        }
+    }
+    settings.endArray();
+    recentFiles.prepend({fullFileName,fileType});
+    while (recentFiles.size() > maxFileNr)
+        recentFiles.removeLast();
+
+    settings.beginWriteArray(QUALX_RECENT_FILES_KEY);
+    for (int i = 0; i < recentFiles.size(); i++) {
+        settings.setArrayIndex(i);
+        settings.setValue("FileName", recentFiles.at(i).fileName);
+        settings.setValue("FileType", recentFiles.at(i).fileType);
+    }
+    settings.endArray();
+    //
+
+    // if you have several istances of Mainwindow present,
+    // call updateRecentFileActions on all top-level windows and
+    // all recent files menu will be equal
+    foreach (QWidget *widget, QApplication::topLevelWidgets()) {
+        QMainWindow *mainwindow = qobject_cast<QMainWindow *>(widget);
+        if (mainwindow)
+            updateRecentFileActions();
+    }
+}
+
+void MainWindow::setCurrentFile(const QString &fullFileName, const QString &fileType)
+{
+    if (!fullFileName.isEmpty()) {
+        currentFile = fullFileName;
+        setWindowTitle(currentFile);
+
+        setRecentFiles(fullFileName, fileType);
     }
 }
 
@@ -503,9 +692,41 @@ void MainWindow::onActionBackgroundTriggered()
     backgroundDialog->show();
 }
 
+void MainWindow::onActionBackgroundExportTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = "xy";
+    int code = 0;
+    QString exts = "XY files (*.xy);; CIF files (*.cif)";
+    QString fileName = SaveDialog::run(this,
+                                       tr("Export Background As"),
+                                       settings.value(DEFAULT_DIR_KEY).toString(),
+                                       QFileInfo(currentFile).baseName(),
+                                       exts,
+                                       "xy",
+                                       selectedFilter,
+                                       &code);
+    if (!fileName.isEmpty()) {
+        settings.setValue(DEFAULT_DIR_KEY,QFileInfo(fileName).absolutePath());
+        if (selectedFilter.contains("cif", Qt::CaseInsensitive)) {
+            // Export Background as CIF
+            esportanew(16, fileName.toLocal8Bit().constData(), fileName.toLocal8Bit().size());
+        } else {
+            // Export Background as XY
+            esportanew(19, fileName.toLocal8Bit().constData(), fileName.toLocal8Bit().size());
+        }
+    }
+}
+
 void MainWindow::onActionSubtractBackgroundTriggered()
 {
     apply_background_subtraction();
+}
+
+void MainWindow::onActionSmoothingTriggered()
+{
+    smoothingDialog->setSmoothing();
+    smoothingDialog->show();
 }
 
 void MainWindow::onActionPeakSearchTriggered()
@@ -908,70 +1129,6 @@ void MainWindow::onActionTestDatabaseTriggered()
     ui->resultsWidget->setResults(cards);
 }
 
-// void MainWindow::onActionGetCardTriggered()
-// {
-//     QString idCard = "2300375";
-//     //QString idCard = "230037"; //uncomment this to get error in case of wrong card number
-//     AppState::db().getCardInfo(idCard);
-//     AppState::db().getCardAdditionalInfo(idCard);
-// }
-
-void MainWindow::onActionLoadAddTriggered()
-{
-    bool ok = false;
-    const QString id = QInputDialog::getText(this, tr("Load Card by ID"),
-                                             tr("Card ID:"), QLineEdit::Normal,
-                                             QString(), &ok).trimmed();
-    if (!ok || id.isEmpty()) return;
-
-    const CardInfo info = AppState::db().queryCard(id);
-    if (!info.valid) {
-        QMessageBox::warning(this, tr("Card Not Found"),
-                             tr("No card with ID \"%1\" found in the database.").arg(id));
-        return;
-    }
-
-    // Build CardType from CardInfo
-    const QVector<double> &pw = xpdViewer()->plotWave;
-    const double wave = pw.isEmpty() ? 1.54056 : pw.first();
-
-    CardType card;
-    card.setId(info.id);
-    card.setChemicalName(info.name);
-    card.setMineralName(info.mineralName);
-    card.setChemicalFormula(info.chemicalFormula);
-    card.setQuality(info.quality);
-    card.setRIR(info.rir);
-    card.setSpaceGroup(info.spaceGroup);
-    card.setD(info.dvalues, wave);
-    card.setIntensity(info.intensities);
-
-    // Compute FOM if experimental peaks are available
-    ExperimentalPeaks &ep = AppState::peaks();
-    if (ep.valid && !ep.tth.isEmpty() && !card.getTth().isEmpty()) {
-        double fom = 0.0, fompeakpos = 0.0, fomintensity = 0.0, cardscale = 0.0;
-        computeFOM(card.getTth().data(), card.getIntensity().data(), card.getTth().size(),
-                   &fom,
-                   SearchOptionsDialog::savedWeight2thetaD(),
-                   SearchOptionsDialog::savedWeightIntensity(),
-                   SearchOptionsDialog::savedWeightPhases(),
-                   SearchOptionsDialog::savedDelta2theta(),
-                   &fompeakpos, &fomintensity, &cardscale,
-                   ep.tth.data(), ep.intensity.data(), ep.tth.size());
-        card.setFom(fom);
-        card.setFomPeakPos(fompeakpos);
-        card.setFomIntensity(fomintensity);
-        card.setScale(cardscale);
-    }
-
-    ui->resultsWidget->addCard(card);
-    setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
-
-    // Force the card info dock visible
-    ui->dockWidgetCard->show();
-    ui->dockWidgetCard->raise();
-}
-
 void MainWindow::actionManageDatabasesTriggered()
 {
     ManageDatabasesDialog dlg(this);
@@ -1168,4 +1325,64 @@ void MainWindow::performResidualSearch(const CardType &acceptedCard)
               [](const CardType &a, const CardType &b){ return a.getFom() > b.getFom(); });
     ui->resultsWidget->setResults(cards);
     setStatusMessage(tr("%1 card(s) after residual search").arg(cards.size()));
+}
+
+//
+//  Search Menu
+//
+
+void MainWindow::onActionLoadAddTriggered()
+{
+    bool ok = false;
+    const QString id = QInputDialog::getText(this, tr("Load/Add Card by ID"),
+                                             tr("Card ID:"), QLineEdit::Normal,
+                                             QString(), &ok).trimmed();
+    if (!ok || id.isEmpty()) return;
+
+    const CardInfo info = AppState::db().queryCard(id);
+    if (!info.valid) {
+        QMessageBox::warning(this, tr("Card Not Found"),
+                             tr("No card with ID \"%1\" found in the database.").arg(id));
+        return;
+    }
+
+    // Build CardType from CardInfo
+    const QVector<double> &pw = xpdViewer()->plotWave;
+    const double wave = pw.isEmpty() ? 1.54056 : pw.first();
+
+    CardType card;
+    card.setId(info.id);
+    card.setChemicalName(info.name);
+    card.setMineralName(info.mineralName);
+    card.setChemicalFormula(info.chemicalFormula);
+    card.setQuality(info.quality);
+    card.setRIR(info.rir);
+    card.setSpaceGroup(info.spaceGroup);
+    card.setD(info.dvalues, wave);
+    card.setIntensity(info.intensities);
+
+    // Compute FOM if experimental peaks are available
+    ExperimentalPeaks &ep = AppState::peaks();
+    if (ep.valid && !ep.tth.isEmpty() && !card.getTth().isEmpty()) {
+        double fom = 0.0, fompeakpos = 0.0, fomintensity = 0.0, cardscale = 0.0;
+        computeFOM(card.getTth().data(), card.getIntensity().data(), card.getTth().size(),
+                   &fom,
+                   SearchOptionsDialog::savedWeight2thetaD(),
+                   SearchOptionsDialog::savedWeightIntensity(),
+                   SearchOptionsDialog::savedWeightPhases(),
+                   SearchOptionsDialog::savedDelta2theta(),
+                   &fompeakpos, &fomintensity, &cardscale,
+                   ep.tth.data(), ep.intensity.data(), ep.tth.size());
+        card.setFom(fom);
+        card.setFomPeakPos(fompeakpos);
+        card.setFomIntensity(fomintensity);
+        card.setScale(cardscale);
+    }
+
+    ui->resultsWidget->addCard(card);
+    setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
+
+    // Force the card info dock visible
+    ui->dockWidgetCard->show();
+    ui->dockWidgetCard->raise();
 }

@@ -114,6 +114,9 @@ set(PROJECT_SOURCES
     searchoptionsdialog.cpp
     searchoptionsdialog.h
     searchoptionsdialog.ui
+    smoothingdialog.cpp
+    smoothingdialog.h
+    smoothingdialog.ui
     stringlistdialog.cpp
     stringlistdialog.h
     stringlistdialog.ui
@@ -159,7 +162,6 @@ set(FORTRAN_SOURCES
     datautil.f90
     elements.f90
     error.F90
-#    exportexpon.F90
     filetype.f90
     fileutil.F90
     fom.f90
@@ -220,6 +222,7 @@ set(FORTRAN_SOURCES
     screen_new.f90
     shelx_form.f90
     smooth.f90
+    smooth_interop.f90
     specif.f90
     spginfo.f90
     sphase.f90

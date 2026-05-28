@@ -7,6 +7,9 @@
 #include "floatdelegate.h"
 
 #include <QColor>
+#include <QColorDialog>
+#include <QHash>
+#include <QMenu>
 #include <QStandardItemModel>
 #include <QHeaderView>
 #include <QSignalBlocker>
@@ -16,11 +19,12 @@
 #include <algorithm>
 #include <cmath>
 
-// Maps a card ID string to a visually distinct, stable HSV colour.
-// Uses the golden-ratio method so sequential IDs spread evenly around
-// the hue wheel.
+static QHash<QString, QColor> s_colorOverrides;
+
 QColor cardColor(const QString &id)
 {
+    if (s_colorOverrides.contains(id))
+        return s_colorOverrides.value(id);
     bool ok;
     quint64 n = id.toULongLong(&ok);
     if (!ok)
@@ -98,7 +102,6 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     connect(ui->table->horizontalHeader(), &QHeaderView::sectionClicked,
             this, &DbResultsWidget::onHeaderSectionClicked);
 
-    connect(ui->acceptButton, &QToolButton::clicked, this, &DbResultsWidget::onAcceptClicked);
 
     // Card selection: emit id (for info panel) and full CardType (for peak compare)
     connect(ui->table->selectionModel(), &QItemSelectionModel::currentRowChanged,
@@ -110,6 +113,11 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
         const QVariant v = ui->table->model()->index(current.row(), 0).data(Qt::UserRole);
         if (v.isValid())
             emit cardDataSelected(v.value<CardType>());
+    });
+
+    connect(ui->table->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, [this]() {
+        emit entrySelectionChanged(hasSelection());
     });
 
     updateButtons();
@@ -271,6 +279,11 @@ bool DbResultsWidget::hasResults() const
     return sourceModel->rowCount() > 0;
 }
 
+bool DbResultsWidget::hasSelection() const
+{
+    return ui->table->selectionModel()->hasSelection();
+}
+
 void DbResultsWidget::selectFirstCard()
 {
     if (pageModel->rowCount() == 0) return;
@@ -312,7 +325,98 @@ void DbResultsWidget::updateButtons()
     ui->lastBtn->setEnabled(pageModel->canGoForward());
 }
 
-void DbResultsWidget::onAcceptClicked()
+void DbResultsWidget::setContextMenuActions(const QList<QAction *> &actions)
+{
+    ui->table->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->table, &QWidget::customContextMenuRequested,
+            this, [this, actions](const QPoint &pos) {
+        QMenu menu(this);
+        for (QAction *a : actions) {
+            if (a)
+                menu.addAction(a);
+            else
+                menu.addSeparator();
+        }
+        menu.exec(ui->table->viewport()->mapToGlobal(pos));
+    });
+}
+
+void DbResultsWidget::setEntryToolBar(QToolBar *tb)
+{
+    tb->setMovable(false);
+    tb->setFloatable(false);
+    ui->topLayout->insertWidget(0, tb);
+}
+
+void DbResultsWidget::changeSelectedCardColor()
+{
+    const auto selected = ui->table->selectionModel()->selectedRows();
+    if (selected.isEmpty()) return;
+
+    // Work on the first selected card only
+    const QModelIndex srcIdx = filterModel->mapToSource(pageModel->mapToSource(selected.first()));
+    auto *colorItem = sourceModel->item(srcIdx.row(), 0);
+    if (!colorItem) return;
+
+    const QString id = colorItem->data(Qt::UserRole).value<CardType>().getId();
+    const QColor current = colorItem->background().color();
+
+    const QColor chosen = QColorDialog::getColor(current, this, tr("Choose card color"));
+    if (!chosen.isValid()) return;
+
+    s_colorOverrides.insert(id, chosen);
+    colorItem->setBackground(QBrush(chosen));
+
+    emit cardColorChanged(id);
+}
+
+void DbResultsWidget::deleteSelectedCards()
+{
+    const auto selected = ui->table->selectionModel()->selectedRows();
+    if (selected.isEmpty()) return;
+
+    // Map selected rows to source model row indices
+    QSet<int> srcRowSet;
+    for (const QModelIndex &idx : selected) {
+        const QModelIndex srcIdx = filterModel->mapToSource(pageModel->mapToSource(idx));
+        srcRowSet.insert(srcIdx.row());
+    }
+
+    const int minSrc = *std::min_element(srcRowSet.begin(), srcRowSet.end());
+    const int maxSrc = *std::max_element(srcRowSet.begin(), srcRowSet.end());
+
+    // Determine which card to select after deletion:
+    // prefer the nearest row above the first deleted row; fall back to below the last.
+    int targetSrcRow = -1;
+    for (int r = minSrc - 1; r >= 0; --r) {
+        if (!srcRowSet.contains(r)) { targetSrcRow = r; break; }
+    }
+    if (targetSrcRow < 0) {
+        for (int r = maxSrc + 1; r < sourceModel->rowCount(); ++r) {
+            if (!srcRowSet.contains(r)) { targetSrcRow = r; break; }
+        }
+    }
+
+    // Save target ID so we can re-find it after row indices shift
+    QString targetId;
+    if (targetSrcRow >= 0) {
+        if (auto *item = sourceModel->item(targetSrcRow, 2))
+            targetId = item->text();
+    }
+
+    // Remove rows highest-first to keep lower indices valid
+    QList<int> srcRows(srcRowSet.begin(), srcRowSet.end());
+    std::sort(srcRows.begin(), srcRows.end(), std::greater<int>());
+    for (int r : srcRows)
+        sourceModel->removeRow(r);
+
+    if (!targetId.isEmpty())
+        selectCard(targetId);
+
+    emit hasResultsChanged(hasResults());
+}
+
+void DbResultsWidget::acceptSelectedCards()
 {
     const auto selected = ui->table->selectionModel()->selectedRows();
     if (selected.isEmpty()) return;
@@ -341,6 +445,11 @@ void DbResultsWidget::onAcceptClicked()
         emit phaseAccepted(rc.second);
 
     emit hasResultsChanged(hasResults());
+}
+
+void DbResultsWidget::onAcceptClicked()
+{
+    acceptSelectedCards();
 }
 
 void DbResultsWidget::onHeaderSectionClicked(int column)

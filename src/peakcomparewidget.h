@@ -25,6 +25,7 @@ public:
     void clearCard();
     void addAcceptedPhase(const CardType &card);
     void clearAcceptedPhases();
+    void refresh();
 
 private:
     void rebuild();

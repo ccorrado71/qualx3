@@ -6,6 +6,7 @@
 #define QUALX_STATE_KEY "expostate"
 #define QUALX_USER_WAVE "expouserwave"
 #define QUALX_WAVE_INDEX "expowaveindex"
+#define QUALX_RECENT_FILES_KEY "qualxrecentfiles"
 
 // Database registry keys.
 // DB_INUSE_KEY / DB_NAME_KEY / DB_PATH_KEY expect a single %1 = zero-based index.

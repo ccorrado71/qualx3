@@ -1,0 +1,72 @@
+/* XPM */
+
+static char * legendaon_xpm[] = {
+
+/* width height ncolors cpp [x_hot y_hot] */
+
+"24 24 6 1 2 22",
+
+/* colors */
+
+" 	s iconColor3	m black	c red",
+
+".	s none	m none	c none",
+
+"X	s iconColor2	m white	c white",
+
+"o	s iconColor1	m black	c black",
+
+"O	s iconColor5	m black	c blue",
+
+"+	s iconColor8	m black	c magenta",
+
+/* pixels */
+
+"  ....................  ",
+
+"   ..................   ",
+
+".   XXXXXXXXXXXXXXXX   .",
+
+"..   XXXXXXXXXXXXXX   ..",
+
+"..X   XXXXXXXXXooo   X..",
+
+"..XX          XoX   XX..",
+
+"..XX          Xo   XXX..",
+
+"..XXXX   XXXXXX   XXXX..",
+
+"..XXXXX   XXXX   XXXXX..",
+
+"..XXXXXX   XX   XXXXXX..",
+
+"..XXXXXXX      oooXXXX..",
+
+"..XXOOOOOO    XoXoXXXX..",
+
+"..XXOOOOOO    XoXoXXXX..",
+
+"..XXXXXXX      oooXXXX..",
+
+"..XXXXXX   XX   XXXXXX..",
+
+"..XXXXX   XXXX   XXXXX..",
+
+"..XXXX   XXXXXX   XXXX..",
+
+"..XX+   ++++++Xo   XXX..",
+
+"..XX   +++++++Xoo   XX..",
+
+"..X   XXXXXXXXXoXX   X..",
+
+"..   XXXXXXXXXXXXXX   ..",
+
+".   XXXXXXXXXXXXXXXX   .",
+
+"   ..................   ",
+
+"  ....................  "};
+

@@ -127,6 +127,9 @@ module background_interop
    USE variables, only: dataset
    USE VIEW
 !
+   if (.not.dataset(1)%has_back()) then
+       call dataset(1)%make_background()
+   endif
    call dataset(1)%subtract_background()
    call vedinew()
 !

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QVector>
 #include <QColor>
+#include <QToolBar>
 #include "cardtype.h"
 
 // Returns the display color associated with a card ID (same golden-ratio hue mapping
@@ -30,15 +31,23 @@ public:
     void mergeResults(const QVector<CardType>& newCards);
     void addCard(const CardType &card);
     bool hasResults() const;
+    bool hasSelection() const;
     QVector<CardType> allCards() const;
     void selectFirstCard();
     void selectCard(const QString &id);
+    void deleteSelectedCards();
+    void acceptSelectedCards();
+    void changeSelectedCardColor();
+    void setEntryToolBar(QToolBar *tb);
+    void setContextMenuActions(const QList<QAction *> &actions);
 
 signals:
     void hasResultsChanged(bool hasResults);
     void cardSelected(const QString &id);
     void cardDataSelected(const CardType &card);
     void phaseAccepted(const CardType &card);
+    void cardColorChanged(const QString &id);
+    void entrySelectionChanged(bool hasSelection);
 
 private slots:
     void currentPageChanged(int page);
