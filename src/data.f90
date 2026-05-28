@@ -186,3 +186,106 @@ END MODULE datamod
 !
    end subroutine update_peak_graph1
 
+! ---------------------------------------------------------------------
+
+   subroutine back_for_peaksearch(vis)
+   USE counts
+   !USE arrayutil
+   USE plotstyle
+   USE pointmod
+   USE variables, only: dataset
+   implicit none
+   logical, intent(in) :: vis   ! if true force visualization
+   !integer             :: pfin
+!
+   !pfin = clocate(theta_int(:,7),thmax)
+   !call dataset(1)%set_limit(1,pfin)
+   call dataset(1)%make_background()
+!
+!  set background as visible
+   if (vis) then
+       style(STYLE_BACK)%vis = 1
+       style(STYLE_BACKP)%vis = 1
+   endif
+!
+   end subroutine back_for_peaksearch
+
+!--------------------------------------------------------------------------------
+
+   subroutine UserBack()
+   USE background
+   USE variables, only: dataset
+!  
+   implicit none
+   real :: thmin0,thmax0
+!
+   select case (dataset(1)%cond%btype)
+
+   case (POLY,CHEBY,FOUR_SERIES)
+     if (dataset(1)%cond%auto) then
+         call autobackground(dataset(1)%x0,dataset(1)%y,dataset(1)%yb,dataset(1)%cond%btype,    &
+              dataset(1)%points,dataset(1)%thzerob,dataset(1)%coef,dataset(1)%cond%ncoef)
+     else
+         thmin0 = dataset(1)%xminc0()
+         thmax0 = dataset(1)%xmaxc0()
+         call param_back(dataset(1)%cond%btype,dataset(1)%points,dataset(1)%cond%ncoef,dataset(1)%coef,   &
+                         thmin0,thmax0,dataset(1)%thzerob)
+         call getbackground(dataset(1)%cond%btype,dataset(1)%yb(:dataset(1)%nc2),  &
+              dataset(1)%x0,dataset(1)%coef(:dataset(1)%cond%ncoef),dataset(1)%thzerob)
+     endif
+
+   case (CSPLINE, BSPLINE, BK_FILTER)
+     call compute_background(dataset(1)%x0,dataset(1)%y,dataset(1)%yb,dataset(1)%points,  &
+                             dataset(1)%coef,dataset(1)%thzerob,dataset(1)%cond,dataset(1)%wave(1))
+
+   end select
+!
+   end subroutine Userback
+
+! ---------------------------------------------------------------------
+
+   subroutine update_background(paction,xp,yp)
+   USE VIEW
+   USE pointmod
+   USE plotstyle
+   USE arrayutil
+   USE variables, only: dataset
+!
+   implicit none
+   interface
+     subroutine run_peaksearch(gui)
+     logical, intent(in), optional :: gui
+     end subroutine run_peaksearch
+   end interface
+   integer, intent(in) :: paction
+   real, intent(in)    :: xp,yp
+   type(point_type)    :: padd
+   integer             :: ipos
+!
+   if (paction == 1) then     ! Add point
+!
+!      Set background is not available
+       if (.not.allocated(dataset(1)%yb)) then
+           call back_for_peaksearch(.true.)
+       endif
+       padd%x = xp
+       padd%y = yp
+       ipos = clocate(dataset(1)%points(:)%x,padd%x)
+       if (padd%x > dataset(1)%points(ipos)%x) ipos = ipos + 1
+       call add_point(dataset(1)%points,padd,ipos)
+   elseif (paction == 2) then ! Delete point
+       padd%x = xp
+       padd%y = yp
+       ipos = clocate(dataset(1)%points(:)%x,padd%x)
+       call del_point(dataset(1)%points,ipos)
+   endif
+!
+   call UserBack()      ! ricalcola il background
+!
+   if (style(STYLE_PEAKS)%vis == 1) then  ! peaksearch
+       call run_peaksearch()
+   else
+       call vedinew(rescale=0)
+   endif
+!
+   end subroutine update_background

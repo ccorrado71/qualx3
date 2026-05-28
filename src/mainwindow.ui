@@ -351,6 +351,24 @@
    <addaction name="actionChange_Color"/>
    <addaction name="actionLoad_Add"/>
   </widget>
+  <widget class="QToolBar" name="toolBarZoom">
+   <property name="windowTitle">
+    <string>Zoom Toolbar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSelection_Mode"/>
+   <addaction name="actionHorizontal_Zoom"/>
+   <addaction name="actionRectangle_Zoom"/>
+   <addaction name="actionPan"/>
+   <addaction name="actionReset_Zoom"/>
+   <addaction name="actionAutoscale"/>
+   <addaction name="actionLegend"/>
+  </widget>
   <action name="actionDatabaseInfo">
    <property name="text">
     <string>Database Info</string>
@@ -529,6 +547,106 @@
   <action name="actionSmoothing">
    <property name="text">
     <string>Smoothing</string>
+   </property>
+  </action>
+  <action name="actionSelection_Mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/computermousecursor.png</normaloff>:/images/images/computermousecursor.png</iconset>
+   </property>
+   <property name="text">
+    <string>Selection Mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Selection Mode</string>
+   </property>
+  </action>
+  <action name="actionHorizontal_Zoom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/horizontal_zoom.png</normaloff>:/images/images/horizontal_zoom.png</iconset>
+   </property>
+   <property name="text">
+    <string>Horizontal Zoom</string>
+   </property>
+   <property name="toolTip">
+    <string>Horizontal Zoom</string>
+   </property>
+  </action>
+  <action name="actionRectangle_Zoom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/rectangle_zoom.png</normaloff>:/images/images/rectangle_zoom.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rectangle Zoom</string>
+   </property>
+   <property name="toolTip">
+    <string>Rectangle Zoom</string>
+   </property>
+  </action>
+  <action name="actionPan">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/pan_121784.png</normaloff>:/images/images/pan_121784.png</iconset>
+   </property>
+   <property name="text">
+    <string>Pan</string>
+   </property>
+   <property name="toolTip">
+    <string>Pan</string>
+   </property>
+  </action>
+  <action name="actionReset_Zoom">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/reset_zoom.xpm</normaloff>:/images/images/reset_zoom.xpm</iconset>
+   </property>
+   <property name="text">
+    <string>Reset Zoom</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
+   </property>
+  </action>
+  <action name="actionAutoscale">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/autoscale.xpm</normaloff>:/images/images/autoscale.xpm</iconset>
+   </property>
+   <property name="text">
+    <string>Autoscale</string>
+   </property>
+   <property name="toolTip">
+    <string>Autoscale</string>
+   </property>
+  </action>
+  <action name="actionLegend">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/legendaon.xpm</normaloff>
+     <normalon>:/images/images/legendaoff.xpm</normalon>:/images/images/legendaon.xpm</iconset>
+   </property>
+   <property name="text">
+    <string>Legend</string>
+   </property>
+   <property name="toolTip">
+    <string>Display Legend</string>
    </property>
   </action>
  </widget>

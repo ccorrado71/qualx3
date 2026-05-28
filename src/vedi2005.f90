@@ -708,256 +708,187 @@ MODULE view
 
   !-----------------------------------------------------------------------------------------------
 
-!corr   subroutine process_action_points(kaction,xp,yp,ier) bind(C,name="process_action_points")   
-!corr   use iso_c_binding
-!corr   use peak_mod
-!corr   use variables, only: dataset
-!corr   use conteggi, only: theta_int
-!corr   use arrayutil, only: clocate
-!corr   use General, only:alambda, is_extra_active
-!corr   use messagemod
-!corr   use proginterface, only: fillcounts
-!corr   integer(c_int), intent(in), value :: kaction
-!corr   real(c_double), intent(in), value :: xp,yp
-!corr   integer(c_int), intent(out)       :: ier
-!corr   real                              :: thp
-!corr   real                              :: xc,yc
-!corr   integer                           :: iok
-!corr   type(peak_type)                   :: padd
-!corr   real                              :: pkx,pky,fwp
-!corr   integer                           :: ierfw,ipos
-!corr
-!corr   enum, bind(c)
-!corr     enumerator :: AddBackgroundPoint=4, DeleteBackgroundPoint, AddPeak, DeletePeak
-!corr   endenum
-!corr
-!corr   ier = 0
-!corr!corr   write(0,*)'ACTION:',is_extra_active,xp,yp
-!corr   select case (kaction)
-!corr     case (AddBackgroundPoint)
-!corr        if (is_extra_active) then
-!corr            call update_background_extra(1, real(xp), real(yp))
-!corr        else
-!corr            call update_background(1, real(xp), real(yp))
-!corr        endif
-!corr
-!corr     case (DeleteBackgroundPoint)
-!corr        !write(0,*)'Action: ',kaction,xp,yp
-!corr        if (is_extra_active) then
-!corr            call update_background_extra(2, real(xp), real(yp))
-!corr        else
-!corr            call update_background(2, real(xp), real(yp))
-!corr        endif
-!corr
-!corr     case (AddPeak)
-!corr        thp = real(xp)
-!corr        call check_peak(pkind,thp,xc,yc,iok) 
-!corr        if (iok == 1) then
-!corr!
-!corr!           Set background is not available
-!corr            if (.not.allocated(dataset(1)%yb)) then
-!corr                call fillcounts()
-!corr                call back_for_peaksearch(.false.)
-!corr            endif
-!corr!
-!corr!           Compute fwhm
-!corr            call peak_gaussian_fit(theta_int(:,1),theta_int(:,2),clocate(theta_int(:,1),xc),4,pkx,pky,fwp,ierfw)
-!corr            if (ierfw /= 0) fwp = peak_fwhm(pkind,xc)
-!corr!
-!corr            padd = peak_type(fwhm=fwp)
-!corr            call padd%sety(yc)
-!corr            call padd%setxd(xc,alambda)
-!corr            call padd%get_int(theta_int(:,1),theta_int(:,2),dataset(1)%yb(:))
-!corr!
-!corr            call padd%integrated_intensity(theta_int(:,1),theta_int(:,2),dataset(1)%yb)
-!corr!
-!corr!           add peak to list
-!corr            call peak_add(pkind,padd,INSERT_PEAK)
-!corr            if (numpeaks(pkindtot) > 0) then
-!corr                if (.not.is_peak_position(pkindtot,padd%getx()))  &
-!corr                    call peak_add(pkindtot,padd,INSERT_PEAK)  ! add to array pkindtot if absent
-!corr            else
-!corr                call peak_add(pkindtot,padd,INSERT_PEAK)
-!corr            endif
-!corr!
-!corr            style(STYLE_PEAKS)%vis = 1  ! force visualization
-!corr            !call vedinew(rescale=0)
-!corr            !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
-!corr            call update_peak_graph()
-!corr         endif
-!corr
-!corr     case (DeletePeak)
-!corr        ipos = clocate(pkind(:)%getx(),real(xp))
-!corr        call peak_delete(pkindtot,pkind(ipos)%getx())
-!corr        call peak_delete(pkind,ipos)
-!corr        !call vedinew(rescale=0)
-!corr        !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
-!corr        call update_peak_graph()
-!corr
-!corr   end select
-!corr
-!corr   end subroutine process_action_points
+   subroutine process_action_points(kaction,xp,yp,ier) bind(C,name="process_action_points")   
+   use iso_c_binding
+   use peak_mod
+   use variables, only: dataset
+   use arrayutil, only: clocate
+   integer(c_int), intent(in), value :: kaction
+   real(c_double), intent(in), value :: xp,yp
+   integer(c_int), intent(out)       :: ier
+   real                              :: thp
+   real                              :: xc,yc
+   integer                           :: iok
+   type(peak_type)                   :: padd
+   real                              :: pkx,pky,fwp
+   integer                           :: ierfw,ipos
+
+   enum, bind(c)
+     enumerator :: AddBackgroundPoint=4, DeleteBackgroundPoint, AddPeak, DeletePeak
+   endenum
+
+   ier = 0
+!corr   write(0,*)'ACTION:',is_extra_active,xp,yp
+   select case (kaction)
+     case (AddBackgroundPoint)
+        call update_background(1, real(xp), real(yp))
+
+     case (DeleteBackgroundPoint)
+        call update_background(2, real(xp), real(yp))
+
+     case (AddPeak)
+        thp = real(xp)
+        call check_peak(pkind,thp,xc,yc,iok) 
+        if (iok == 1) then
+!
+!           Set background is not available
+            if (.not.allocated(dataset(1)%yb)) then
+                call back_for_peaksearch(.false.)
+            endif
+!
+!           Compute fwhm
+            call peak_gaussian_fit(dataset(1)%x,dataset(1)%y,clocate(dataset(1)%x,xc),4,pkx,pky,fwp,ierfw)
+            if (ierfw /= 0) fwp = peak_fwhm(pkind,xc)
+!
+            padd = peak_type(fwhm=fwp)
+            call padd%sety(yc)
+            call padd%setxd(xc,dataset(1)%wave(1))
+            call padd%get_int(dataset(1)%x,dataset(1)%y,dataset(1)%yb(:))
+!
+            call padd%integrated_intensity(dataset(1)%x,dataset(1)%y,dataset(1)%yb)
+!
+!           add peak to list
+            call peak_add(pkind,padd,INSERT_PEAK)
+            if (numpeaks(pkindtot) > 0) then
+                if (.not.is_peak_position(pkindtot,padd%getx()))  &
+                    call peak_add(pkindtot,padd,INSERT_PEAK)  ! add to array pkindtot if absent
+            else
+                call peak_add(pkindtot,padd,INSERT_PEAK)
+            endif
+!
+            style(STYLE_PEAKS)%vis = 1  ! force visualization
+            !call vedinew(rescale=0)
+            !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
+            call update_peak_graph()
+         endif
+
+     case (DeletePeak)
+        ipos = clocate(pkind(:)%getx(),real(xp))
+        call peak_delete(pkindtot,pkind(ipos)%getx())
+        call peak_delete(pkind,ipos)
+        !call vedinew(rescale=0)
+        !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
+        call update_peak_graph()
+
+   end select
+
+   end subroutine process_action_points
 
 ! ----------------------------------------------------------------------
 
-!corr   subroutine check_peak(peaks,tt,xc,yc,iok)
-!corr!
-!corr   USE Conteggi
-!corr   USE arrayutil
-!corr   USE peak_util
-!corr!
-!corr   type(peak_type), dimension(:), allocatable, intent(in) :: peaks
-!corr   real, intent(in)     :: tt
-!corr   real, intent(out)    :: xc,yc
-!corr   integer, intent(out) :: iok
-!corr   integer              :: jmin
-!corr   integer              :: iniz,ifin
-!corr   real                 :: yjmin
-!corr   real                 :: yjmaxr,yjmaxl
-!corr   integer              :: jmaxr,jmaxl
-!corr   integer              :: i
-!corr   integer              :: iadd
-!corr   logical              :: is_peak
-!corr!
-!corr   iok = 1
-!corr   xc = tt
-!corr   iadd = 3
-!corr   jmin = clocate(theta_int(:,1),tt)   ! localizza conteggio piu' vicino
-!corr   if (numpeaks(peaks) == 0) then
-!corr       yc = theta_int(jmin,2)
-!corr       return
-!corr   endif
-!corr!
-!corr!  Controlla subito se nella posizione cliccata non esiste gia' un picco
-!corr   !is_peak = any(abs(xmax(:npk) - theta_int(jmin,1)) < 1.e-07)
-!corr!co     is_peak = any(abs(peaks%x - theta_int(jmin,1)) < 1.e-07)
-!corr   is_peak = is_peak_position(peaks,theta_int(jmin,1))
-!corr!
-!corr   if (jmin > 0 .and. is_peak .eqv. .false.) then
-!corr       iniz = jmin - iadd
-!corr       if (iniz.lt.1) iniz = 1
-!corr       ifin = jmin + iadd
-!corr       if (ifin.gt.npunti) ifin = npunti
-!corr       if (iniz.gt.ifin) iniz = ifin
-!corr       yjmin = theta_int(jmin,2)
-!corr!
-!corr!      Cerca il massimo + vicino a destra
-!corr       jmaxr = 0
-!corr       yjmaxr = yjmin
-!corr       do i=jmin+1,ifin
-!corr          if (theta_int(i,2) > yjmaxr) then
-!corr              yjmaxr = theta_int(i,2)
-!corr              jmaxr = i
-!corr          elseif (theta_int(i,2) < yjmaxr .and. jmaxr > 0) then
-!corr              exit
-!corr          endif
-!corr       enddo
-!corr       if (jmaxr == ifin) jmaxr = 0  ! il massimo non puo' coincidere col limite
-!corr       if (jmaxr > 0) then
-!corr       !if (any(abs(xmax(:npk) - theta_int(jmaxr,1)) < 1.e-07))jmaxr=-1  ! annulla il punto se esiste gia'
-!corr!co         if (any(abs(peaks%x - theta_int(jmaxr,1)) < 1.e-07))jmaxr=-1  ! annulla il punto se esiste gia'
-!corr       if(is_peak_position(peaks,theta_int(jmaxr,1)))jmaxr=-1   ! annulla il punto se esiste gia'
-!corr       !if (jmaxr > 0)write(0,*)'massimo a destra=',jmaxr,theta_int(jmaxr,1),yjmaxr
-!corr       endif
-!corr!
-!corr!      Cerca il massimo + vicino a sinistra
-!corr       jmaxl = 0
-!corr       yjmaxl = yjmin
-!corr       do i=jmin-1,iniz,-1
-!corr          if (theta_int(i,2) > yjmaxl) then
-!corr              yjmaxl = theta_int(i,2)
-!corr              jmaxl = i
-!corr          elseif (theta_int(i,2) < yjmaxl .and. jmaxl > 0) then
-!corr              exit
-!corr          endif
-!corr       enddo
-!corr       if (jmaxl == iniz) jmaxl = 0  ! il massimo non puo' coincidere col limite
-!corr       if (jmaxl > 0) then
-!corr       !if (any(abs(peaks%x - theta_int(jmaxl,1)) < 1.e-07))jmaxl=-1  ! annulla il punto se esiste gia'
-!corr       if(is_peak_position(peaks,theta_int(jmaxl,1)))jmaxl=-1  ! annulla il punto se esiste gia'
-!corr       !if (any(abs(xmax(:npk) - theta_int(jmaxl,1)) < 1.e-07))jmaxl=-1  ! annulla il punto se esiste gia'
-!corr       !if (jmaxl > 0)write(0,*)'massimo a sinistra=',jmaxl,theta_int(jmaxl,1),yjmaxl
-!corr       endif
-!corr!
-!corr       if ((jmaxl + jmaxr == 0) .or. (jmaxl + jmaxr == -1)) then       ! non trova nessun massimo
-!corr           yc = yjmin                              ! accetta selezione dell'utente
-!corr           xc = theta_int(jmin,1)
-!corr       elseif (jmaxl > 0 .and. jmaxr <= 0) then    ! massimo a sinistra
-!corr           yc = yjmaxl
-!corr           xc = theta_int(jmaxl,1)
-!corr       elseif (jmaxr > 0 .and. jmaxl <= 0) then    ! massimo a destra
-!corr           yc = yjmaxr
-!corr           xc = theta_int(jmaxr,1)
-!corr       elseif (jmaxr > 0 .and. jmaxl > 0) then     ! massimo a destra e sinistra: prendi quello pi� vicino
-!corr           if (jmaxr - jmin  > jmin - jmaxl) then
-!corr               yc = yjmaxl               ! a sinistra e' piu' vicino
-!corr               xc = theta_int(jmaxl,1)
-!corr           else
-!corr               yc = yjmaxr               ! piu' vicino a destra o uguali
-!corr               xc = theta_int(jmaxr,1)
-!corr           endif
-!corr       elseif (jmaxr < 0 .and. jmaxl < 0) then     ! il picco trovato esiste gia'
-!corr           !write(0,*)"picco annullato perche' esiste gia'"
-!corr           iok = 0
-!corr       endif
-!corr       !write(0,*)'scelgo massimo=',yc,xc,jmaxl,jmaxr,jmin
-!corr    else
-!corr       iok = 0
-!corr    endif
-!corr
-!corr    end subroutine check_peak
+   subroutine check_peak(peaks,tt,xc,yc,iok)
+!
+   USE arrayutil
+   USE peak_util
+   USE variables, only: dataset
+!
+   type(peak_type), dimension(:), allocatable, intent(in) :: peaks
+   real, intent(in)     :: tt
+   real, intent(out)    :: xc,yc
+   integer, intent(out) :: iok
+   integer              :: jmin
+   integer              :: iniz,ifin
+   real                 :: yjmin
+   real                 :: yjmaxr,yjmaxl
+   integer              :: jmaxr,jmaxl
+   integer              :: i
+   integer              :: iadd
+   logical              :: is_peak
+!
+   iok = 1
+   xc = tt
+   iadd = 3
+   jmin = clocate(dataset(1)%x(:),tt)   ! localizza conteggio piu' vicino
+   if (numpeaks(peaks) == 0) then
+       yc = dataset(1)%y(jmin)
+       return
+   endif
+!
+!  Controlla subito se nella posizione cliccata non esiste gia' un picco
+   !is_peak = any(abs(xmax(:npk) - theta_int(jmin,1)) < 1.e-07)
+!co     is_peak = any(abs(peaks%x - theta_int(jmin,1)) < 1.e-07)
+   is_peak = is_peak_position(peaks,dataset(1)%x(jmin))
+!
+   if (jmin > 0 .and. is_peak .eqv. .false.) then
+       iniz = jmin - iadd
+       if (iniz.lt.1) iniz = 1
+       ifin = jmin + iadd
+       if (ifin.gt.dataset(1)%npoints()) ifin = dataset(1)%npoints()
+       if (iniz.gt.ifin) iniz = ifin
+       yjmin = dataset(1)%y(jmin)
+!
+!      Cerca il massimo + vicino a destra
+       jmaxr = 0
+       yjmaxr = yjmin
+       do i=jmin+1,ifin
+          if (dataset(1)%y(i) > yjmaxr) then
+              yjmaxr = dataset(1)%y(i)
+              jmaxr = i
+          elseif (dataset(1)%y(i) < yjmaxr .and. jmaxr > 0) then
+              exit
+          endif
+       enddo
+       if (jmaxr == ifin) jmaxr = 0  ! il massimo non puo' coincidere col limite
+       if (jmaxr > 0) then
+           if(is_peak_position(peaks,dataset(1)%x(jmaxr)))jmaxr=-1   ! annulla il punto se esiste gia'
+       endif
+!
+!      Cerca il massimo + vicino a sinistra
+       jmaxl = 0
+       yjmaxl = yjmin
+       do i=jmin-1,iniz,-1
+          if (dataset(1)%y(i) > yjmaxl) then
+              yjmaxl = dataset(1)%y(i)
+              jmaxl = i
+          elseif (dataset(1)%y(i) < yjmaxl .and. jmaxl > 0) then
+              exit
+          endif
+       enddo
+       if (jmaxl == iniz) jmaxl = 0  ! il massimo non puo' coincidere col limite
+       if (jmaxl > 0) then
+           if(is_peak_position(peaks,dataset(1)%x(jmaxl)))jmaxl=-1  ! annulla il punto se esiste gia'
+       endif
+!
+       if ((jmaxl + jmaxr == 0) .or. (jmaxl + jmaxr == -1)) then       ! non trova nessun massimo
+           yc = yjmin                              ! accetta selezione dell'utente
+           xc = dataset(1)%x(jmin)
+       elseif (jmaxl > 0 .and. jmaxr <= 0) then    ! massimo a sinistra
+           yc = yjmaxl
+           xc = dataset(1)%x(jmaxl)
+       elseif (jmaxr > 0 .and. jmaxl <= 0) then    ! massimo a destra
+           yc = yjmaxr
+           xc = dataset(1)%x(jmaxr)
+       elseif (jmaxr > 0 .and. jmaxl > 0) then     ! massimo a destra e sinistra: prendi quello pi� vicino
+           if (jmaxr - jmin  > jmin - jmaxl) then
+               yc = yjmaxl               ! a sinistra e' piu' vicino
+               xc = dataset(1)%x(jmaxl)
+           else
+               yc = yjmaxr               ! piu' vicino a destra o uguali
+               xc = dataset(1)%x(jmaxr)
+           endif
+       elseif (jmaxr < 0 .and. jmaxl < 0) then     ! il picco trovato esiste gia'
+           !write(0,*)"picco annullato perche' esiste gia'"
+           iok = 0
+       endif
+       !write(0,*)'scelgo massimo=',yc,xc,jmaxl,jmaxr,jmin
+    else
+       iok = 0
+    endif
+
+    end subroutine check_peak
 
   !-----------------------------------------------------------------------------------------------
                                                                                                                   
-!corr     subroutine update_background_extra(paction,xp,yp)
-!corr     USE PatternRef, only:jjj
-!corr     USE Commonexpo, only:nnt,ntyp,ncoun1,ncoun2,nback,backp
-!corr     USE conteggi
-!corr     USE arrayutil, only: clocate
-!corr     integer, intent(in) :: paction
-!corr     real, intent(in)    :: xp,yp
-!corr     integer             :: i,j
-!corr     integer             :: jjjsav
-!corr     integer             :: ipos
-!corr!
-!corr     jjjsav = jjj  
-!corr     if (paction == 1) then      ! aggiungo punti col tasto sinistro
-!corr         !ier = 0
-!corr         nback=nback+1
-!corr         backp(nback,1) = xp
-!corr         backp(nback,2) = yp
-!corr!
-!corr!        localizza l'intervallo jjj a cui appartiene il punto aggiunto
-!corr         do i=2,nnt-1
-!corr            if (backp(nback,1) >= theta_int(ncoun1(i),7) .and.    &
-!corr                backp(nback,1) <= theta_int(ncoun2(i),7)) then
-!corr                jjj = i
-!corr            endif
-!corr         enddo
-!corr         ntyp(nback)=jjj
-!corr         call CalcoBacExt(1)
-!corr
-!corr     elseif (paction == 2) then  ! elimino punti col tasto destro
-!corr!        locate and remove point
-!corr         ipos = clocate(backp(:nback,1),xp)
-!corr         backp(ipos:nback-1,:) = backp(ipos+1:nback,:)
-!corr         ntyp(ipos:nback-1) = ntyp(ipos+1:nback)
-!corr         nback = nback - 1
-!corr!        localizza l'intervallo jjj a cui appartiene il punto da eliminare
-!corr         do j=2,nnt-1
-!corr            if (backp(ipos,1) >= theta_int(ncoun1(j),7) .and.    &
-!corr                backp(ipos,1) <= theta_int(ncoun2(j),7)) then
-!corr                jjj = j
-!corr            endif
-!corr         enddo
-!corr         call CalcoBacExt(1)
-!corr     endif
-!corr     jjj = jjjsav
-!corr     call vedinew(rescale=0)
-!corr!
-!corr     end subroutine update_background_extra
-
-!----------------------------------------------------------------------------------------------------
 !corr
 !corr   subroutine get_reflection_info(phaseIndex,refIndex,hkl,tth,dval,err) bind(C,name="get_reflection_info")
 !corr   use variables, only: cryst

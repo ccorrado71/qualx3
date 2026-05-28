@@ -28,6 +28,8 @@ extern "C" void open_diffraction_patt(const char *fileIn, int lenIn, const char 
 extern "C" void run_peaksearchwin();
 extern "C" void LoadPeaksC(const char *filename, int length, int tipo, int *ier);
 extern "C" void SavePeaksC(const char *filename, int length, int tipo);
+extern "C" void delete_peaksC(int pkvet[], int npeak);
+extern "C" void process_action_points(int kaction, double xp, double yp,int *ier);
 extern "C" void apply_background_subtraction();
 extern "C" int peak_number();
 extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave);
@@ -74,7 +76,18 @@ MainWindow::MainWindow(QWidget *parent)
         statusLabel1->setText(ui->statusBar->currentMessage());
     });
 
+    createActionGroup();
     actionsSetup();
+    readAction();
+
+    xpdViewer()->connectLabels(ui->plotLabel1, ui->plotLabel2, ui->plotLabel3);
+    xpdViewer()->connectHorizontalScrollBar(ui->horizontalScrollBar);
+    xpdViewer()->connectAddDeletePoints();
+    xpdViewer()->connectSelectionChanged();
+    connect(xpdViewer(), &XpdViewWidget::deleteSelectedPeaksSignal, this, &MainWindow::deleteSelectedPeaks);
+    connect(xpdViewer(), &XpdViewWidget::addDeletePointSignal, this, &MainWindow::addDeleteSelectedPoint);
+    connect(xpdViewer(), &XpdViewWidget::fileDropped, this, &MainWindow::onActionFileDropped);
+
     createDialogs();
 
     //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
@@ -85,6 +98,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     readSettings();
     createRecentActions();
+    enableActions(InitAction);
+
     mMainWindow = this;
 }
 
@@ -93,46 +108,56 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::createActionGroup()
+{
+    QActionGroup *zoomGroup = new QActionGroup(this);
+    zoomGroup->addAction(ui->actionSelection_Mode);
+    zoomGroup->addAction(ui->actionHorizontal_Zoom);
+    zoomGroup->addAction(ui->actionRectangle_Zoom);
+    zoomGroup->addAction(ui->actionPan);
+    zoomGroup->addAction(ui->actionAdd_Background_Point);
+    zoomGroup->addAction(ui->actionDelete_Background_Point);
+    zoomGroup->addAction(ui->actionAdd_Peak);
+    zoomGroup->addAction(ui->actionDelete_Peak);
+    connect(zoomGroup,&QActionGroup::triggered, this, &MainWindow::zoomGroupTriggered);
+}
+
 XpdViewWidget *MainWindow::xpdViewer() const
 {
     return ui->xpdWidget;
 }
 
-void MainWindow::setAction(const MouseAction &action, bool writeConfig)
-{
-    XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
-    xpdViewer()->setAction(xpdAction);
-
-    // FIX THIS LATER
-    // if (writeConfig) {
-    //     QSettings settings;
-    //     QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
-    //     const char *key = metaEnum.valueToKey(action);
-    //     settings.setValue(EXPO_ACTION_KEY,key);
-    // }
-}
-
 void MainWindow::checkAction(MouseAction action)
 {
     if (action == mAction) return;
-    // FIX THIS LATER
-    // switch (action) {
-    // case NoZoom:
-    //     ui->actionSelection_Mode->setChecked(true);
-    //     break;
-    // case RectangleZoom:
-    //     ui->actionRectangle_Zoom->setChecked(true);
-    //     break;
-    // case HorizontalZoom:
-    //     ui->actionHorizontal_Zoom->setChecked(true);
-    //     break;
-    // case Pan:
-    //     ui->actionPan->setChecked(true);
-    //     break;
-    // default:
-    //     break;
-    // }
+
+    switch (action) {
+    case NoZoom:
+        ui->actionSelection_Mode->setChecked(true);
+        break;
+    case RectangleZoom:
+        ui->actionRectangle_Zoom->setChecked(true);
+        break;
+    case HorizontalZoom:
+        ui->actionHorizontal_Zoom->setChecked(true);
+        break;
+    case Pan:
+        ui->actionPan->setChecked(true);
+        break;
+    default:
+        break;
+    }
     setAction(action, false);
+}
+
+void MainWindow::saveAction()
+{
+    savedAction = mAction;
+}
+
+void MainWindow::restoreAction()
+{
+    checkAction(savedAction);
 }
 
 void MainWindow::setZoomAction()
@@ -141,24 +166,120 @@ void MainWindow::setZoomAction()
         checkAction(savedZoomAction);
 }
 
-void MainWindow::setStatusMessage(const QString &message)
+void MainWindow::readAction()
 {
-    statusLabel1->setText(message);
+    QSettings settings;
+    if (settings.contains(XPDVIEW_ACTION_KEY)) {
+        QString sAction = settings.value(XPDVIEW_ACTION_KEY).toString();
+        //        static int enumIdx = MainWindow::staticMetaObject.indexOfEnumerator("MouseAction");
+        //        MouseAction action = static_cast<MouseAction> (MainWindow::staticMetaObject.enumerator(enumIdx).keyToValue(sAction.toStdString().c_str()));
+        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
+        int action = metaEnum.keyToValue(sAction.toStdString().c_str());
+        checkAction(static_cast<MouseAction>(action));
+    } else {
+        //        ui->actionHorizontal_Zoom->setChecked(true);
+        //        setAction(HorizontalZoom, false);
+        checkAction(HorizontalZoom);
+    }
 }
 
-void MainWindow::clearStatusMessage()
+void MainWindow::setAction(const MouseAction &action, bool writeConfig)
 {
-    statusLabel1->clear();
+    XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
+    xpdViewer()->setAction(xpdAction);
+
+    if (writeConfig) {
+        QSettings settings;
+        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
+        const char *key = metaEnum.valueToKey(action);
+        settings.setValue(XPDVIEW_ACTION_KEY,key);
+    }
 }
 
-QProgressBar *MainWindow::getStatusProgressBar() const
+void MainWindow::updatePeakListTable()
 {
-    return statusProgressBar;
+    if (ui->peakListWidget->isVisible())
+        ui->peakListWidget->updatePeakListTable();
 }
 
 void MainWindow::enableActions(EnabledActions action, bool state)
 {
-    qInfo() << "FIX LATER enableActions";
+    //qInfo() << "Enable Actions: " << action << " State: " << state;
+    switch (action) {
+    // case InitAction:  //Init
+    //     enableMenu(ui->menuExportData, false);
+    //     ui->actionSave_Project->setEnabled(false);
+    //     ui->actionSave_Project_As->setEnabled(false);
+    //     enableMenu(ui->menuPattern, false);
+    //     enableMenu(ui->menuView, false);
+    //     enableMenu(ui->menuInfo, false);
+    //     break;
+    // case PatternAction:   //Only Pattern
+    //     enableMenu(ui->menuExportData, true);
+    //     ui->actionSave_Project->setEnabled(true);
+    //     ui->actionSave_Project_As->setEnabled(true);
+    //     enableMenu(ui->menuPattern, true);
+    //     ui->actionIntervals->setEnabled(false);
+    //     // ui->actionAdd_Background_Point->setEnabled(true);
+    //     // ui->actionDelete_Background_Point->setEnabled(true);
+    //     enableMenu(ui->menuView, true);
+    //     ui->actionDirect_Methods->setEnabled(true);
+    //     ui->actionExplore_Trials->setEnabled(false);
+    //     ui->actionSimulated_Annealing->setEnabled(true);
+    //     ui->menuSuperflip->setEnabled(true);
+    //     enableMenu(ui->menuSuperflip, true);
+    //     ui->actionRAMM_Procedure->setEnabled(false);
+    //     ui->actionRecycle_in_Extra->setEnabled(is_extraction_active());
+    //     enableMenu(ui->menuRefine, false);
+    //     ui->actionRietveld->setEnabled(true);
+    //     enableMenu(ui->menuInfo, true);
+    //     ui->actionProfile->setEnabled(false);
+    //     break;
+    // case DialogOpenAction:
+    //     enableMenu(ui->menuFile, false);
+    //     enableMenu(ui->menuPattern, false);
+    //     // ui->actionAdd_Background_Point->setEnabled(false);
+    //     // ui->actionDelete_Background_Point->setEnabled(false);
+    //     enableMenu(ui->menuSolve, false);
+    //     enableMenu(ui->menuRefine, false);
+    //     ui->crystalWidget->updateModify(3);
+    //     ui->toolBarRun->setEnabled(false);
+    //     break;
+    // case RunAction:     //Run procedure
+    //     ui->toolBarRun->setEnabled(state);
+    //     ui->actionSkip->setEnabled(false);
+    //     break;
+    // case RunSkipAction:  //Run/Skip procedure
+    //     ui->toolBarRun->setEnabled(state);
+    //     ui->actionSkip->setEnabled(state);
+    //     break;
+    case SaveAction:
+        saveEnabledActions();
+        break;
+    case RestoreAction:
+        restoreEnabledActions();
+        break;
+    case PeaksAction: //unused!
+        //ui->toolBarPattern
+        //qInfo() << "Enable Pattern Menu";
+        enableMenu(ui->menuPattern, true);
+        //ui->actionIntervals->setEnabled(false);
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::enableMenu(QMenu *menu, bool enab)
+{
+    QList<QAction*> actions = menu->actions();
+    for (int i = 0; i < actions.size(); ++i)
+        actions.at(i)->setEnabled(enab);
+    QList<QMenu*> menus = menu->findChildren<QMenu*>();
+    for (int i = 0; i < menus.size(); ++i) {
+        menus.at(i)->setEnabled(enab);
+        enableMenu(menus.at(i), enab); //to disable actions on toolbar
+    }
 }
 
 void MainWindow::enumerateEnabledActionsMenu(QMenu *menu)
@@ -361,134 +482,45 @@ void MainWindow::readSettings()
     //ui->splitter2->restoreState(settings.value(EXPO_SPLITSIZE_KEY2).toByteArray());
 }
 
-void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
+void MainWindow::setStatusMessage(const QString &message)
 {
-    switch (testCase) {
-    case 1:
-        builder.setNames("nickel");
-        builder.enableDeleted(false);
-        break;
-    case 2:
-        builder.setNames("nickel");
-        builder.setSubfiles({"I"});
-        break;
-    case 3:
-        builder.setNames("silicon oxide");
-        builder.setSubfiles({"O"});
-        break;
-    case 4:
-        builder.setNames("carbon");
-        builder.setSubfiles({"I"});
-        break;
-    case 5:
-        builder.setNames("copper");
-        break;
-    case 6:
-        builder.setElements("Al");
-        builder.setNames("copper");
-        break;
-    case 7:
-        builder.setElements("Al and P and O");
-        break;
-    case 8:
-        builder.setElements("Al or C");
-        break;
-    case 9:
-        builder.setElements("Al or P and C");
-        break;
-    case 10:
-        builder.setElements("Al and Si and P or C or O");
-        break;
-    case 11:
-        builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        builder.setElements("Al");
-        break;
-    case 12:
-        builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        builder.setElements("Al and O");
-        break;
-    case 13:
-        builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        builder.setElements("Al and O and P");
-        break;
-    case 14:
-        builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        builder.setElements("Al and O and P and Si");
-        break;
-    case 15:
-        builder.setBOperator(DbQueryBuilder::JUST_OP);
-        builder.setElements("Al");
-        break;
-    case 16:
-        builder.setBOperator(DbQueryBuilder::JUST_OP);
-        builder.setElements("Al and O");
-        break;
-    case 17:
-        builder.setBOperator(DbQueryBuilder::JUST_OP);
-        builder.setElements("Al and O and P");
-        break;
-    case 18:
-        builder.setNames("potassium");
-        builder.setSubfiles({"I"});
-        builder.setBOperator(DbQueryBuilder::ONLY_OP);
-        builder.setElements("Al and P");
-        break;
-    case 19:
-        builder.setCsysString({"Cubic"});
-        break;
-    case 20:
-        builder.setCsysString({"Cubic","Tetragonal"});
-        break;
-    case 21:
-        builder.setCsysString({"hexagonal"});
-        builder.setElements("Al");
-        break;
-    case 22:
-        builder.setSpgString({"P 1 2 1"});
-        break;
-    case 23:
-        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
-        break;
-    case 24:
-        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
-        builder.setCsysString({"Cubic"});
-        break;
-    case 25:
-        builder.setCellParameter(0, 5.00, 5.01);
-        builder.setCellParameter(1, 5.00, 5.01);
-        break;
-    case 26:
-        builder.setCellParameter(0, 10.00, 11.00);
-        builder.setCellParameter(1, 10.00, 11.00);
-        builder.setCsysString({"Monoclinic"});
-        break;
-    case 27:
-        builder.setCellParameter(0, 10.00, 11.00);
-        builder.setCellParameter(1, 10.00, 11.00);
-        builder.setCsysString({"Monoclinic"});
-        builder.setSubfiles({"I"});
-        break;
-    case 28:
-        builder.setCellParameter(0, 10.00, 11.00);
-        builder.setCellParameter(1, 10.00, 11.00);
-        builder.setCsysString({"Monoclinic"});
-        builder.setSubfiles({"I"});
-        builder.setElements("Al");
-        break;
-    case 29:
-        builder.setIdEntry({"1000000","1000017"});
-        builder.setSubfiles({"I"});
-        builder.setElements("Al");
-        builder.setCsysString({"Monoclinic"});
-        break;
+    statusLabel1->setText(message);
+}
+
+void MainWindow::clearStatusMessage()
+{
+    statusLabel1->clear();
+}
+
+QProgressBar *MainWindow::getStatusProgressBar() const
+{
+    return statusProgressBar;
+}
+
+void MainWindow::zoomGroupTriggered(QAction *action)
+{
+    if (action == ui->actionSelection_Mode) {
+        if (mAction != NoZoom) setAction(NoZoom);
+    } else if (action == ui->actionHorizontal_Zoom) {
+        if (mAction != HorizontalZoom) setAction(HorizontalZoom);
+    } else if (action == ui->actionRectangle_Zoom) {
+        if (mAction != RectangleZoom) setAction(RectangleZoom);
+    } else if (action == ui->actionPan) {
+        if (mAction != Pan) setAction(Pan);
+    } else if (action == ui->actionAdd_Background_Point) {
+        if (mAction != AddBackgroundPoint) setAction(AddBackgroundPoint, false);
+    } else if (action == ui->actionDelete_Background_Point) {
+        if (mAction != DeleteBackgroundPoint) setAction(DeleteBackgroundPoint, false);
+    } else if (action == ui->actionAdd_Peak) {
+        if (mAction != AddPeak) setAction(AddPeak, false);
+    } else if (action == ui->actionDelete_Peak) {
+        if (mAction != DeletePeak) setAction(DeletePeak, false);
     }
 }
 
 //
 //  File Menu
 //
-
-
 
 void MainWindow::openRecentFile()
 {
@@ -540,6 +572,36 @@ void MainWindow::openRecentFile()
     }
 }
 
+void MainWindow::loadDiffractionPatterns(QStringList files)
+{
+    QSettings settings;
+    if (!files.isEmpty()) {
+        QFileInfo info(files.at(0));
+        QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
+        fileutils::setFileForWritable(outFile);
+        outFile = QDir::toNativeSeparators(outFile);
+        int nerr = 0;
+        fileutils::setCurrentDirFromFile(files.at(0));
+        for (int i = 0; i < files.size(); i++) {
+            int err;
+            QString filename = QDir::toNativeSeparators(files.at(i));
+
+            open_diffraction_patt(filename.toLocal8Bit().constData(), filename.toLocal8Bit().size(),
+                                  outFile.toLocal8Bit().constData(), outFile.toLocal8Bit().size(),
+                                  i, &err);
+            if (err) {
+                nerr++;
+            }
+        }
+        if (nerr < files.size()) {
+            QString filename = QDir::toNativeSeparators(files.at(0));
+            settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
+//            outputFileName = outFile;
+            setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
+        }
+    }
+}
+
 void MainWindow::onActionImportDiffractionPatternTriggered()
 {
     QSettings settings;
@@ -559,36 +621,12 @@ void MainWindow::onActionImportDiffractionPatternTriggered()
                    "Philips UDF data (*.udf);;"
                    "PANalytical XRDML data (*.xrdml)";
 
-    qInfo() << "Import Diffraction Pattern From";
-
     QStringList files = QFileDialog::getOpenFileNames(this,
                                                       tr("Import Diffraction Pattern From"),
                                                       settings.value(DEFAULT_DIR_KEY).toString(),
                                                       exts, &selectedFilter);
 
-    if (!files.isEmpty()) {
-        QFileInfo info(files.at(0));
-        QString outFile = info.path() + QDir::separator() + info.baseName() + ".out";
-        outFile = QDir::toNativeSeparators(outFile);
-        int nerr = 0;
-        fileutils::setCurrentDirFromFile(files.at(0));
-        for (int i = 0; i < files.size(); i++) {
-            int err;
-            QString filename = QDir::toNativeSeparators(files.at(i));
-            open_diffraction_patt(filename.toStdString().c_str(), filename.length(),
-                               outFile.toStdString().c_str(), outFile.length(),
-                                   i, &err);
-            if (err) {
-                nerr++;
-            }
-        }
-        if (nerr < files.size()) {
-            QString filename = QDir::toNativeSeparators(files.at(0));
-            settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
-//            outputFileName = outFile;
-            setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
-        }
-    }
+    loadDiffractionPatterns(files);
 }
 
 void MainWindow::createRecentActions()
@@ -682,6 +720,26 @@ void MainWindow::setCurrentFile(const QString &fullFileName, const QString &file
     }
 }
 
+void MainWindow::onActionFileDropped(const QStringList &fileList)
+{
+    QStringList xpdExtensions = {"dat","xy","rtv","gda","xye","xrdml","pow"};
+
+    for (int i = 0; i < fileList.size(); i++) {
+        QString fileIn = fileList.at(i);
+        QFileInfo fi(fileIn);
+        QString ext = fi.suffix().toLower();
+        if (xpdExtensions.contains(ext)) {
+            loadDiffractionPatterns(fileList);
+            break;
+        } else if (ext == "expo") {
+//FIX PROJECT LATER            loadProject(fileIn);
+            break;
+        } else {
+            QMessageBox::critical(this,"Error",fileIn + " is not a valid file type.");
+        }
+    }
+}
+
 //
 //  Pattern Menu
 //
@@ -727,6 +785,21 @@ void MainWindow::onActionSmoothingTriggered()
 {
     smoothingDialog->setSmoothing();
     smoothingDialog->show();
+}
+
+void MainWindow::deleteSelectedPeaks(const QVector<int> &selected)
+{
+    int *peaks = new int[selected.size()];
+    for (int i = 0; i < selected.size(); i++) {
+        peaks[i] = selected.at(i);
+    }
+    delete_peaksC(peaks, selected.size());
+    delete [] peaks;
+}
+
+void MainWindow::addDeleteSelectedPoint(int action, double xp, double yp, int &ier)
+{
+    process_action_points(action, xp, yp, &ier);
 }
 
 void MainWindow::onActionPeakSearchTriggered()
@@ -775,12 +848,6 @@ void MainWindow::onActionSavePeaksTriggered()
         int tipo = list.lastIndexOf(selectedFilter) + 1;
         SavePeaksC(fileName.toStdString().c_str(), fileName.length(),tipo);
     }
-}
-
-void MainWindow::updatePeakListTable()
-{
-    if (ui->peakListWidget->isVisible())
-        ui->peakListWidget->updatePeakListTable();
 }
 
 //
@@ -1327,10 +1394,6 @@ void MainWindow::performResidualSearch(const CardType &acceptedCard)
     setStatusMessage(tr("%1 card(s) after residual search").arg(cards.size()));
 }
 
-//
-//  Search Menu
-//
-
 void MainWindow::onActionLoadAddTriggered()
 {
     bool ok = false;
@@ -1385,4 +1448,127 @@ void MainWindow::onActionLoadAddTriggered()
     // Force the card info dock visible
     ui->dockWidgetCard->show();
     ui->dockWidgetCard->raise();
+}
+
+void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)
+{
+    switch (testCase) {
+    case 1:
+        builder.setNames("nickel");
+        builder.enableDeleted(false);
+        break;
+    case 2:
+        builder.setNames("nickel");
+        builder.setSubfiles({"I"});
+        break;
+    case 3:
+        builder.setNames("silicon oxide");
+        builder.setSubfiles({"O"});
+        break;
+    case 4:
+        builder.setNames("carbon");
+        builder.setSubfiles({"I"});
+        break;
+    case 5:
+        builder.setNames("copper");
+        break;
+    case 6:
+        builder.setElements("Al");
+        builder.setNames("copper");
+        break;
+    case 7:
+        builder.setElements("Al and P and O");
+        break;
+    case 8:
+        builder.setElements("Al or C");
+        break;
+    case 9:
+        builder.setElements("Al or P and C");
+        break;
+    case 10:
+        builder.setElements("Al and Si and P or C or O");
+        break;
+    case 11:
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al");
+        break;
+    case 12:
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al and O");
+        break;
+    case 13:
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al and O and P");
+        break;
+    case 14:
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al and O and P and Si");
+        break;
+    case 15:
+        builder.setBOperator(DbQueryBuilder::JUST_OP);
+        builder.setElements("Al");
+        break;
+    case 16:
+        builder.setBOperator(DbQueryBuilder::JUST_OP);
+        builder.setElements("Al and O");
+        break;
+    case 17:
+        builder.setBOperator(DbQueryBuilder::JUST_OP);
+        builder.setElements("Al and O and P");
+        break;
+    case 18:
+        builder.setNames("potassium");
+        builder.setSubfiles({"I"});
+        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        builder.setElements("Al and P");
+        break;
+    case 19:
+        builder.setCsysString({"Cubic"});
+        break;
+    case 20:
+        builder.setCsysString({"Cubic","Tetragonal"});
+        break;
+    case 21:
+        builder.setCsysString({"hexagonal"});
+        builder.setElements("Al");
+        break;
+    case 22:
+        builder.setSpgString({"P 1 2 1"});
+        break;
+    case 23:
+        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
+        break;
+    case 24:
+        builder.setSpgString({"P 1 1 2", "P 2 1 1"});
+        builder.setCsysString({"Cubic"});
+        break;
+    case 25:
+        builder.setCellParameter(0, 5.00, 5.01);
+        builder.setCellParameter(1, 5.00, 5.01);
+        break;
+    case 26:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        break;
+    case 27:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        builder.setSubfiles({"I"});
+        break;
+    case 28:
+        builder.setCellParameter(0, 10.00, 11.00);
+        builder.setCellParameter(1, 10.00, 11.00);
+        builder.setCsysString({"Monoclinic"});
+        builder.setSubfiles({"I"});
+        builder.setElements("Al");
+        break;
+    case 29:
+        builder.setIdEntry({"1000000","1000017"});
+        builder.setSubfiles({"I"});
+        builder.setElements("Al");
+        builder.setCsysString({"Monoclinic"});
+        break;
+    }
 }

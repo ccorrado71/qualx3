@@ -76,20 +76,25 @@ public:
     void runSearch(const SearchOptions &opts);
     void updatePeakListTable();
     void checkAction(MouseAction action);
+    void saveAction();
+    void restoreAction();
     void setZoomAction();
     void enableActions(MainWindow::EnabledActions action, bool state=false);
     void saveEnabledActions();
     void restoreEnabledActions();
+    void enableMenu(QMenu *menu, bool enab);
 
     static QString getPathDataFiles();
     static void setPathDataFiles(const QString &newPathDataFiles);
 
 private slots:
     void closeEvent(QCloseEvent *event);
+    void zoomGroupTriggered(QAction *action);
 
     //File
     void openRecentFile();
     void onActionImportDiffractionPatternTriggered();
+    void onActionFileDropped(const QStringList &fileList);
 
     //Pattern
     void onActionBackgroundTriggered();
@@ -113,14 +118,19 @@ private slots:
     void onActionLoadAddTriggered();
 private:
     void createDialogs();
+    void createActionGroup();
     void actionsSetup();
     void writeSettings();
     void readSettings();
+    void readAction();
+    void deleteSelectedPeaks(const QVector<int> &selected);
+    void addDeleteSelectedPoint(int action, double xp, double yp, int &ier);
 
     Ui::MainWindow *ui;
     QLabel *statusLabel1;
     QProgressBar *statusProgressBar;
     MouseAction mAction;
+    MouseAction savedAction;
     MouseAction savedZoomAction;
     QMap<QAction *, bool> stateActions;
     void enumerateEnabledActionsMenu(QMenu *menu);
@@ -148,5 +158,6 @@ private:
     void onCardSelected(const QString &id);
     void applyDialogRestraints(DbQueryBuilder &builder);
     void performResidualSearch(const CardType &acceptedCard);
+    void loadDiffractionPatterns(QStringList files);
 };
 #endif // MAINWINDOW_H

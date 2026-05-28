@@ -2,10 +2,11 @@
 #define PROGKEYSETTINGS_H
 
 #define DEFAULT_DIR_KEY "default_dir"
-#define QUALX_GEOMETRY_KEY "expogeometry"
-#define QUALX_STATE_KEY "expostate"
-#define QUALX_USER_WAVE "expouserwave"
-#define QUALX_WAVE_INDEX "expowaveindex"
+#define QUALX_GEOMETRY_KEY "qualxgeometry"
+#define QUALX_STATE_KEY "qualxstate"
+#define QUALX_USER_WAVE "qualxuserwave"
+#define QUALX_WAVE_INDEX "qaulxwaveindex"
+#define XPDVIEW_ACTION_KEY "xpdviewaction"
 #define QUALX_RECENT_FILES_KEY "qualxrecentfiles"
 
 // Database registry keys.
