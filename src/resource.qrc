@@ -28,5 +28,6 @@
         <file>images/pan_121784.png</file>
         <file>images/rectangle_zoom.png</file>
         <file>images/reset_zoom.xpm</file>
+        <file>images/preferences.png</file>
     </qresource>
 </RCC>

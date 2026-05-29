@@ -106,6 +106,11 @@ private slots:
     void onActionLoadPeaksTriggered();
     void onActionSavePeaksTriggered();
 
+    //View
+    void onActionPlotStyleTriggered();
+    void onActionResetZoomTriggered();
+    void onActionAutoscaleTriggered();
+
     //Search
     void onActionSearchMatchTriggered();
     void onActionSearchMatchOptionsTriggered();

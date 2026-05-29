@@ -151,6 +151,26 @@
     <addaction name="actionSmoothing"/>
     <addaction name="menuPeaks"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menuZoom">
+     <property name="title">
+      <string>Zoom</string>
+     </property>
+     <addaction name="actionReset_Zoom"/>
+     <addaction name="actionHorizontal_Zoom"/>
+     <addaction name="actionRectangle_Zoom"/>
+     <addaction name="actionPan"/>
+     <addaction name="actionAutoscale"/>
+    </widget>
+    <addaction name="actionPlot_Style"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelection_Mode"/>
+    <addaction name="menuZoom"/>
+    <addaction name="actionLegend"/>
+   </widget>
    <widget class="QMenu" name="menuEntry">
     <property name="title">
      <string>Entry</string>
@@ -164,6 +184,7 @@
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPattern"/>
+   <addaction name="menuView"/>
    <addaction name="menuDatabase"/>
    <addaction name="menuEntry"/>
   </widget>
@@ -547,6 +568,15 @@
   <action name="actionSmoothing">
    <property name="text">
     <string>Smoothing</string>
+   </property>
+  </action>
+  <action name="actionPlot_Style">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/change_color.png</normaloff>:/images/images/change_color.png</iconset>
+   </property>
+   <property name="text">
+    <string>Plot Style</string>
    </property>
   </action>
   <action name="actionSelection_Mode">

@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(xpdViewer(), &XpdViewWidget::deleteSelectedPeaksSignal, this, &MainWindow::deleteSelectedPeaks);
     connect(xpdViewer(), &XpdViewWidget::addDeletePointSignal, this, &MainWindow::addDeleteSelectedPoint);
     connect(xpdViewer(), &XpdViewWidget::fileDropped, this, &MainWindow::onActionFileDropped);
+    ui->actionLegend->setChecked(xpdViewer()->pSettings().legendVisible);
 
     createDialogs();
 
@@ -106,94 +107,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::createActionGroup()
-{
-    QActionGroup *zoomGroup = new QActionGroup(this);
-    zoomGroup->addAction(ui->actionSelection_Mode);
-    zoomGroup->addAction(ui->actionHorizontal_Zoom);
-    zoomGroup->addAction(ui->actionRectangle_Zoom);
-    zoomGroup->addAction(ui->actionPan);
-    zoomGroup->addAction(ui->actionAdd_Background_Point);
-    zoomGroup->addAction(ui->actionDelete_Background_Point);
-    zoomGroup->addAction(ui->actionAdd_Peak);
-    zoomGroup->addAction(ui->actionDelete_Peak);
-    connect(zoomGroup,&QActionGroup::triggered, this, &MainWindow::zoomGroupTriggered);
-}
-
-XpdViewWidget *MainWindow::xpdViewer() const
-{
-    return ui->xpdWidget;
-}
-
-void MainWindow::checkAction(MouseAction action)
-{
-    if (action == mAction) return;
-
-    switch (action) {
-    case NoZoom:
-        ui->actionSelection_Mode->setChecked(true);
-        break;
-    case RectangleZoom:
-        ui->actionRectangle_Zoom->setChecked(true);
-        break;
-    case HorizontalZoom:
-        ui->actionHorizontal_Zoom->setChecked(true);
-        break;
-    case Pan:
-        ui->actionPan->setChecked(true);
-        break;
-    default:
-        break;
-    }
-    setAction(action, false);
-}
-
-void MainWindow::saveAction()
-{
-    savedAction = mAction;
-}
-
-void MainWindow::restoreAction()
-{
-    checkAction(savedAction);
-}
-
-void MainWindow::setZoomAction()
-{
-    if (mAction != savedZoomAction)
-        checkAction(savedZoomAction);
-}
-
-void MainWindow::readAction()
-{
-    QSettings settings;
-    if (settings.contains(XPDVIEW_ACTION_KEY)) {
-        QString sAction = settings.value(XPDVIEW_ACTION_KEY).toString();
-        //        static int enumIdx = MainWindow::staticMetaObject.indexOfEnumerator("MouseAction");
-        //        MouseAction action = static_cast<MouseAction> (MainWindow::staticMetaObject.enumerator(enumIdx).keyToValue(sAction.toStdString().c_str()));
-        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
-        int action = metaEnum.keyToValue(sAction.toStdString().c_str());
-        checkAction(static_cast<MouseAction>(action));
-    } else {
-        //        ui->actionHorizontal_Zoom->setChecked(true);
-        //        setAction(HorizontalZoom, false);
-        checkAction(HorizontalZoom);
-    }
-}
-
-void MainWindow::setAction(const MouseAction &action, bool writeConfig)
-{
-    XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
-    xpdViewer()->setAction(xpdAction);
-
-    if (writeConfig) {
-        QSettings settings;
-        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
-        const char *key = metaEnum.valueToKey(action);
-        settings.setValue(XPDVIEW_ACTION_KEY,key);
-    }
 }
 
 void MainWindow::updatePeakListTable()
@@ -329,6 +242,11 @@ void MainWindow::restoreEnabledActions()
     }
 }
 
+XpdViewWidget *MainWindow::xpdViewer() const
+{
+    return ui->xpdWidget;
+}
+
 void MainWindow::createDialogs()
 {
     peakSearchDialog   = new PeakSearchDialog(this);
@@ -383,6 +301,14 @@ void MainWindow::actionsSetup()
     connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
     connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
     connect(ui->actionPeak_Search_Conditions, &QAction::triggered, this, &MainWindow::onActionPeakSearchConditionsTriggered);
+
+    //View menu
+    connect(ui->actionPlot_Style, &QAction::triggered, this, &MainWindow::onActionPlotStyleTriggered);
+    connect(ui->actionReset_Zoom, &QAction::triggered, this, &MainWindow::onActionResetZoomTriggered);
+    connect(ui->actionAutoscale, &QAction::triggered, this, &MainWindow::onActionAutoscaleTriggered);
+    connect(ui->actionLegend, &QAction::triggered, this, [=](bool state){
+        xpdViewer()->setLegendVisible(state);
+    });
 
     //Search menu
     connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
@@ -458,8 +384,7 @@ void MainWindow::writeSettings()
     QSettings settings;
     settings.setValue(QUALX_GEOMETRY_KEY, saveGeometry());
     settings.setValue(QUALX_STATE_KEY, saveState());
-    //settings.setValue(QUALX_SPLITSIZE_KEY1, ui->splitter1->saveState());
-    //settings.setValue(EXPO_SPLITSIZE_KEY2, ui->splitter2->saveState());
+    xpdViewer()->pSettings().write();
 }
 
 void MainWindow::readSettings()
@@ -495,27 +420,6 @@ void MainWindow::clearStatusMessage()
 QProgressBar *MainWindow::getStatusProgressBar() const
 {
     return statusProgressBar;
-}
-
-void MainWindow::zoomGroupTriggered(QAction *action)
-{
-    if (action == ui->actionSelection_Mode) {
-        if (mAction != NoZoom) setAction(NoZoom);
-    } else if (action == ui->actionHorizontal_Zoom) {
-        if (mAction != HorizontalZoom) setAction(HorizontalZoom);
-    } else if (action == ui->actionRectangle_Zoom) {
-        if (mAction != RectangleZoom) setAction(RectangleZoom);
-    } else if (action == ui->actionPan) {
-        if (mAction != Pan) setAction(Pan);
-    } else if (action == ui->actionAdd_Background_Point) {
-        if (mAction != AddBackgroundPoint) setAction(AddBackgroundPoint, false);
-    } else if (action == ui->actionDelete_Background_Point) {
-        if (mAction != DeleteBackgroundPoint) setAction(DeleteBackgroundPoint, false);
-    } else if (action == ui->actionAdd_Peak) {
-        if (mAction != AddPeak) setAction(AddPeak, false);
-    } else if (action == ui->actionDelete_Peak) {
-        if (mAction != DeletePeak) setAction(DeletePeak, false);
-    }
 }
 
 //
@@ -847,6 +751,127 @@ void MainWindow::onActionSavePeaksTriggered()
         QStringList list = exts.split(";;");
         int tipo = list.lastIndexOf(selectedFilter) + 1;
         SavePeaksC(fileName.toStdString().c_str(), fileName.length(),tipo);
+    }
+}
+
+//
+//  View Menu
+//
+
+void MainWindow::onActionPlotStyleTriggered()
+{
+    // plotStyleDialog->setOptions(xpdViewer());
+    // plotStyleDialog->show();
+}
+
+void MainWindow::onActionResetZoomTriggered()
+{
+    xpdViewer()->xAxis->rescale();
+    xpdViewer()->redrawPlot(true);
+}
+
+void MainWindow::onActionAutoscaleTriggered()
+{
+    xpdViewer()->applyAutoScale();
+}
+
+void MainWindow::createActionGroup()
+{
+    QActionGroup *zoomGroup = new QActionGroup(this);
+    zoomGroup->addAction(ui->actionSelection_Mode);
+    zoomGroup->addAction(ui->actionHorizontal_Zoom);
+    zoomGroup->addAction(ui->actionRectangle_Zoom);
+    zoomGroup->addAction(ui->actionPan);
+    zoomGroup->addAction(ui->actionAdd_Background_Point);
+    zoomGroup->addAction(ui->actionDelete_Background_Point);
+    zoomGroup->addAction(ui->actionAdd_Peak);
+    zoomGroup->addAction(ui->actionDelete_Peak);
+    connect(zoomGroup,&QActionGroup::triggered, this, &MainWindow::zoomGroupTriggered);
+}
+
+void MainWindow::zoomGroupTriggered(QAction *action)
+{
+    if (action == ui->actionSelection_Mode) {
+        if (mAction != NoZoom) setAction(NoZoom);
+    } else if (action == ui->actionHorizontal_Zoom) {
+        if (mAction != HorizontalZoom) setAction(HorizontalZoom);
+    } else if (action == ui->actionRectangle_Zoom) {
+        if (mAction != RectangleZoom) setAction(RectangleZoom);
+    } else if (action == ui->actionPan) {
+        if (mAction != Pan) setAction(Pan);
+    } else if (action == ui->actionAdd_Background_Point) {
+        if (mAction != AddBackgroundPoint) setAction(AddBackgroundPoint, false);
+    } else if (action == ui->actionDelete_Background_Point) {
+        if (mAction != DeleteBackgroundPoint) setAction(DeleteBackgroundPoint, false);
+    } else if (action == ui->actionAdd_Peak) {
+        if (mAction != AddPeak) setAction(AddPeak, false);
+    } else if (action == ui->actionDelete_Peak) {
+        if (mAction != DeletePeak) setAction(DeletePeak, false);
+    }
+}
+
+void MainWindow::checkAction(MouseAction action)
+{
+    if (action == mAction) return;
+
+    switch (action) {
+    case NoZoom:
+        ui->actionSelection_Mode->setChecked(true);
+        break;
+    case RectangleZoom:
+        ui->actionRectangle_Zoom->setChecked(true);
+        break;
+    case HorizontalZoom:
+        ui->actionHorizontal_Zoom->setChecked(true);
+        break;
+    case Pan:
+        ui->actionPan->setChecked(true);
+        break;
+    default:
+        break;
+    }
+    setAction(action, false);
+}
+
+void MainWindow::saveAction()
+{
+    savedAction = mAction;
+}
+
+void MainWindow::restoreAction()
+{
+    checkAction(savedAction);
+}
+
+void MainWindow::setZoomAction()
+{
+    if (mAction != savedZoomAction)
+        checkAction(savedZoomAction);
+}
+
+void MainWindow::readAction()
+{
+    QSettings settings;
+    if (settings.contains(XPDVIEW_ACTION_KEY)) {
+        QString sAction = settings.value(XPDVIEW_ACTION_KEY).toString();
+        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
+        int action = metaEnum.keyToValue(sAction.toStdString().c_str());
+        checkAction(static_cast<MouseAction>(action));
+    } else {
+        checkAction(HorizontalZoom);
+    }
+}
+
+void MainWindow::setAction(const MouseAction &action, bool writeConfig)
+{
+    XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
+    xpdViewer()->setAction(xpdAction);
+
+    if (writeConfig) {
+        QSettings settings;
+        QMetaEnum metaEnum = QMetaEnum::fromType<MouseAction>();
+        const char *key = metaEnum.valueToKey(action);
+        settings.setValue(XPDVIEW_ACTION_KEY,key);
     }
 }
 
