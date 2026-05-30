@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-//#include "dbmanager.h"
+#include "plotstyledialog.h"
 #include "peaksearchdialog.h"
 #include "backgrounddialog.h"
 #include "restraintsdialog.h"
@@ -90,6 +90,7 @@ public:
 private slots:
     void closeEvent(QCloseEvent *event);
     void zoomGroupTriggered(QAction *action);
+    void plotStyleClosed(QDialogButtonBox::StandardButton button);
 
     //File
     void openRecentFile();
@@ -128,6 +129,7 @@ private:
     void writeSettings();
     void readSettings();
     void readAction();
+    void plotStyleConfig();
     void deleteSelectedPeaks(const QVector<int> &selected);
     void addDeleteSelectedPoint(int action, double xp, double yp, int &ier);
 
@@ -142,6 +144,7 @@ private:
 
     //Dialog Windows
     PeakSearchDialog  *peakSearchDialog  = nullptr;
+    PlotStyleDialog *plotStyleDialog = nullptr;
     BackgroundDialog  *backgroundDialog  = nullptr;
     RestraintsDialog  *m_restraintsDialog = nullptr;
     SmoothingDialog *smoothingDialog = nullptr;

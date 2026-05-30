@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     createActionGroup();
+    createDialogs();
     actionsSetup();
     readAction();
 
@@ -88,8 +89,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(xpdViewer(), &XpdViewWidget::addDeletePointSignal, this, &MainWindow::addDeleteSelectedPoint);
     connect(xpdViewer(), &XpdViewWidget::fileDropped, this, &MainWindow::onActionFileDropped);
     ui->actionLegend->setChecked(xpdViewer()->pSettings().legendVisible);
-
-    createDialogs();
 
     //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
     // currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
@@ -107,6 +106,117 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::createDialogs()
+{
+    peakSearchDialog   = new PeakSearchDialog(this);
+    backgroundDialog   = new BackgroundDialog(this);
+    m_restraintsDialog = new RestraintsDialog(this);
+    smoothingDialog    = new SmoothingDialog(this);
+    plotStyleDialog    = new PlotStyleDialog(this);
+
+    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
+            m_restraintsDialog, &RestraintsDialog::setMergeEnabled);
+
+    connect(m_restraintsDialog, &RestraintsDialog::loadCardsRequested,
+            this, [this]() { onRestraintsSearch(false); });
+    connect(m_restraintsDialog, &RestraintsDialog::loadAndMergeCardsRequested,
+            this, [this]() { onRestraintsSearch(true); });
+    connect(m_restraintsDialog, &RestraintsDialog::searchWithRestraintsRequested,
+            this, &MainWindow::onRestraintsSearchMatch);
+
+    connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
+            this, &MainWindow::onCardSelected);
+
+    connect(ui->resultsWidget, &DbResultsWidget::cardDataSelected,
+            this, [this](const CardType &card) {
+                ui->peakCompareWidget->setSelectedCard(
+                    card, card.getId(), SearchOptionsDialog::savedDelta2theta());
+            });
+
+    connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
+            this, [this](const CardType &card) {
+                ui->quantWidget->addPhase(card);
+                ui->peakCompareWidget->addAcceptedPhase(card);
+                ui->reportWidget->updateQuantitative(
+                    ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
+                ui->dockWidgetQuant->show();
+                ui->dockWidgetQuant->raise();
+                if (SearchOptionsDialog::savedResidualSearching())
+                    performResidualSearch(card);
+            });
+}
+
+void MainWindow::actionsSetup()
+{
+    //File menu
+    connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
+    connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
+
+    //Pattern menu
+    connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
+    connect(ui->actionExport_Background, &QAction::triggered, this, &MainWindow::onActionBackgroundExportTriggered);
+    connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
+    connect(ui->actionSmoothing, &QAction::triggered, this, &MainWindow::onActionSmoothingTriggered);
+    connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
+    connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
+    connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
+    connect(ui->actionPeak_Search_Conditions, &QAction::triggered, this, &MainWindow::onActionPeakSearchConditionsTriggered);
+
+    //View menu
+    connect(ui->actionPlot_Style, &QAction::triggered, this, &MainWindow::onActionPlotStyleTriggered);
+    connect(ui->actionReset_Zoom, &QAction::triggered, this, &MainWindow::onActionResetZoomTriggered);
+    connect(ui->actionAutoscale, &QAction::triggered, this, &MainWindow::onActionAutoscaleTriggered);
+    connect(ui->actionLegend, &QAction::triggered, this, [=](bool state){
+        xpdViewer()->setLegendVisible(state);
+    });
+    connect(plotStyleDialog, &PlotStyleDialog::dialogClosed, this, &MainWindow::plotStyleClosed);
+    connect(plotStyleDialog, &PlotStyleDialog::applyOffsetRequested, this, [this](double offset){ xpdViewer()->applyOffset(offset); });
+    connect(plotStyleDialog, &PlotStyleDialog::redrawRequested, this, [this](){ xpdViewer()->redrawPlot(); });
+
+    //Search menu
+    connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
+    connect(ui->actionSearch_Match_Options, &QAction::triggered, this, &MainWindow::onActionSearchMatchOptionsTriggered);
+    connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
+    connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
+    connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
+    //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
+    connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
+    connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
+
+    //Entry menu
+    ui->actionAccept_Selected_Entries->setEnabled(false);
+    ui->actionDelete->setEnabled(false);
+    ui->actionChange_Color->setEnabled(false);
+
+    auto updateEntryActions = [this]() {
+        const bool on = ui->resultsWidget->hasResults() && ui->resultsWidget->hasSelection();
+        ui->actionAccept_Selected_Entries->setEnabled(on);
+        ui->actionDelete->setEnabled(on);
+        ui->actionChange_Color->setEnabled(on);
+    };
+    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
+            this, [updateEntryActions](bool) { updateEntryActions(); });
+    connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
+            this, [updateEntryActions](bool) { updateEntryActions(); });
+
+    connect(ui->actionAccept_Selected_Entries, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->acceptSelectedCards();
+    });
+    connect(ui->actionChange_Color, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->changeSelectedCardColor();
+    });
+    connect(ui->resultsWidget, &DbResultsWidget::cardColorChanged,
+            this, [this](const QString &id) {
+                onCardSelected(id);
+                if (ui->dockWidgetCompare->isVisible())
+                    ui->peakCompareWidget->refresh();
+            });
+    connect(ui->actionDelete, &QAction::triggered, this, [this]() {
+        ui->resultsWidget->deleteSelectedCards();
+        setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
+    });
 }
 
 void MainWindow::updatePeakListTable()
@@ -245,113 +355,6 @@ void MainWindow::restoreEnabledActions()
 XpdViewWidget *MainWindow::xpdViewer() const
 {
     return ui->xpdWidget;
-}
-
-void MainWindow::createDialogs()
-{
-    peakSearchDialog   = new PeakSearchDialog(this);
-    backgroundDialog   = new BackgroundDialog(this);
-    m_restraintsDialog = new RestraintsDialog(this);
-    smoothingDialog    = new SmoothingDialog(this);
-
-    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
-            m_restraintsDialog, &RestraintsDialog::setMergeEnabled);
-
-    connect(m_restraintsDialog, &RestraintsDialog::loadCardsRequested,
-            this, [this]() { onRestraintsSearch(false); });
-    connect(m_restraintsDialog, &RestraintsDialog::loadAndMergeCardsRequested,
-            this, [this]() { onRestraintsSearch(true); });
-    connect(m_restraintsDialog, &RestraintsDialog::searchWithRestraintsRequested,
-            this, &MainWindow::onRestraintsSearchMatch);
-
-    connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
-            this, &MainWindow::onCardSelected);
-
-    connect(ui->resultsWidget, &DbResultsWidget::cardDataSelected,
-            this, [this](const CardType &card) {
-        ui->peakCompareWidget->setSelectedCard(
-            card, card.getId(), SearchOptionsDialog::savedDelta2theta());
-    });
-
-    connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
-            this, [this](const CardType &card) {
-        ui->quantWidget->addPhase(card);
-        ui->peakCompareWidget->addAcceptedPhase(card);
-        ui->reportWidget->updateQuantitative(
-            ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
-        ui->dockWidgetQuant->show();
-        ui->dockWidgetQuant->raise();
-        if (SearchOptionsDialog::savedResidualSearching())
-            performResidualSearch(card);
-    });
-}
-
-void MainWindow::actionsSetup()
-{
-    //File menu
-    connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
-    connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
-
-    //Pattern menu
-    connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
-    connect(ui->actionExport_Background, &QAction::triggered, this, &MainWindow::onActionBackgroundExportTriggered);
-    connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
-    connect(ui->actionSmoothing, &QAction::triggered, this, &MainWindow::onActionSmoothingTriggered);
-    connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
-    connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
-    connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
-    connect(ui->actionPeak_Search_Conditions, &QAction::triggered, this, &MainWindow::onActionPeakSearchConditionsTriggered);
-
-    //View menu
-    connect(ui->actionPlot_Style, &QAction::triggered, this, &MainWindow::onActionPlotStyleTriggered);
-    connect(ui->actionReset_Zoom, &QAction::triggered, this, &MainWindow::onActionResetZoomTriggered);
-    connect(ui->actionAutoscale, &QAction::triggered, this, &MainWindow::onActionAutoscaleTriggered);
-    connect(ui->actionLegend, &QAction::triggered, this, [=](bool state){
-        xpdViewer()->setLegendVisible(state);
-    });
-
-    //Search menu
-    connect(ui->actionSearch_Match, &QAction::triggered, this, &MainWindow::onActionSearchMatchTriggered);
-    connect(ui->actionSearch_Match_Options, &QAction::triggered, this, &MainWindow::onActionSearchMatchOptionsTriggered);
-    connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
-    connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
-    connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
-    //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
-    connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
-    connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
-
-    //Entry menu
-    ui->actionAccept_Selected_Entries->setEnabled(false);
-    ui->actionDelete->setEnabled(false);
-    ui->actionChange_Color->setEnabled(false);
-
-    auto updateEntryActions = [this]() {
-        const bool on = ui->resultsWidget->hasResults() && ui->resultsWidget->hasSelection();
-        ui->actionAccept_Selected_Entries->setEnabled(on);
-        ui->actionDelete->setEnabled(on);
-        ui->actionChange_Color->setEnabled(on);
-    };
-    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
-            this, [updateEntryActions](bool) { updateEntryActions(); });
-    connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
-            this, [updateEntryActions](bool) { updateEntryActions(); });
-
-    connect(ui->actionAccept_Selected_Entries, &QAction::triggered, this, [this]() {
-        ui->resultsWidget->acceptSelectedCards();
-    });
-    connect(ui->actionChange_Color, &QAction::triggered, this, [this]() {
-        ui->resultsWidget->changeSelectedCardColor();
-    });
-    connect(ui->resultsWidget, &DbResultsWidget::cardColorChanged,
-            this, [this](const QString &id) {
-        onCardSelected(id);
-        if (ui->dockWidgetCompare->isVisible())
-            ui->peakCompareWidget->refresh();
-    });
-    connect(ui->actionDelete, &QAction::triggered, this, [this]() {
-        ui->resultsWidget->deleteSelectedCards();
-        setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
-    });
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -760,8 +763,8 @@ void MainWindow::onActionSavePeaksTriggered()
 
 void MainWindow::onActionPlotStyleTriggered()
 {
-    // plotStyleDialog->setOptions(xpdViewer());
-    // plotStyleDialog->show();
+    plotStyleDialog->setOptions(xpdViewer());
+    plotStyleDialog->show();
 }
 
 void MainWindow::onActionResetZoomTriggered()
@@ -873,6 +876,70 @@ void MainWindow::setAction(const MouseAction &action, bool writeConfig)
         const char *key = metaEnum.valueToKey(action);
         settings.setValue(XPDVIEW_ACTION_KEY,key);
     }
+}
+
+void MainWindow::plotStyleClosed(QDialogButtonBox::StandardButton button)
+{
+    if (button == QDialogButtonBox::Apply) {
+        plotStyleDialog->apply(xpdViewer());
+    } else if (button == QDialogButtonBox::Ok) {
+        if (plotStyleDialog->anyChangeToApply()) {
+            plotStyleDialog->apply(xpdViewer());
+        }
+
+        if (plotStyleDialog->anyChangeApplied()) {
+            plotStyleConfig();
+        }
+
+    } else if (button == QDialogButtonBox::Cancel) {
+        plotStyleDialog->cancel(xpdViewer());
+    } else if (button == QDialogButtonBox::RestoreDefaults) {
+        for (int i = 0; i < plotStyleDialog->obsPen.count(); i++) {
+            plotStyleDialog->obsPen[i] = xpdViewer()->obs.at(i).getDefaultPen(i);
+            plotStyleDialog->obsScatter[i] = xpdViewer()->obs.at(i).getDefaultScatter(i);
+            plotStyleDialog->obsVisible[i] = true;
+        }
+        QPen backPen = xpdViewer()->back.getDefaultPen();
+        QCPScatterStyle backScatter = xpdViewer()->bpoints.getDefaultScatter();
+        QPen calcPen = xpdViewer()->calc.getDefaultPen();
+        QPen diffPen = xpdViewer()->diff.getDefaultPen();
+        QPen cDiffPen = xpdViewer()->cdiff.getDefaultPen();
+        QPen peaksPen = xpdViewer()->peaks.getDefaultPen();
+        for (int i = 0; i < plotStyleDialog->reflPen.count(); i++) {
+            plotStyleDialog->reflPen[i] = xpdViewer()->refl.at(i).getDefaultPen(i);
+            plotStyleDialog->reflVisible[i] = true;
+        }
+        PlotSettings defaults;
+        defaults.restoreDefaults();
+        plotStyleDialog->setWidgets(false, backPen, backScatter, calcPen, diffPen, cDiffPen, peaksPen, defaults,
+                                    xpdViewer()->back.isVisible(), xpdViewer()->bpoints.isVisible(), xpdViewer()->calc.isVisible(),
+                                    xpdViewer()->diff.isVisible(), xpdViewer()->cdiff.isVisible(), xpdViewer()->peaks.isVisible());
+    }
+}
+
+void MainWindow::plotStyleConfig()
+{
+    QSettings settings;
+
+    for (int i = 0; i < plotStyleDialog->obsPen.count(); i++ ) {
+        settings.setValue(xpdViewer()->obs[i].getKeyString("pen", i),xpdViewer()->obs.at(i).getPen());
+        settings.setValue(xpdViewer()->obs[i].getKeyString("scatterPen", i), xpdViewer()->obs.at(i).getScatter().pen());
+        settings.setValue(xpdViewer()->obs[i].getKeyString("scatterStyle", i), xpdViewer()->obs.at(i).getScatter().shape());
+    }
+
+    settings.setValue(xpdViewer()->back.getKeyString("pen", -1),xpdViewer()->back.getPen());
+    settings.setValue(xpdViewer()->bpoints.getKeyString("scatterPen", -1),xpdViewer()->bpoints.getScatter().pen());
+    settings.setValue(xpdViewer()->bpoints.getKeyString("scatterStyle", -1),xpdViewer()->bpoints.getScatter().shape());
+
+    settings.setValue(xpdViewer()->calc.getKeyString("pen", -1),xpdViewer()->calc.getPen());
+    settings.setValue(xpdViewer()->diff.getKeyString("pen", -1),xpdViewer()->diff.getPen());
+    settings.setValue(xpdViewer()->cdiff.getKeyString("pen", -1),xpdViewer()->cdiff.getPen());
+    settings.setValue(xpdViewer()->peaks.getKeyString("pen", -1),xpdViewer()->peaks.getPen());
+
+    for (int i = 0; i < plotStyleDialog->reflPen.count(); i++) {
+        settings.setValue(xpdViewer()->refl[i].getKeyString("pen", i),xpdViewer()->refl.at(i).getPen());
+    }
+    xpdViewer()->pSettings().write();
 }
 
 //

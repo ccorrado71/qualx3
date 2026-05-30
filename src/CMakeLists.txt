@@ -21,8 +21,13 @@ set(PROJECT_SOURCES
     cifdbpopulator.h
     commandline.cpp
     commandline.h
+    createdatabasedialog.h
+    createdatabasedialog.cpp
+    createdatabasedialog.ui
     customplotzoom.cpp
     customplotzoom.h
+    databasebuilder.h
+    databasebuilder.cpp
     dataset.h
     dbmanager.h
     dbmanager.cpp
@@ -54,6 +59,11 @@ set(PROJECT_SOURCES
     libmath.h
     libmatrix.h
     libvector.h
+    linestylescombobox.cpp
+    linestylescombobox.h
+    linestylewidget.cpp
+    linestylewidget.h
+    linestylewidget.ui
     locate.cpp
     main.cpp
     mainwindow.h
@@ -62,11 +72,11 @@ set(PROJECT_SOURCES
     managedatabasesdialog.h
     managedatabasesdialog.cpp
     managedatabasesdialog.ui
-    createdatabasedialog.h
-    createdatabasedialog.cpp
-    createdatabasedialog.ui
-    databasebuilder.h
-    databasebuilder.cpp
+    markerstylescombobox.cpp
+    markerstylescombobox.h
+    markerstylewidget.cpp
+    markerstylewidget.h
+    markerstylewidget.ui
     nr.h
     paginationmodel.cpp
     paginationmodel.h
@@ -89,6 +99,9 @@ set(PROJECT_SOURCES
     periodictablewidget.h
     plotsettings.h
     plotsettings.cpp
+    plotstyledialog.cpp
+    plotstyledialog.h
+    plotstyledialog.ui
     progkeysettings.h
     qcustomplot.h
     qcustomplot.cpp
