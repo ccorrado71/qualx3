@@ -86,6 +86,7 @@ void XpdViewWidget::setGraphicArea()
 {
     disableTracer();
     clearGraphs();
+    m_cardPeakGraphs.clear(); // pointers invalidated by clearGraphs()
     clearPlottables();
     clearItems();
 
@@ -390,6 +391,8 @@ void XpdViewWidget::drawPlot()
     } else {
         if (refl.size() > 0) yAxis->setRange(yLowerRange,yUpperRange);
     }
+
+    drawCardPeaks();
 
     setDraggingLegend(true);
     setLegendPosition(1.0,0.0);
@@ -1378,4 +1381,36 @@ void XpdViewWidget::connectAddDeletePoints()
 void XpdViewWidget::connectSelectionChanged()
 {
     connect(this, &CustomPlotZoom::selectionChangedByUser, this, &XpdViewWidget::selectionChanged);
+}
+
+void XpdViewWidget::setCardPeaks(const QVector<CardPeakData> &peaks)
+{
+    for (QCPGraph *g : m_cardPeakGraphs)
+        removeGraph(g);
+    m_cardPeakGraphs.clear();
+
+    m_cardPeaks = peaks;
+    drawCardPeaks();
+    replot();
+}
+
+void XpdViewWidget::drawCardPeaks()
+{
+    if (m_cardPeaks.isEmpty()) return;
+
+    const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
+
+    for (const CardPeakData &cpd : m_cardPeaks) {
+        const QVector<double> &xData = useDValue ? cpd.d : cpd.tth;
+        if (xData.isEmpty() || cpd.intensity.size() != xData.size()) continue;
+
+        QCPGraph *g = addGraph();
+        plotWave.append(cpd.wave);   // keeps plotWave in sync with graph count
+        g->setName(cpd.id);
+        g->setPen(QPen(cpd.color, 1.5));
+        g->setLineStyle(QCPGraph::lsImpulse);
+        g->setData(xData, cpd.intensity);
+        g->setSelectable(QCP::stNone);
+        m_cardPeakGraphs.append(g);
+    }
 }

@@ -54,6 +54,13 @@ void QuantWidget::addPhase(const CardType &card)
     updateQuant();
 }
 
+void QuantWidget::clearPhases()
+{
+    m_phases.clear();
+    m_quant.clear();
+    m_model->setRowCount(0);
+}
+
 void QuantWidget::updateQuant()
 {
     const int n = m_phases.size();

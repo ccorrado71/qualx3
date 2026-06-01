@@ -118,6 +118,7 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     connect(ui->table->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, [this]() {
         emit entrySelectionChanged(hasSelection());
+        emit selectedCardsChanged(selectedCards());
     });
 
     updateButtons();
@@ -235,6 +236,19 @@ void DbResultsWidget::addCard(const CardType &card)
 
     emit hasResultsChanged(true);
     selectCard(card.getId());
+}
+
+QVector<CardType> DbResultsWidget::selectedCards() const
+{
+    const auto selected = ui->table->selectionModel()->selectedRows();
+    QVector<CardType> result;
+    result.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        const QModelIndex srcIdx = filterModel->mapToSource(pageModel->mapToSource(idx));
+        if (auto *item = sourceModel->item(srcIdx.row(), 0))
+            result.append(item->data(Qt::UserRole).value<CardType>());
+    }
+    return result;
 }
 
 void DbResultsWidget::selectCard(const QString &id)

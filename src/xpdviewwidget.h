@@ -16,6 +16,16 @@ typedef struct {
     float wave;
 } reflectionSet;
 
+struct CardPeakData {
+    QString id;
+    QColor  color;
+    QVector<double> tth;
+    QVector<double> d;
+    QVector<double> intensity;        // 0-100, or absolute counts if intensityAbsolute=true
+    bool            intensityAbsolute = false;
+    double          wave = 0.0;
+};
+
 class XpdViewWidget : public CustomPlotZoom
 {
     Q_OBJECT
@@ -58,6 +68,7 @@ public:
     void drawSystematicAbsences();
     void clearSystematicAbsences();
     void setLegendVisible(bool visible);
+    void setCardPeaks(const QVector<CardPeakData> &peaks);
     void applyOffset(double yOffset = 0);
     void applyAutoScale();
     void enableRescalePlot(bool value);
@@ -131,6 +142,10 @@ private:
     int findRefLocation(const QVector<refInfo> &ref, double xval);
     QLabel *labelWidget1, *labelWidget2, *labelWidget3;
     QScrollBar *horizontalScrollBar;
+
+    QVector<CardPeakData> m_cardPeaks;
+    QVector<QCPGraph *>   m_cardPeakGraphs;
+    void drawCardPeaks();
 };
 
 #endif // XPDVIEWWIDGET_H

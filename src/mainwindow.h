@@ -95,6 +95,9 @@ private slots:
     //File
     void openRecentFile();
     void onActionImportDiffractionPatternTriggered();
+    void onActionLoadProjectTriggered();
+    void onActionSaveProjectTriggered();
+    void onActionSaveProjectAsTriggered();
     void onActionFileDropped(const QStringList &fileList);
 
     //Pattern
@@ -151,10 +154,13 @@ private:
 
     //Files
     QString currentFile;
+    QString currentProjectFile;
+    bool projectFileSaved;
+    void clearProjectFile();
     static QString pathDataFiles;
     enum { maxFileNr = 10 };
     QList<QAction*> recentFileActionList;
-    //void saveFile(const QString &fileName);
+    void saveProject(const QString &fileName);
     void createRecentActions();
     void updateRecentFileActions();
     void setRecentFiles(const QString &fullFileName, const QString &fileType);
@@ -167,5 +173,6 @@ private:
     void applyDialogRestraints(DbQueryBuilder &builder);
     void performResidualSearch(const CardType &acceptedCard);
     void loadDiffractionPatterns(QStringList files);
+    void loadProject(QString fileName);
 };
 #endif // MAINWINDOW_H

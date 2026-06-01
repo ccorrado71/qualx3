@@ -14,8 +14,13 @@
 #include "dbresultswidget.h"
 
 #include <QApplication>
+#include <QDateTime>
 #include <QDebug>
+#include <QFile>
 #include <QInputDialog>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QMessageBox>
 
 #include <algorithm>
@@ -44,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , mAction(NoAction)
     , savedZoomAction(mAction)
+    , projectFileSaved(false)
 {
     ui->setupUi(this);
     ui->resultsWidget->setEntryToolBar(ui->toolBarEntry);
@@ -152,6 +158,9 @@ void MainWindow::actionsSetup()
 {
     //File menu
     connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
+    connect(ui->actionOpen_Project, &QAction::triggered, this, &MainWindow::onActionLoadProjectTriggered);
+    connect(ui->actionSave_Project, &QAction::triggered, this, &MainWindow::onActionSaveProjectTriggered);
+    connect(ui->actionSave_Project_As, &QAction::triggered, this, &MainWindow::onActionSaveProjectAsTriggered);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
 
     //Pattern menu
@@ -216,6 +225,26 @@ void MainWindow::actionsSetup()
     connect(ui->actionDelete, &QAction::triggered, this, [this]() {
         ui->resultsWidget->deleteSelectedCards();
         setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
+    });
+
+    connect(ui->resultsWidget, &DbResultsWidget::selectedCardsChanged,
+            this, [this](const QVector<CardType> &cards) {
+        QVector<CardPeakData> peaks;
+        peaks.reserve(cards.size());
+        for (const CardType &card : cards) {
+            if (card.getTth().isEmpty()) continue;
+            CardPeakData cpd;
+            const QVector<double> &pw = xpdViewer()->plotWave;
+            cpd.id        = card.getId();
+            cpd.color     = cardColor(card.getId());
+            cpd.tth       = card.getTth();
+            cpd.d         = card.getD();
+            cpd.intensityAbsolute = (card.getScale() > 0.0);
+            cpd.intensity = card.getScaledIntensity();
+            cpd.wave      = pw.isEmpty() ? 1.54056 : pw.first();
+            peaks.append(cpd);
+        }
+        xpdViewer()->setCardPeaks(peaks);
     });
 }
 
@@ -534,6 +563,239 @@ void MainWindow::onActionImportDiffractionPatternTriggered()
                                                       exts, &selectedFilter);
 
     loadDiffractionPatterns(files);
+}
+
+void MainWindow::loadProject(QString fileName)
+{
+    QSettings settings;
+    if (fileName.isEmpty()) return;
+
+    fileName = QDir::toNativeSeparators(fileName);
+    settings.setValue(DEFAULT_DIR_KEY, QFileInfo(fileName).absolutePath());
+
+    // Helper: QJsonArray → QVector<double>
+    auto toVec = [](const QJsonArray &a) {
+        QVector<double> v;
+        v.reserve(a.size());
+        for (const QJsonValue &val : a) v.append(val.toDouble());
+        return v;
+    };
+
+    // Helper: build CardType from a JSON object
+    auto cardFromJson = [&](const QJsonObject &o, double wave) {
+        CardType c;
+        c.setId(o["id"].toString());
+        c.setChemicalName(o["name"].toString());
+        c.setMineralName(o["mineral"].toString());
+        c.setChemicalFormula(o["formula"].toString());
+        c.setQuality(o["quality"].toString());
+        c.setRIR(o["rir"].toString());
+        c.setSpaceGroup(o["spg"].toString());
+        c.setD(toVec(o["d"].toArray()), wave);
+        c.setIntensity(toVec(o["intensity"].toArray()));
+        if (o["fom_calculated"].toBool()) {
+            c.setFom(o["fom"].toDouble());
+            c.setFomPeakPos(o["fom_peakpos"].toDouble());
+            c.setFomIntensity(o["fom_intensity"].toDouble());
+            c.setScale(o["scale"].toDouble());
+        }
+        return c;
+    };
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Open Project"),
+                             tr("Cannot read file:\n%1").arg(fileName));
+        return;
+    }
+    QJsonParseError parseErr;
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &parseErr);
+    if (doc.isNull()) {
+        QMessageBox::warning(this, tr("Open Project"),
+                             tr("Invalid project file:\n%1").arg(parseErr.errorString()));
+        return;
+    }
+    const QJsonObject root = doc.object();
+
+    // ── Experimental peaks ───────────────────────────────────────────
+    double wave = 1.54056;
+    if (root.contains("peaks")) {
+        const QJsonObject pk = root["peaks"].toObject();
+        ExperimentalPeaks &ep = AppState::peaks();
+        ep.wave          = pk["wave"].toDouble(1.54056);
+        ep.tth           = toVec(pk["tth"].toArray());
+        ep.d             = toVec(pk["d"].toArray());
+        ep.deltaD        = toVec(pk["delta_d"].toArray());
+        ep.intensityOrig = toVec(pk["intensity"].toArray());
+        ep.intensity     = ep.intensityOrig;
+        ep.fwhm          = toVec(pk["fwhm"].toArray());
+        ep.valid         = !ep.tth.isEmpty();
+        wave             = ep.wave;
+        updatePeakListTable();
+        ui->peakCompareWidget->setExperimentalPeaks(ep);
+    }
+
+    // ── Search results ───────────────────────────────────────────────
+    if (root.contains("results")) {
+        QVector<CardType> cards;
+        for (const QJsonValue &val : root["results"].toArray())
+            cards.append(cardFromJson(val.toObject(), wave));
+        ui->resultsWidget->setResults(cards);
+        ui->reportWidget->updateReport(AppState::peaks(), cards);
+        if (ui->resultsWidget->hasResults()) {
+            ui->resultsWidget->selectFirstCard();
+            ui->dockWidgetCompare->show();
+            ui->dockWidgetCompare->raise();
+        }
+    }
+
+    // ── Accepted phases ──────────────────────────────────────────────
+    if (root.contains("phases")) {
+        ui->quantWidget->clearPhases();
+        ui->peakCompareWidget->clearAcceptedPhases();
+        for (const QJsonValue &val : root["phases"].toArray()) {
+            const CardType card = cardFromJson(val.toObject(), wave);
+            ui->quantWidget->addPhase(card);
+            ui->peakCompareWidget->addAcceptedPhase(card);
+        }
+        ui->reportWidget->updateQuantitative(
+            ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
+        ui->dockWidgetQuant->show();
+        ui->dockWidgetQuant->raise();
+    }
+
+    setCurrentFile(fileName, QVariant::fromValue(RecentFileType::Project).toString());
+    setStatusMessage(tr("Project loaded: %1").arg(QFileInfo(fileName).fileName()));
+}
+
+void MainWindow::onActionLoadProjectTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = "Qualx Project (*.qxp)";
+    QString exts = "Qualx Project (*.qxp)";
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Project"), settings.value(DEFAULT_DIR_KEY).toString(),
+                                                    exts, &selectedFilter);
+    loadProject(fileName);
+}
+
+void MainWindow::saveProject(const QString &fileName)
+{
+    // Helper: QVector<double> → QJsonArray
+    auto toJsonArray = [](const QVector<double> &v) {
+        QJsonArray a;
+        for (double x : v) a.append(x);
+        return a;
+    };
+
+    QJsonObject root;
+    root["version"] = 1;
+    root["created"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+    // ── Experimental peaks ──────────────────────────────────────────
+    const ExperimentalPeaks &ep = AppState::peaks();
+    if (ep.valid && !ep.tth.isEmpty()) {
+        QJsonObject pk;
+        pk["wave"]      = ep.wave;
+        pk["tth"]       = toJsonArray(ep.tth);
+        pk["d"]         = toJsonArray(ep.d);
+        pk["delta_d"]   = toJsonArray(ep.deltaD);
+        pk["intensity"] = toJsonArray(ep.intensityOrig);
+        pk["fwhm"]      = toJsonArray(ep.fwhm);
+        root["peaks"] = pk;
+    }
+
+    // ── Search results ───────────────────────────────────────────────
+    const QVector<CardType> cards = ui->resultsWidget->allCards();
+    if (!cards.isEmpty()) {
+        QJsonArray arr;
+        for (const CardType &c : cards) {
+            QJsonObject o;
+            o["id"]             = c.getId();
+            o["name"]           = c.getChemicalName();
+            o["mineral"]        = c.getMineralName();
+            o["formula"]        = c.getChemicalFormula();
+            o["quality"]        = c.getQuality();
+            o["rir"]            = c.getRIR();
+            o["spg"]            = c.getSpaceGroup();
+            o["fom_calculated"] = c.isFomCalculated();
+            o["fom"]            = c.getFom();
+            o["fom_peakpos"]    = c.getFomPeakPos();
+            o["fom_intensity"]  = c.getFomIntensity();
+            o["scale"]          = c.getScale();
+            o["d"]              = toJsonArray(c.getD());
+            o["intensity"]      = toJsonArray(c.getIntensity());
+            arr.append(o);
+        }
+        root["results"] = arr;
+    }
+
+    // ── Accepted phases ──────────────────────────────────────────────
+    const QVector<CardType> &phases = ui->quantWidget->phases();
+    const QVector<double>   &quant  = ui->quantWidget->quantPercentages();
+    if (!phases.isEmpty()) {
+        QJsonArray arr;
+        for (int i = 0; i < phases.size(); ++i) {
+            QJsonObject o;
+            o["id"]             = phases[i].getId();
+            o["name"]           = phases[i].getChemicalName();
+            o["mineral"]        = phases[i].getMineralName();
+            o["formula"]        = phases[i].getChemicalFormula();
+            o["quality"]        = phases[i].getQuality();
+            o["rir"]            = phases[i].getRIR();
+            o["spg"]            = phases[i].getSpaceGroup();
+            o["fom_calculated"] = phases[i].isFomCalculated();
+            o["fom"]            = phases[i].getFom();
+            o["fom_peakpos"]    = phases[i].getFomPeakPos();
+            o["fom_intensity"]  = phases[i].getFomIntensity();
+            o["scale"]          = phases[i].getScale();
+            o["d"]              = toJsonArray(phases[i].getD());
+            o["intensity"]      = toJsonArray(phases[i].getIntensity());
+            o["weight_percent"] = (i < quant.size()) ? quant[i] : 0.0;
+            arr.append(o);
+        }
+        root["phases"] = arr;
+    }
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Save Project"),
+                             tr("Cannot write file:\n%1").arg(fileName));
+        return;
+    }
+    file.write(QJsonDocument(root).toJson());
+    projectFileSaved = true;
+}
+
+void MainWindow::onActionSaveProjectTriggered()
+{
+    if (currentProjectFile.isEmpty())
+        onActionSaveProjectAsTriggered();
+    else
+        saveProject(currentProjectFile);
+}
+
+void MainWindow::onActionSaveProjectAsTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = "expo";
+    QString exts = "Qualx Project (*.qxp)";
+    QString fileName = SaveDialog::run(this,tr("Save Project As"),
+                                       settings.value(DEFAULT_DIR_KEY).toString(),
+                                       QFileInfo(currentFile).baseName(),exts,
+                                       "qxp",selectedFilter);
+    if (!fileName.isEmpty()) {
+        fileName = QDir::toNativeSeparators(fileName);
+        currentProjectFile = fileName;
+        saveProject(fileName);
+    }
+}
+
+void MainWindow::clearProjectFile()
+{
+    projectFileSaved = false;
+    currentProjectFile.clear();
 }
 
 void MainWindow::createRecentActions()
@@ -982,6 +1244,8 @@ static int loadExperimentalPeaks()
 
 void MainWindow::onActionSearchMatchTriggered()
 {
+    apply_background_subtraction();
+
     int npeaks = peak_number();
     if (npeaks == 0) {
         run_peaksearchwin();

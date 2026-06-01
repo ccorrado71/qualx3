@@ -38,6 +38,7 @@ public:
     void   setScale(double v);
 
     QVector<double> getIntensity() const;
+    QVector<double> getScaledIntensity() const;
     void setIntensity(const QVector<double> &newIntensity);
 
 private:

@@ -125,6 +125,16 @@ QVector<double> CardType::getIntensity() const
     return intensity;
 }
 
+QVector<double> CardType::getScaledIntensity() const
+{
+    if (scale <= 0.0)
+        return intensity;
+    QVector<double> result(intensity.size());
+    for (int i = 0; i < intensity.size(); ++i)
+        result[i] = intensity[i] * scale;
+    return result;
+}
+
 void CardType::setIntensity(const QVector<double> &newIntensity)
 {
     intensity = newIntensity;

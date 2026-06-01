@@ -111,6 +111,7 @@ END MODULE datamod
    USE peak_mod
    USE variables, only: dataset
    USE arrayutil
+   USE view, only: vedinew
    implicit none
    logical, intent(in), optional   :: gui
    real, dimension(:), allocatable :: yc
@@ -127,6 +128,8 @@ END MODULE datamod
    if (.not.dataset(1)%has_back()) then
        call dataset(1)%make_background()
    endif
+
+   if (guivar) call update_peak_graph()
    allocate(yc(dataset(1)%npoints()))
    yc(:) = dataset(1)%y(:) - dataset(1)%yb(:)
 !

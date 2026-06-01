@@ -48,6 +48,10 @@ signals:
     void phaseAccepted(const CardType &card);
     void cardColorChanged(const QString &id);
     void entrySelectionChanged(bool hasSelection);
+    void selectedCardsChanged(const QVector<CardType> &cards);
+
+private:
+    QVector<CardType> selectedCards() const;
 
 private slots:
     void currentPageChanged(int page);

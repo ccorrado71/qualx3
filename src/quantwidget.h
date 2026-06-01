@@ -23,6 +23,7 @@ public slots:
     void addPhase(const CardType &card);
 
 public:
+    void clearPhases();
     const QVector<CardType>  &phases()            const { return m_phases; }
     const QVector<double>    &quantPercentages()  const { return m_quant;  }
 
