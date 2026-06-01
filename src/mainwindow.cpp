@@ -42,6 +42,16 @@ extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *
                            double w2thetad, double w_intensity, double w_phases, double delta2theta,
                            double *fompeakpos_out, double *fomintensity_out, double *scale_out,
                            double exp_tth[], double exp_intensity[], int exp_size);
+extern "C" void get_diffraction_data_size(int *ndata, int *nyb, int *nwave);
+extern "C" void get_diffraction_data(float x[], float y[], float yb[], int nyb,
+                                     bool *has_back, bool *back_subtracted,
+                                     float wave[], float ratio[], int nwave,
+                                     int *radtype);
+extern "C" void set_diffraction_data(float x[], float y[], int ndata, float yb[], int nyb,
+                                     bool has_back, bool back_subtracted,
+                                     float wave[], float ratio[], int nwave,
+                                     int radtype,
+                                     const char *filename, int filename_len);
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -617,6 +627,42 @@ void MainWindow::loadProject(QString fileName)
     }
     const QJsonObject root = doc.object();
 
+    // ── Diffraction data (x, y, background, wavelengths) ────────────
+    if (root.contains("diffraction_data")) {
+        const QJsonObject dd = root["diffraction_data"].toObject();
+
+        auto jsonToFloatVec = [](const QJsonArray &a) {
+            QVector<float> v(a.size());
+            for (int i = 0; i < a.size(); ++i) v[i] = static_cast<float>(a[i].toDouble());
+            return v;
+        };
+
+        QVector<float> xv    = jsonToFloatVec(dd["x"].toArray());
+        QVector<float> yv    = jsonToFloatVec(dd["y"].toArray());
+        const int ndata = xv.size();
+        if (ndata > 0) {
+            QVector<float> ybv    = dd.contains("yb")    ? jsonToFloatVec(dd["yb"].toArray())    : QVector<float>();
+            QVector<float> wavev  = dd.contains("wave")  ? jsonToFloatVec(dd["wave"].toArray())  : QVector<float>();
+            QVector<float> ratiov = dd.contains("ratio") ? jsonToFloatVec(dd["ratio"].toArray()) : QVector<float>();
+            const bool has_back        = dd["has_back"].toBool();
+            const bool back_subtracted = dd["back_subtracted"].toBool();
+            const int  radtype         = dd["radtype"].toInt(0);
+            const int  nyb             = ybv.size();
+            const int  nwave           = wavev.size();
+            const QByteArray fnBytes   = dd["filename"].toString().toLocal8Bit();
+
+            // Dummy placeholder for optional zero-size parameters
+            static float dummy = 0.0f;
+            set_diffraction_data(xv.data(), yv.data(), ndata,
+                                 nyb   > 0 ? ybv.data()    : &dummy, nyb,
+                                 has_back, back_subtracted,
+                                 nwave > 0 ? wavev.data()  : &dummy,
+                                 nwave > 0 ? ratiov.data() : &dummy, nwave,
+                                 radtype,
+                                 fnBytes.constData(), fnBytes.size());
+        }
+    }
+
     // ── Experimental peaks ───────────────────────────────────────────
     double wave = 1.54056;
     if (root.contains("peaks")) {
@@ -692,6 +738,40 @@ void MainWindow::saveProject(const QString &fileName)
     QJsonObject root;
     root["version"] = 1;
     root["created"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+    // ── Diffraction data (x, y, background, wavelengths) ────────────
+    int ndata = 0, nyb = 0, nwave = 0;
+    get_diffraction_data_size(&ndata, &nyb, &nwave);
+    if (ndata > 0) {
+        QVector<float> xv(ndata), yv(ndata);
+        QVector<float> ybv   (nyb   > 0 ? nyb   : 1);
+        QVector<float> wavev (nwave > 0 ? nwave : 1);
+        QVector<float> ratiov(nwave > 0 ? nwave : 1);
+        bool has_back = false, back_subtracted = false;
+        int radtype = 0;
+        get_diffraction_data(xv.data(), yv.data(), ybv.data(), nyb,
+                             &has_back, &back_subtracted,
+                             wavev.data(), ratiov.data(), nwave,
+                             &radtype);
+
+        auto floatToJsonArray = [](const QVector<float> &v, int n) {
+            QJsonArray a;
+            for (int i = 0; i < n; ++i) a.append(static_cast<double>(v[i]));
+            return a;
+        };
+
+        QJsonObject dd;
+        dd["x"]               = floatToJsonArray(xv,  ndata);
+        dd["y"]               = floatToJsonArray(yv,  ndata);
+        dd["has_back"]        = has_back;
+        dd["back_subtracted"] = back_subtracted;
+        dd["radtype"]         = radtype;
+        dd["filename"]        = currentFile;
+        if (nyb   > 0) dd["yb"]    = floatToJsonArray(ybv,   nyb);
+        if (nwave > 0) dd["wave"]  = floatToJsonArray(wavev, nwave);
+        if (nwave > 0) dd["ratio"] = floatToJsonArray(ratiov,nwave);
+        root["diffraction_data"] = dd;
+    }
 
     // ── Experimental peaks ──────────────────────────────────────────
     const ExperimentalPeaks &ep = AppState::peaks();

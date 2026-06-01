@@ -225,6 +225,7 @@ set(FORTRAN_SOURCES
     plotstyle.f90
     prog_names.F90
     progtype.F90
+    data_interop.f90
     qualx.f90
     qualx_interop.f90
     recipes.f90

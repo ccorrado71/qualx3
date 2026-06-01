@@ -86,6 +86,7 @@ MODULE datasetmod
      procedure          :: resize
      procedure          :: set_points
      procedure          :: make_background
+     procedure          :: set_background
      procedure          :: subtract_background
      procedure          :: set_cond
      procedure          :: smooth_calculate
@@ -635,6 +636,16 @@ CONTAINS
    call compute_background(datas%x0(datas%nc1:datas%nc2),datas%y(datas%nc1:datas%nc2),datas%yb,   &
                           datas%points,datas%coef,datas%thzerob,datas%cond,datas%wave(1))
    end subroutine make_background
+
+!----------------------------------------------------------------------------------------
+
+   subroutine set_background(datas,back)
+   class(dataset_type), intent(inout) :: datas
+   real, dimension(:), intent(in)     :: back
+!
+   datas%yb = back   ! automatic reallocation (F2003)
+!
+   end subroutine set_background
 
 !----------------------------------------------------------------------------------------
 
