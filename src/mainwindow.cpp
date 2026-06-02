@@ -15,6 +15,9 @@
 
 #include <QApplication>
 #include <QDateTime>
+#include <QDesktopServices>
+#include <QFileInfo>
+#include <QUrl>
 #include <QDebug>
 #include <QFile>
 #include <QInputDialog>
@@ -203,6 +206,11 @@ void MainWindow::actionsSetup()
     //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
+
+    //Help menu
+    connect(ui->actionDocumentation_HTML, &QAction::triggered, this, &MainWindow::onActionDocumentationHtmlTriggered);
+    connect(ui->actionDocumentation_PDF,  &QAction::triggered, this, &MainWindow::onActionDocumentationPdfTriggered);
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onActionAboutTriggered);
 
     //Entry menu
     ui->actionAccept_Selected_Entries->setEnabled(false);
@@ -1884,6 +1892,56 @@ void MainWindow::onActionLoadAddTriggered()
     // Force the card info dock visible
     ui->dockWidgetCard->show();
     ui->dockWidgetCard->raise();
+}
+
+//
+//  Help Menu
+//
+
+void MainWindow::onActionDocumentationHtmlTriggered()
+{
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    // Try development build layout (build_*/src/ → project_root/docs/site/)
+    // then installed layout (bin/ → share/qualx/docs/)
+    const QStringList candidates = {
+        appDir.filePath("../../docs/site/index.html"),
+        appDir.filePath("../share/qualx/docs/index.html"),
+        appDir.filePath("docs/index.html"),
+    };
+    for (const QString &path : candidates) {
+        if (QFile::exists(path)) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()));
+            return;
+        }
+    }
+    QMessageBox::information(this, tr("Documentation"),
+        tr("HTML documentation not found.\n"
+           "Run 'mkdocs build' inside the docs/ folder to generate it."));
+}
+
+void MainWindow::onActionDocumentationPdfTriggered()
+{
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList candidates = {
+        appDir.filePath("../../docs/qualx_manual.pdf"),
+        appDir.filePath("../share/qualx/docs/qualx_manual.pdf"),
+        appDir.filePath("docs/qualx_manual.pdf"),
+    };
+    for (const QString &path : candidates) {
+        if (QFile::exists(path)) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()));
+            return;
+        }
+    }
+    QMessageBox::information(this, tr("Documentation"),
+        tr("PDF documentation not found.\n"
+           "Run 'bash docs/make_pdf.sh' to generate it."));
+}
+
+void MainWindow::onActionAboutTriggered()
+{
+    AboutDialog dlg(this);
+    dlg.exec();
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)

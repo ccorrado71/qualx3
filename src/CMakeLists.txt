@@ -1,4 +1,7 @@
 set(PROJECT_SOURCES
+    aboutdialog.cpp
+    aboutdialog.h
+    aboutdialog.ui
     appstate.cpp
     appstate.h
     backgroundcoefwidget.cpp

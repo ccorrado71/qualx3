@@ -41,3 +41,8 @@ build*/
 *.csv
 *.fc
 *.pea
+
+# Documentation build artifacts
+docs/.venv/
+docs/site/
+docs/qualx_manual.pdf

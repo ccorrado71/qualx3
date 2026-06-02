@@ -86,6 +86,18 @@ install(TARGETS ${EXECUTABLE_NAME}
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/share/qualx DESTINATION share COMPONENT ${COMPONENT_NAME_MAIN})
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION . COMPONENT ${COMPONENT_NAME_MAIN})
 
+# Documentation (generated files — build with 'mkdocs build' and 'bash docs/make_pdf.sh' first)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/index.html)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/
+            DESTINATION share/qualx/docs
+            COMPONENT ${COMPONENT_NAME_MAIN})
+endif()
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
+            DESTINATION share/qualx/docs
+            COMPONENT ${COMPONENT_NAME_MAIN})
+endif()
+
 # Linux: Install Qt libraries and plugins manually (skip for Debian package)
 if(UNIX AND NOT APPLE AND NOT BUILD_DEB_PACKAGE)
    if(Qt6_FOUND)

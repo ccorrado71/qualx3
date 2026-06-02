@@ -10,6 +10,7 @@
 #include "xpdviewwidget.h"
 #include "managedatabasesdialog.h"
 #include "commandline.h"
+#include "aboutdialog.h"
 #include "smoothingdialog.h"
 
 #include <QMainWindow>
@@ -125,6 +126,12 @@ private slots:
 
     //Entry
     void onActionLoadAddTriggered();
+
+    //Help
+    void onActionDocumentationHtmlTriggered();
+    void onActionDocumentationPdfTriggered();
+    void onActionAboutTriggered();
+
 private:
     void createDialogs();
     void createActionGroup();

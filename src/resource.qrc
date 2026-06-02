@@ -29,5 +29,8 @@
         <file>images/rectangle_zoom.png</file>
         <file>images/reset_zoom.xpm</file>
         <file>images/preferences.png</file>
+        <file>images/about.png</file>
+        <file>images/logo_CNR_compatto.png</file>
+        <file>images/logo_IC.png</file>
     </qresource>
 </RCC>

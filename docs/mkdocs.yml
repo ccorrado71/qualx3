@@ -1,0 +1,45 @@
+site_name: QualX Documentation
+site_description: Qualitative X-ray Powder Diffraction Analysis Software
+site_author: IC-CNR Bari
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: light blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Introduction:
+    - Overview: introduction/index.md
+    - Getting Started: introduction/getting-started.md
+    - Examples: introduction/examples.md
+  - Data Reduction:
+    - Overview: data-reduction/index.md
+    - Background: data-reduction/background.md
+    - Peak Search: data-reduction/peak-search.md
+    - Smoothing: data-reduction/smoothing.md
+  - Search & Match:
+    - Overview: search-match/index.md
+    - Search Match: search-match/search-match.md
+    - Restraints: search-match/restraints.md
+  - References: references.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables
+  - toc:
+      permalink: true

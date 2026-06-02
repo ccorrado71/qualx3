@@ -187,11 +187,21 @@
     <addaction name="separator"/>
     <addaction name="actionLoad_Add"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionDocumentation_HTML"/>
+    <addaction name="actionDocumentation_PDF"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPattern"/>
    <addaction name="menuView"/>
    <addaction name="menuDatabase"/>
    <addaction name="menuEntry"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetResults">
@@ -705,6 +715,21 @@
     <string>Open Project</string>
    </property>
   </action>
+  <action name="actionDocumentation_HTML">
+   <property name="text">
+    <string>Documentation (HTML)</string>
+   </property>
+  </action>
+  <action name="actionDocumentation_PDF">
+   <property name="text">
+    <string>Documentation (PDF)</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -749,3 +774,4 @@
  </resources>
  <connections/>
 </ui>
+

@@ -1,0 +1,3 @@
+# Smoothing
+
+*To be completed.*
