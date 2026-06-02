@@ -8,6 +8,10 @@
 
 #include <QColor>
 #include <QColorDialog>
+#include <QLabel>
+#include <QSpinBox>
+#include <QToolBar>
+#include <QToolButton>
 #include <QHash>
 #include <QMenu>
 #include <QStandardItemModel>
@@ -74,24 +78,50 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     ui->table->horizontalHeader()->setSortIndicatorShown(true);
     ui->table->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
 
-    ui->maxRowSpin->setMinimum(1);
-    ui->maxRowSpin->setMaximum(10000);
-    ui->maxRowSpin->setSingleStep(5);
-    ui->maxRowSpin->setValue(pageModel->maxRows());
+    // ── Navigation toolbar ──────────────────────────────────────────
+    // Use addAction() for buttons so they get native toolbar-button rendering
+    // (same as toolBarEntry), and addWidget() only for spinboxes/labels.
+    navToolBar = new QToolBar(this);
+    navToolBar->setMovable(false);
+    navToolBar->setFloatable(false);
 
-    ui->pageSpin->setMinimum(1);
-    ui->pageSpin->setMaximum(pageModel->pageCount());
-    ui->pageSpin->setValue(1);
-    ui->pageSpin->setSuffix(QString("/%1").arg(pageModel->pageCount()));
+    auto addNavAction = [&](const QString &tip, const QString &iconPath) -> QToolButton * {
+        QAction *act = navToolBar->addAction(QIcon(iconPath), QString());
+        act->setToolTip(tip);
+        return qobject_cast<QToolButton *>(navToolBar->widgetForAction(act));
+    };
+    firstBtn = addNavAction(tr("Go to first page"),    ":/images/images/first_view.png");
+    prevBtn  = addNavAction(tr("Go to previous page"), ":/images/images/go_previous.png");
+
+    pageSpin = new QSpinBox(this);
+    pageSpin->setMinimum(1);
+    pageSpin->setMaximum(pageModel->pageCount());
+    pageSpin->setValue(1);
+    pageSpin->setSuffix(QString("/%1").arg(pageModel->pageCount()));
+    navToolBar->addWidget(pageSpin);
+
+    nextBtn  = addNavAction(tr("Go to next page"),  ":/images/images/go_next.png");
+    lastBtn  = addNavAction(tr("Go to last page"),  ":/images/images/last_view.png");
+    navToolBar->addSeparator();
+    navToolBar->addWidget(new QLabel(tr("Max rows:"), this));
+
+    maxRowSpin = new QSpinBox(this);
+    maxRowSpin->setMinimum(1);
+    maxRowSpin->setMaximum(10000);
+    maxRowSpin->setSingleStep(5);
+    maxRowSpin->setValue(pageModel->maxRows());
+    navToolBar->addWidget(maxRowSpin);
+
+    ui->topLayout->addWidget(navToolBar);
 
     connect(ui->textFilterEdit, &QLineEdit::textEdited, filterModel, &TextFilterProxyModel::setFilterFixedString);
-    connect(ui->maxRowSpin, QOverload<int>::of(&QSpinBox::valueChanged), pageModel, &PaginationModel::setMaxRows);
+    connect(maxRowSpin, QOverload<int>::of(&QSpinBox::valueChanged), pageModel, &PaginationModel::setMaxRows);
 
-    connect(ui->firstBtn, &QToolButton::clicked, pageModel, &PaginationModel::firstPage);
-    connect(ui->prevBtn, &QToolButton::clicked, pageModel, &PaginationModel::previousPage);
-    connect(ui->nextBtn, &QToolButton::clicked, pageModel, &PaginationModel::nextPage);
-    connect(ui->lastBtn, &QToolButton::clicked, pageModel, &PaginationModel::lastPage);
-    connect(ui->pageSpin, QOverload<int>::of(&QSpinBox::valueChanged), [this](int p){ pageModel->setCurrentPage(p - 1); });
+    connect(firstBtn, &QToolButton::clicked, pageModel, &PaginationModel::firstPage);
+    connect(prevBtn,  &QToolButton::clicked, pageModel, &PaginationModel::previousPage);
+    connect(nextBtn,  &QToolButton::clicked, pageModel, &PaginationModel::nextPage);
+    connect(lastBtn,  &QToolButton::clicked, pageModel, &PaginationModel::lastPage);
+    connect(pageSpin, QOverload<int>::of(&QSpinBox::valueChanged), [this](int p){ pageModel->setCurrentPage(p - 1); });
 
     connect(pageModel, &PaginationModel::currentPageChanged, this, &DbResultsWidget::currentPageChanged);
     connect(pageModel, &PaginationModel::pageCountChanged, this, &DbResultsWidget::pageCountChanged);
@@ -320,23 +350,23 @@ QVector<CardType> DbResultsWidget::allCards() const
 
 void DbResultsWidget::currentPageChanged(int page)
 {
-    QSignalBlocker blocker(ui->pageSpin);
-    ui->pageSpin->setValue(page + 1);
+    QSignalBlocker blocker(pageSpin);
+    pageSpin->setValue(page + 1);
 }
 
 void DbResultsWidget::pageCountChanged(int count)
 {
-    QSignalBlocker blocker(ui->pageSpin);
-    ui->pageSpin->setMaximum(qMax(1, count));
-    ui->pageSpin->setSuffix(QString("/%1").arg(count));
+    QSignalBlocker blocker(pageSpin);
+    pageSpin->setMaximum(qMax(1, count));
+    pageSpin->setSuffix(QString("/%1").arg(count));
 }
 
 void DbResultsWidget::updateButtons()
 {
-    ui->firstBtn->setEnabled(pageModel->canGoBack());
-    ui->prevBtn->setEnabled(pageModel->canGoBack());
-    ui->nextBtn->setEnabled(pageModel->canGoForward());
-    ui->lastBtn->setEnabled(pageModel->canGoForward());
+    firstBtn->setEnabled(pageModel->canGoBack());
+    prevBtn->setEnabled(pageModel->canGoBack());
+    nextBtn->setEnabled(pageModel->canGoForward());
+    lastBtn->setEnabled(pageModel->canGoForward());
 }
 
 void DbResultsWidget::setContextMenuActions(const QList<QAction *> &actions)
@@ -359,6 +389,9 @@ void DbResultsWidget::setEntryToolBar(QToolBar *tb)
 {
     tb->setMovable(false);
     tb->setFloatable(false);
+    // Keep navToolBar icon size in sync with the entry toolbar
+    navToolBar->setIconSize(tb->iconSize());
+    connect(tb, &QToolBar::iconSizeChanged, navToolBar, &QToolBar::setIconSize);
     ui->topLayout->insertWidget(0, tb);
 }
 

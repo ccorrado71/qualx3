@@ -14,6 +14,9 @@ QColor cardColor(const QString &id);
 class QStandardItemModel;
 class TextFilterProxyModel;
 class PaginationModel;
+class QToolBar;
+class QToolButton;
+class QSpinBox;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class DbResultsWidget; }
@@ -70,6 +73,14 @@ private:
 
     int            m_sortColumn = -1;
     Qt::SortOrder  m_sortOrder  = Qt::AscendingOrder;
+
+    QToolBar   *navToolBar = nullptr;
+    QToolButton *firstBtn  = nullptr;
+    QToolButton *prevBtn   = nullptr;
+    QSpinBox    *pageSpin  = nullptr;
+    QToolButton *nextBtn   = nullptr;
+    QToolButton *lastBtn   = nullptr;
+    QSpinBox    *maxRowSpin = nullptr;
 };
 
 #endif // DBRESULTSWIDGET_H
