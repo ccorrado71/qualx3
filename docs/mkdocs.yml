@@ -3,6 +3,7 @@ site_description: Qualitative X-ray Powder Diffraction Analysis Software
 site_author: IC-CNR Bari
 docs_dir: docs
 site_dir: site
+use_directory_urls: false
 
 theme:
   name: material
@@ -40,6 +41,12 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight
+  - pymdownx.arithmatex:
+      generic: true
   - tables
   - toc:
       permalink: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
