@@ -141,6 +141,8 @@ set(PROJECT_SOURCES
     scopedtimer.h
     textfilterproxymodel.cpp
     textfilterproxymodel.h
+    updater.cpp
+    updater.h
     wavedialog.h
     wavedialog.cpp
     wavedialog.ui

@@ -16,6 +16,7 @@
 #include <QApplication>
 #include <QDateTime>
 #include <QDesktopServices>
+#include "updater.h"
 #include <QFileInfo>
 #include <QUrl>
 #include <QDebug>
@@ -208,9 +209,10 @@ void MainWindow::actionsSetup()
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
 
     //Help menu
-    connect(ui->actionDocumentation_HTML, &QAction::triggered, this, &MainWindow::onActionDocumentationHtmlTriggered);
-    connect(ui->actionDocumentation_PDF,  &QAction::triggered, this, &MainWindow::onActionDocumentationPdfTriggered);
-    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onActionAboutTriggered);
+    connect(ui->actionDocumentation_HTML,   &QAction::triggered, this, &MainWindow::onActionDocumentationHtmlTriggered);
+    connect(ui->actionDocumentation_PDF,    &QAction::triggered, this, &MainWindow::onActionDocumentationPdfTriggered);
+    connect(ui->actionCheck_for_Updates,    &QAction::triggered, this, &MainWindow::onActionCheckForUpdatesTriggered);
+    connect(ui->actionAbout,                &QAction::triggered, this, &MainWindow::onActionAboutTriggered);
 
     //Entry menu
     ui->actionAccept_Selected_Entries->setEnabled(false);
@@ -1936,6 +1938,25 @@ void MainWindow::onActionDocumentationPdfTriggered()
     QMessageBox::information(this, tr("Documentation"),
         tr("PDF documentation not found.\n"
            "Run 'bash docs/make_pdf.sh' to generate it."));
+}
+
+void MainWindow::onActionCheckForUpdatesTriggered()
+{
+#if defined(Q_OS_WIN)
+    auto m_updater = new MaintenanceTool(this);
+    connect(m_updater, &MaintenanceTool::stateChanged, [=](MaintenanceTool::ProcessState state){
+        if (state == MaintenanceTool::NotRunning && m_updater->hasUpdate()) {
+            m_updater->startMaintenanceTool(MaintenanceTool::Updater);
+        }
+    });
+
+    m_updater->checkUpdate();
+#else
+    auto updater = new Updater(this);
+    updater->setUrl(QStringLiteral("https://www.ba.ic.cnr.it/content/old/qualx3/updates.json"));
+    updater->setNotifyOnFinish(true);
+    updater->checkForUpdates();
+#endif
 }
 
 void MainWindow::onActionAboutTriggered()

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=QualX
+Comment=Software for qualitative X-ray powder diffraction analysis
+Exec=@CMAKE_INSTALL_PREFIX@/bin/qualx %f
+Terminal=false
+Icon=expo
+Type=Application
+Categories=Education;Science;
+Version=@PROJECT_VERSION@

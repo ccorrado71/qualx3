@@ -130,6 +130,7 @@ private slots:
     //Help
     void onActionDocumentationHtmlTriggered();
     void onActionDocumentationPdfTriggered();
+    void onActionCheckForUpdatesTriggered();
     void onActionAboutTriggered();
 
 private:
