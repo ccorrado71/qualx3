@@ -16,7 +16,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         message(STATUS "Building Debian package, using prefix: ${CMAKE_INSTALL_PREFIX}")
     else()
         # For manual installation: install to /opt/qualx3-version
-        set(CMAKE_INSTALL_PREFIX "/opt/qualx3-${PROJECT_VERSION}" CACHE PATH "Installation prefix" FORCE)
+        set(CMAKE_INSTALL_PREFIX "/opt/qualx-${PROJECT_VERSION}" CACHE PATH "Installation prefix" FORCE)
         message(STATUS "CMAKE_INSTALL_PREFIX not specified, defaulting to: ${CMAKE_INSTALL_PREFIX}")
     endif()
 endif()
@@ -95,6 +95,39 @@ endif()
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
             DESTINATION share/qualx/docs
+            COMPONENT ${COMPONENT_NAME_MAIN})
+endif()
+
+# Linux: Desktop integration (icons + .desktop file)
+if(UNIX AND NOT APPLE)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/deploy/linux/qualx.desktop.in
+        ${CMAKE_BINARY_DIR}/qualx.desktop
+        @ONLY
+    )
+    file(WRITE ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake "
+        set(HOME \"\$ENV{HOME}\")
+        set(APPS_DIR \"\${HOME}/.local/share/applications\")
+        set(ICON_BASE \"\${HOME}/.local/share/icons/hicolor\")
+
+        file(MAKE_DIRECTORY \"\${APPS_DIR}\")
+        file(COPY \"${CMAKE_BINARY_DIR}/qualx.desktop\"
+             DESTINATION \"\${APPS_DIR}\")
+
+        foreach(SIZE 16 32 48 256)
+            set(SRC \"${CMAKE_SOURCE_DIR}/deploy/linux/icons/\${SIZE}x\${SIZE}/qualx.png\")
+            if(EXISTS \"\${SRC}\")
+                set(DEST \"\${ICON_BASE}/\${SIZE}x\${SIZE}/apps\")
+                file(MAKE_DIRECTORY \"\${DEST}\")
+                file(COPY \"\${SRC}\" DESTINATION \"\${DEST}\")
+            endif()
+        endforeach()
+
+        execute_process(COMMAND gtk-update-icon-cache -f -t \"\${ICON_BASE}\" ERROR_QUIET)
+        execute_process(COMMAND update-desktop-database \"\${APPS_DIR}\" ERROR_QUIET)
+        message(STATUS \"Desktop integration installed for user \${HOME}\")
+    ")
+    install(SCRIPT ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake
             COMPONENT ${COMPONENT_NAME_MAIN})
 endif()
 

@@ -135,6 +135,10 @@ void MainWindow::createDialogs()
     m_restraintsDialog = new RestraintsDialog(this);
     smoothingDialog    = new SmoothingDialog(this);
     plotStyleDialog    = new PlotStyleDialog(this);
+    aboutDialog = new AboutDialog(this);
+    aboutDialog->setWebsiteUrl("https://www.ba.ic.cnr.it/softwareic/qualx/");
+    aboutDialog->setContactsUrl("https://www.ba.ic.cnr.it/softwareic/expo/contact-us/");
+    aboutDialog->setCitationUrl("https://doi.org/10.1017/S0885715617000240");
 
     connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
             m_restraintsDialog, &RestraintsDialog::setMergeEnabled);
@@ -1961,8 +1965,7 @@ void MainWindow::onActionCheckForUpdatesTriggered()
 
 void MainWindow::onActionAboutTriggered()
 {
-    AboutDialog dlg(this);
-    dlg.exec();
+    aboutDialog->show();
 }
 
 void MainWindow::testSelection(DbQueryBuilder &builder, int testCase)

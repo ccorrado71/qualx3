@@ -7,6 +7,8 @@ use_directory_urls: false
 
 theme:
   name: material
+  logo: images/qualx_icon.svg
+  favicon: images/favicon.png
   palette:
     - scheme: default
       primary: blue

@@ -159,6 +159,7 @@ private:
     BackgroundDialog  *backgroundDialog  = nullptr;
     RestraintsDialog  *m_restraintsDialog = nullptr;
     SmoothingDialog *smoothingDialog = nullptr;
+    AboutDialog *aboutDialog = nullptr;
 
     //Files
     QString currentFile;
