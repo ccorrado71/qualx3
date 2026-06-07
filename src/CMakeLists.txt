@@ -55,6 +55,9 @@ set(PROJECT_SOURCES
     folderselectorwidget.ui
     graphitem.cpp
     graphitem.h
+    imgsettingsdialog.cpp
+    imgsettingsdialog.h
+    imgsettingsdialog.ui
     libcomune.cpp
     libcomune.h
     libfor.cpp

@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -124,6 +124,8 @@
     <addaction name="separator"/>
     <addaction name="actionSave_Project"/>
     <addaction name="actionSave_Project_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionImage_Powder_Pattern"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -734,6 +736,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionImage_Powder_Pattern">
+   <property name="text">
+    <string>Export Image</string>
    </property>
   </action>
  </widget>

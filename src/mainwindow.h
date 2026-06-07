@@ -99,6 +99,7 @@ private slots:
     void onActionLoadProjectTriggered();
     void onActionSaveProjectTriggered();
     void onActionSaveProjectAsTriggered();
+    void onActionImagePowderPatternTriggered();
     void onActionFileDropped(const QStringList &fileList);
 
     //Pattern

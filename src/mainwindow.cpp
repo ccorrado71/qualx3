@@ -9,6 +9,7 @@
 #include "restraintsdialog.h"
 #include "savedialog.h"
 #include "searchoptionsdialog.h"
+#include "imgsettingsdialog.h"
 #include "fileutils.h"
 #include "xpdutils.h"
 #include "dbresultswidget.h"
@@ -179,6 +180,7 @@ void MainWindow::actionsSetup()
     connect(ui->actionOpen_Project, &QAction::triggered, this, &MainWindow::onActionLoadProjectTriggered);
     connect(ui->actionSave_Project, &QAction::triggered, this, &MainWindow::onActionSaveProjectTriggered);
     connect(ui->actionSave_Project_As, &QAction::triggered, this, &MainWindow::onActionSaveProjectAsTriggered);
+    connect(ui->actionImage_Powder_Pattern, &QAction::triggered, this, &MainWindow::onActionImagePowderPatternTriggered);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
 
     //Pattern menu
@@ -527,6 +529,10 @@ void MainWindow::openRecentFile()
             break;
 
         case RecentFileType::Project:
+            loadProject(fileIn);
+            currentFile = fileIn;
+//            outputFileName = fileutils::removeExtension(fileIn)+".out";
+            setWindowTitle(currentFile);
             break;
         }
     }
@@ -883,6 +889,51 @@ void MainWindow::onActionSaveProjectAsTriggered()
         fileName = QDir::toNativeSeparators(fileName);
         currentProjectFile = fileName;
         saveProject(fileName);
+    }
+}
+
+void MainWindow::onActionImagePowderPatternTriggered()
+{
+    QSettings settings;
+    QString selectedFilter = settings.value(QUALX_IMAGE_FILTER_KEY).toString();
+    int code = 0;
+    QString exts = "PNG (*.png);;"
+                   "PDF (*.pdf);;"
+                   "BMP (*.bmp);;"
+                   "JPEG (*.jpeg *jpg *jpe)";
+    QString fileName = SaveDialog::run(this,
+                                       tr("Export Image As"),
+                                       settings.value(DEFAULT_DIR_KEY).toString(),
+                                       QFileInfo(currentFile).baseName(),
+                                       exts,
+                                       "png",
+                                       selectedFilter,
+                                       &code);
+    settings.setValue(QUALX_IMAGE_FILTER_KEY,selectedFilter);
+    if (!fileName.isEmpty()) {
+        ImgSettingsDialog dialog(this, QFileInfo(fileName).suffix());
+        if (dialog.exec()) {
+            settings.setValue(DEFAULT_DIR_KEY,QFileInfo(fileName).absolutePath());
+            if (dialog.isTransparent()) {
+                // remove background for transparency
+                xpdViewer()->setBackground(QBrush(Qt::NoBrush));
+                xpdViewer()->axisRect()->setBackground(QBrush(Qt::NoBrush));
+            }
+            if( fileName.endsWith(".png") ){
+                xpdViewer()->savePng( fileName, xpdViewer()->width(), xpdViewer()->height(), dialog.scale() );
+            }
+            if( fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpe")){
+                xpdViewer()->saveJpg( fileName, xpdViewer()->width(), xpdViewer()->height(), dialog.scale() );
+            }
+            if( fileName.endsWith(".pdf") ){
+                xpdViewer()->savePdf( fileName, xpdViewer()->width(), xpdViewer()->height());
+            }
+            if (dialog.isTransparent()) {
+                // add background
+                xpdViewer()->pSettings().applyToBackground(xpdViewer());
+                xpdViewer()->pSettings().applyToLayer(xpdViewer());
+            }
+        }
     }
 }
 
