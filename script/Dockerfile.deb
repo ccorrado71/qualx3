@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1
+# ============================================================
+#  Builds the qualx3 Debian package inside a clean Ubuntu image.
+#
+#  UBUNTU_VERSION selects the target distribution, e.g.:
+#    docker build --build-arg UBUNTU_VERSION=24.04 ...
+#    docker build --build-arg UBUNTU_VERSION=26.04 ...
+#
+#  The final "export" stage contains only the produced .deb file(s),
+#  so they can be retrieved with `docker build -o <dir> ...`
+#  (BuildKit local exporter) without creating/removing containers.
+# ============================================================
+ARG UBUNTU_VERSION=24.04
+
+FROM ubuntu:${UBUNTU_VERSION} AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    pkg-config \
+    gfortran \
+    qt6-base-dev \
+    libqt6opengl6-dev \
+    libqt6openglwidgets6 \
+    libgl1-mesa-dev \
+    lsb-release \
+    dpkg-dev \
+    file \
+    && rm -rf /var/lib/apt/lists/*
+
+# Plain gfortran — no MPI needed for qualx3
+ENV FC=gfortran
+ENV CC=gcc
+ENV CXX=g++
+
+WORKDIR /src
+COPY . .
+
+RUN cmake -B build_deb -S . \
+        -DCMAKE_Fortran_COMPILER=gfortran \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_DEB_PACKAGE=ON \
+    && cmake --build build_deb -j"$(nproc)" \
+    && cd build_deb \
+    && cpack -G DEB
+
+# ============================================================
+#  Export stage — holds only the generated .deb package(s)
+# ============================================================
+FROM scratch AS export
+COPY --from=builder /src/build_deb/*.deb /
