@@ -5,6 +5,7 @@
 
 #include <QPainter>
 #include <QBuffer>
+#include <QPrinter>
 
 ReportWidget::ReportWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::ReportWidget)
@@ -189,4 +190,9 @@ void ReportWidget::generateHtml()
 
     html += "</body></html>";
     ui->textBrowser->setHtml(html);
+}
+
+void ReportWidget::print(QPrinter *printer)
+{
+    ui->textBrowser->print(printer);
 }

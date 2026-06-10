@@ -69,6 +69,10 @@ ENDIF()
 # There is some bug where -march=native doesn't work on Mac
 IF(APPLE)
     SET(GNUNATIVE "-mtune=native")
+ELSEIF(BUILD_DEB_PACKAGE)
+    # For distributable packages, use generic x86-64 to avoid Illegal Instruction
+    # on CPUs that don't support the build host's advanced instruction sets (AVX2, etc.)
+    SET(GNUNATIVE "-march=x86-64")
 ELSE()
     SET(GNUNATIVE "-march=native")
 ENDIF()

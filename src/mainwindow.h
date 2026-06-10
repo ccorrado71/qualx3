@@ -128,6 +128,9 @@ private slots:
     //Entry
     void onActionLoadAddTriggered();
 
+    //Print
+    void onActionPrintTriggered();
+
     //Help
     void onActionDocumentationHtmlTriggered();
     void onActionDocumentationPdfTriggered();

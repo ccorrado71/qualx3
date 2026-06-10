@@ -44,6 +44,8 @@ public:
     void setEntryToolBar(QToolBar *tb);
     void setContextMenuActions(const QList<QAction *> &actions);
 
+    QStandardItemModel *sourceModel;
+
 signals:
     void hasResultsChanged(bool hasResults);
     void cardSelected(const QString &id);
@@ -67,7 +69,6 @@ private slots:
 private:
     Ui::DbResultsWidget* ui;
 
-    QStandardItemModel*   sourceModel;
     TextFilterProxyModel* filterModel;
     PaginationModel*      pageModel;
 

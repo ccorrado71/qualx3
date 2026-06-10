@@ -27,12 +27,13 @@ public:
     void clearAcceptedPhases();
     void refresh();
 
+    QStandardItemModel *m_model;
+
 private:
     void rebuild();
     void updateDelegates(int totalColumns);
 
     Ui::PeakCompareWidget *ui;
-    QStandardItemModel    *m_model;
 
     ExperimentalPeaks  m_ep;
     QVector<CardType>  m_acceptedPhases;

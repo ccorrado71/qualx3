@@ -8,6 +8,8 @@
 #include "experimentalpeaks.h"
 #include "cardtype.h"
 
+class QPrinter;
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class ReportWidget; }
 QT_END_NAMESPACE
@@ -26,6 +28,7 @@ public:
     void updateQuantitative(const QVector<CardType> &phases,
                             const QVector<double> &percentages);
     void clearQuantitative();
+    void print(QPrinter *printer);
 
 private:
     void generateHtml();

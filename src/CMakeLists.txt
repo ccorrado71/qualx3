@@ -128,6 +128,9 @@ set(PROJECT_SOURCES
     restraintsdialog.cpp
     restraintsdialog.h
     restraintsdialog.ui
+    printdialog.cpp
+    printdialog.h
+    printdialog.ui
     savedialog.cpp
     savedialog.h
     searchoptionsdialog.cpp

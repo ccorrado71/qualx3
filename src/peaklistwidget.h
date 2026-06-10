@@ -25,6 +25,8 @@ public:
     ~PeakListWidget();
     void updatePeakListTable();
 
+    QStandardItemModel *peakListModel;
+
 private slots:
     void createContextMenu(QPoint pos);
     void deletePeaks();
@@ -34,7 +36,6 @@ private slots:
 
 private:
     Ui::PeakListWidget *ui;
-    QStandardItemModel *peakListModel;
     QSortFilterProxyModel *peakListProxyModel;
     QAction *deletePeakAction;
     QAction *addPeakAction;
