@@ -44,6 +44,7 @@ public:
     Q_ENUM(MouseAction)
 
     explicit XpdViewWidget(QWidget *parent = nullptr);
+    void hideGraphicArea();
     void setGraphicArea();
     void addPlot(const QVector<double> &xvet0, const QVector<double> &yvet0, graphItem::ItemType type,
                  int visible, float wave, const QString &name);

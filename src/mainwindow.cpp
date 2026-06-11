@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , mAction(NoAction)
     , savedZoomAction(mAction)
-    , projectFileSaved(false)
+    , projectFileSaved(true)
 {
     ui->setupUi(this);
     ui->resultsWidget->setEntryToolBar(ui->toolBarEntry);
@@ -140,6 +140,7 @@ void MainWindow::createDialogs()
     backgroundDialog   = new BackgroundDialog(this);
     m_restraintsDialog = new RestraintsDialog(this);
     smoothingDialog    = new SmoothingDialog(this);
+    rangeDialog        = new RangeDialog(this);
     plotStyleDialog    = new PlotStyleDialog(this);
     aboutDialog = new AboutDialog(this);
     aboutDialog->setWebsiteUrl("https://www.ba.ic.cnr.it/softwareic/qualx/");
@@ -181,14 +182,17 @@ void MainWindow::createDialogs()
 void MainWindow::actionsSetup()
 {
     //File menu
+    connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onActionNewTriggered);
     connect(ui->actionImportDiffractionPattern, &QAction::triggered, this, &MainWindow::onActionImportDiffractionPatternTriggered);
     connect(ui->actionOpen_Project, &QAction::triggered, this, &MainWindow::onActionLoadProjectTriggered);
     connect(ui->actionSave_Project, &QAction::triggered, this, &MainWindow::onActionSaveProjectTriggered);
     connect(ui->actionSave_Project_As, &QAction::triggered, this, &MainWindow::onActionSaveProjectAsTriggered);
+    connect(ui->actionExport_Diffraction_Pattern, &QAction::triggered, this, &MainWindow::onActionExportDiffractionPattern);
     connect(ui->actionImage_Powder_Pattern, &QAction::triggered, this, &MainWindow::onActionImagePowderPatternTriggered);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
 
     //Pattern menu
+    connect(ui->actionRange, &QAction::triggered, this, &MainWindow::onActionRangeTriggered);
     connect(ui->actionBackground, &QAction::triggered, this, &MainWindow::onActionBackgroundTriggered);
     connect(ui->actionExport_Background, &QAction::triggered, this, &MainWindow::onActionBackgroundExportTriggered);
     connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
@@ -490,6 +494,46 @@ QProgressBar *MainWindow::getStatusProgressBar() const
 //  File Menu
 //
 
+void MainWindow::onActionNewTriggered()
+{
+    if (!projectFileSaved) {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, tr("New"),
+                                                 tr("The current project has unsaved changes.\nDo you want to save it before restarting from scratch?"),
+                                                 QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        if (reply == QMessageBox::Cancel)
+            return;
+        if (reply == QMessageBox::Save) {
+            onActionSaveProjectTriggered();
+            if (!projectFileSaved)
+                return;
+        }
+    }
+
+    xpdViewer()->setGraphicArea();
+    xpdViewer()->hideGraphicArea();
+    xpdViewer()->replot();
+
+    ui->plotLabel1->clear();
+    ui->plotLabel2->clear();
+    ui->plotLabel3->clear();
+
+    ui->resultsWidget->setResults({});
+    ui->peakListWidget->peakListModel->setRowCount(0);
+    ui->peakCompareWidget->clearAcceptedPhases();
+    ui->peakCompareWidget->clearCard();
+    ui->peakCompareWidget->setExperimentalPeaks(ExperimentalPeaks());
+    ui->quantWidget->clearPhases();
+    ui->reportWidget->clearQuantitative();
+    ui->reportWidget->updateReport(ExperimentalPeaks(), {});
+    ui->cardBrowser->clear();
+
+    AppState::peaks().clear();
+
+    clearProjectFile();
+    currentFile.clear();
+    setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
+}
+
 void MainWindow::openRecentFile()
 {
     QAction *action = qobject_cast<QAction *>(sender());
@@ -528,6 +572,7 @@ void MainWindow::openRecentFile()
                 currentFile = fileIn;
 //                outputFileName = fileOut;
                 setWindowTitle(currentFile);
+                markProjectModified();
             }
             break;
         }
@@ -567,6 +612,7 @@ void MainWindow::loadDiffractionPatterns(QStringList files)
             settings.setValue(DEFAULT_DIR_KEY,QFileInfo(filename).absolutePath());
 //            outputFileName = outFile;
             setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
+            markProjectModified();
         }
     }
 }
@@ -895,6 +941,32 @@ void MainWindow::onActionSaveProjectAsTriggered()
     }
 }
 
+void MainWindow::onActionExportDiffractionPattern()
+{
+    QSettings settings;
+    QString selectedFilter = "xy";
+    int code = 0;
+    QString exts = "XY files (*.xy);; CIF files (*.cif)";
+    QString fileName = SaveDialog::run(this,
+                                       tr("Export Data As"),
+                                       settings.value(DEFAULT_DIR_KEY).toString(),
+                                       QFileInfo(currentFile).baseName(),
+                                       exts,
+                                       "xy",
+                                       selectedFilter,
+                                       &code);
+    if (!fileName.isEmpty()) {
+        settings.setValue(DEFAULT_DIR_KEY,QFileInfo(fileName).absolutePath());
+        if (selectedFilter.contains("cif", Qt::CaseInsensitive)) {
+            // Export as CIF
+            esportanew(16, fileName.toLocal8Bit().constData(), fileName.toLocal8Bit().size());
+        } else {
+            // Export as XY
+            esportanew(17, fileName.toLocal8Bit().constData(), fileName.toLocal8Bit().size());
+        }
+    }
+}
+
 void MainWindow::onActionImagePowderPatternTriggered()
 {
     QSettings settings;
@@ -942,8 +1014,13 @@ void MainWindow::onActionImagePowderPatternTriggered()
 
 void MainWindow::clearProjectFile()
 {
-    projectFileSaved = false;
+    projectFileSaved = true;
     currentProjectFile.clear();
+}
+
+void MainWindow::markProjectModified()
+{
+    projectFileSaved = false;
 }
 
 void MainWindow::createRecentActions()
@@ -1060,6 +1137,12 @@ void MainWindow::onActionFileDropped(const QStringList &fileList)
 //
 //  Pattern Menu
 //
+
+void MainWindow::onActionRangeTriggered()
+{
+    rangeDialog->show();
+    rangeDialog->setRange(xpdViewer());
+}
 
 void MainWindow::onActionBackgroundTriggered()
 {
@@ -1500,6 +1583,8 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
         ui->resultsWidget->mergeResults(cards);
     else
         ui->resultsWidget->setResults(cards);
+
+    markProjectModified();
 
     // Refresh the peak compare widget with the current experimental peaks
     ui->peakCompareWidget->clearAcceptedPhases();

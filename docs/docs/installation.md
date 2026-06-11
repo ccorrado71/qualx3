@@ -131,6 +131,63 @@ sudo cmake --install build
 
 ---
 
+### Option C — Docker image (.tar.gz)
+
+A pre-built Docker image is also available, distributed as a `.tar.gz`
+archive (`qualx-<version>-docker.tar.gz`). This is the simplest way to run
+QualX without installing any dependencies: the image already includes Qt6,
+the Fortran runtime, and the bundled COD reference database.
+
+!!! note
+    The image is large (about 1 GB) because it includes the COD database.
+
+**Requirements**
+
+- [Docker](https://docs.docker.com/engine/install/) installed on the host.
+
+**1. Load the image**
+
+```bash
+docker load -i qualx-<version>-docker.tar.gz
+```
+
+This registers the image as `qualx:<version>`. Verify with:
+
+```bash
+docker images qualx
+```
+
+**2. Run QualX with graphics (X11 forwarding on Linux)**
+
+```bash
+xhost +local:docker
+docker run --rm -it \
+    -e PUID="$(id -u)" -e PGID="$(id -g)" \
+    -e DISPLAY="$DISPLAY" \
+    -e QT_QPA_PLATFORM=xcb \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "$HOME/.Xauthority:/home/qualx/.Xauthority:ro" \
+    -v "$PWD:/work" \
+    qualx:<version> qualx
+```
+
+`PUID`/`PGID` make the container run as a user with the same UID/GID as the
+host user, so any file created in `/work` (the current directory, mounted
+inside the container) belongs to the host user instead of `root`.
+
+If the container has no access to a GPU, add `-e LIBGL_ALWAYS_SOFTWARE=1` to
+enable software OpenGL rendering.
+
+**3. Run QualX from the command line (no graphics)**
+
+```bash
+docker run --rm -v "$PWD:/work" \
+    -e PUID="$(id -u)" -e PGID="$(id -g)" \
+    qualx:<version> qualx --createdb --cifdir /work/cifs --dbout /work/mydb
+```
+
+---
+
 ## Databases
 
 QualX requires at least one crystallographic reference database.

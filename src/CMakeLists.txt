@@ -122,6 +122,9 @@ set(PROJECT_SOURCES
     quantwidget.ui
     qualxdbpopulator.h
     qualxdbpopulator.cpp
+    rangedialog.cpp
+    rangedialog.h
+    rangedialog.ui
     reportwidget.cpp
     reportwidget.h
     reportwidget.ui
@@ -239,6 +242,7 @@ set(FORTRAN_SOURCES
     data_interop.f90
     qualx.f90
     qualx_interop.f90
+    range_interop.f90
     recipes.f90
     reflectionsutil.f90
     restraints.f90

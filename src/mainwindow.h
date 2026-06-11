@@ -12,6 +12,7 @@
 #include "commandline.h"
 #include "aboutdialog.h"
 #include "smoothingdialog.h"
+#include "rangedialog.h"
 
 #include <QMainWindow>
 
@@ -94,15 +95,18 @@ private slots:
     void plotStyleClosed(QDialogButtonBox::StandardButton button);
 
     //File
+    void onActionNewTriggered();
     void openRecentFile();
     void onActionImportDiffractionPatternTriggered();
     void onActionLoadProjectTriggered();
     void onActionSaveProjectTriggered();
     void onActionSaveProjectAsTriggered();
+    void onActionExportDiffractionPattern();
     void onActionImagePowderPatternTriggered();
     void onActionFileDropped(const QStringList &fileList);
 
     //Pattern
+    void onActionRangeTriggered();
     void onActionBackgroundTriggered();
     void onActionBackgroundExportTriggered();
     void onActionSubtractBackgroundTriggered();
@@ -164,12 +168,14 @@ private:
     RestraintsDialog  *m_restraintsDialog = nullptr;
     SmoothingDialog *smoothingDialog = nullptr;
     AboutDialog *aboutDialog = nullptr;
+    RangeDialog *rangeDialog = nullptr;
 
     //Files
     QString currentFile;
     QString currentProjectFile;
     bool projectFileSaved;
     void clearProjectFile();
+    void markProjectModified();
     static QString pathDataFiles;
     enum { maxFileNr = 10 };
     QList<QAction*> recentFileActionList;

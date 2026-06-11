@@ -17,9 +17,7 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     , mAction(NoAction)
     , savedZoomAction(mAction)
 {
-    //hide empty plot
-    axisRect(0)->setVisible(false);
-    axisRect(0)->setVisible(false);
+    hideGraphicArea();
 
     // TODO
     // remove parameter idcolor from setColorLine
@@ -80,6 +78,11 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     setAcceptDrops(true);
 
     plotSettings.read();
+}
+
+void XpdViewWidget::hideGraphicArea()
+{
+    axisRect(0)->setVisible(false);
 }
 
 void XpdViewWidget::setGraphicArea()

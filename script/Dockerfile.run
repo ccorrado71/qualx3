@@ -1,0 +1,93 @@
+# syntax=docker/dockerfile:1
+# ============================================================
+#  Runtime image for qualx on Ubuntu 24.04
+#
+#  Installs qualx from the pre-built .deb package, which must be
+#  present in the build context passed to docker build.
+#
+#  Building the image:
+#    cd /home/corrado/qualx_package/debs/24.04
+#    docker build -f /home/corrado/qualx3/script/Dockerfile.run \
+#        -t qualx:1.0.0 .
+#
+#  The entrypoint runs qualx as the unprivileged "qualx" user, with
+#  UID/GID adapted to the host's via the PUID/PGID variables
+#  (default 1000:1000 if not set), so files created in /work belong
+#  to the host user instead of root.
+#
+#  ── GUI usage (X11 forwarding on Linux) ─────────────────────
+#    xhost +local:docker
+#    docker run --rm -it \
+#        -e PUID="$(id -u)" -e PGID="$(id -g)" \
+#        -e DISPLAY="$DISPLAY" \
+#        -e QT_QPA_PLATFORM=xcb \
+#        -v /tmp/.X11-unix:/tmp/.X11-unix \
+#        -v "$HOME/.Xauthority:/home/qualx/.Xauthority:ro" \
+#        -v "$PWD:/work" \
+#        qualx:1.0.0 qualx
+#
+#  To match the host's GTK/GNOME theme (colors, dark mode, icon set)
+#  instead of the default Adwaita look, also mount the host's GTK3
+#  config read-only:
+#        -v "$HOME/.config/gtk-3.0:/home/qualx/.config/gtk-3.0:ro"
+#
+#  ── Headless usage (database creation, no graphics) ─────────
+#    docker run --rm -v "$PWD:/work" \
+#        -e PUID="$(id -u)" -e PGID="$(id -g)" \
+#        qualx:1.0.0 qualx --createdb --cifdir /work/cifs --dbout /work/mydb
+#
+#  ── Without GPU (software OpenGL rendering) ─────────────────
+#    Add to any command above: -e LIBGL_ALWAYS_SOFTWARE=1
+# ============================================================
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Name of the .deb file in the build context
+ARG DEB=qualx-1.0.0-noble_amd64.deb
+COPY ${DEB} /tmp/qualx.deb
+
+# Install the .deb: apt resolves all runtime dependencies (Qt6, ...).
+# libqt6sql6-sqlite provides the Qt SQLite driver plugin, required to
+# open qualx databases (.sq files).
+# libgl1-mesa-dri adds the Mesa software renderer (llvmpipe), needed
+# when no physical GPU/OpenGL driver is available in the container.
+# xauth is required for X11 authentication in graphical mode.
+# qt6-gtk-platformtheme + adwaita-icon-theme give Qt apps the native
+# GTK/GNOME widget style and icons instead of the generic Fusion style.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/qualx.deb \
+    && apt-get install -y --no-install-recommends \
+        libqt6sql6-sqlite \
+        libgl1-mesa-dri \
+        xauth \
+        qt6-gtk-platformtheme \
+        adwaita-icon-theme \
+    && rm -rf /var/lib/apt/lists/* /tmp/qualx.deb
+
+# Default unprivileged user: the entrypoint adapts its UID/GID at
+# runtime based on PUID/PGID. ubuntu:24.04 images already include
+# an "ubuntu" user with UID/GID 1000: remove it to avoid conflicts
+# with "qualx".
+RUN (userdel -r ubuntu 2>/dev/null || true) \
+    && (groupdel ubuntu 2>/dev/null || true) \
+    && useradd -m -u 1000 -s /bin/bash qualx
+
+# Default mode: headless/offscreen, suitable for --createdb and other
+# command-line operations. For the GUI pass: -e QT_QPA_PLATFORM=xcb
+ENV QT_QPA_PLATFORM=offscreen
+
+# Use the GTK3 platform theme so Qt widgets follow the GNOME/GTK
+# look (colors, fonts, icons) instead of the generic Fusion style.
+# Has no effect in offscreen mode.
+ENV QT_QPA_PLATFORMTHEME=gtk3
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Mount the working directory with: -v "$PWD:/work"
+WORKDIR /work
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["qualx", "--help"]
