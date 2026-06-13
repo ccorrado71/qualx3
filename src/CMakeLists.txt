@@ -256,6 +256,7 @@ set(FORTRAN_SOURCES
     spginfo.f90
     sphase.f90
     stat.f90
+    strip_kalpha.f90
     strutil.f90
     symm_table.f90
     symmgrid.f90

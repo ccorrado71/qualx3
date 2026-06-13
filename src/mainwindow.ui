@@ -162,6 +162,7 @@
     <addaction name="actionRange"/>
     <addaction name="menuBackground"/>
     <addaction name="actionSmoothing"/>
+    <addaction name="actionK_alpha2_Stripping"/>
     <addaction name="menuPeaks"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -637,6 +638,11 @@
   <action name="actionSmoothing">
    <property name="text">
     <string>Smoothing</string>
+   </property>
+  </action>
+  <action name="actionK_alpha2_Stripping">
+   <property name="text">
+    <string>K-α2 Stripping</string>
    </property>
   </action>
   <action name="actionPlot_Style">

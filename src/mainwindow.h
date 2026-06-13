@@ -111,6 +111,7 @@ private slots:
     void onActionBackgroundExportTriggered();
     void onActionSubtractBackgroundTriggered();
     void onActionSmoothingTriggered();
+    void onActionKAlpha2StrippingTriggered();
     void onActionPeakSearchTriggered();
     void onActionPeakSearchConditionsTriggered();
     void onActionLoadPeaksTriggered();

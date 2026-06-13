@@ -34,12 +34,13 @@
    USE peak_mod
 !FIX LATER   USE messagemod
    USE variables, only: dataset
-   implicit none
-   interface
-     subroutine run_peaksearch(gui)
-     logical, intent(in), optional :: gui
-     end subroutine run_peaksearch
-   end interface
+   USE datamod
+!corr   implicit none
+!corr   interface
+!corr     subroutine run_peaksearch(gui)
+!corr     logical, intent(in), optional :: gui
+!corr     end subroutine run_peaksearch
+!corr   end interface
 !
    integer(c_int), intent(in), value                :: iAction
    type(peak_search_settings)                       :: pSettings
@@ -195,11 +196,12 @@
 !
    USE peak_mod
    USE variables, only: dataset
-   interface
-     subroutine run_peaksearch(gui)
-     logical, intent(in), optional :: gui
-     end subroutine run_peaksearch
-   end interface
+   USE datamod
+!corr   interface
+!corr     subroutine run_peaksearch(gui)
+!corr     logical, intent(in), optional :: gui
+!corr     end subroutine run_peaksearch
+!corr   end interface
 !
 !  Reset the range to create the array pkindtot
    pkcond%minp = dataset(1)%xminc()

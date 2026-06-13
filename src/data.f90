@@ -26,13 +26,10 @@ CONTAINS
 
    subroutine open_pattern(input_file,add_data,ier)
    USE fileutil
-!   USE General, only: StructureName, fname, ext, INP_FILE, OUT_FILE
    USE datasetmod
    USE datautil
-!   USE molcom, only:ifProject
    USE strutil
-!   USE General, only:lo
-   USE variables, only: dataset   !,cryst
+   USE variables, only: dataset
    character(len=*), intent(in) :: input_file
    integer, intent(in), value   :: add_data
    integer, intent(out)         :: ier
@@ -76,35 +73,6 @@ CONTAINS
 !
    end subroutine open_pattern
 
-END MODULE datamod
-
-!---------------------------------------------------------------------------
-
-   subroutine work_on_pattern(datas,add_data)
-!   USE Conteggi, only: npunti
-   USE view, only: vedinew
-!   USE messagemod
-!   USE enable_amb
-   USE datasetmod, only: dataset_type
-   USE molcom, only: jscreen
-!   USE datamod, only: abilita_tasti2
-   implicit none
-   type(dataset_type), intent(in) :: datas
-   integer, intent(in)            :: add_data
-!
-!   if(add_data == 0) call dataset_to_expo(datas)
-
-   if (jscreen > 0) then
-!       call init_messages()
-!       call write_message_pattern(datas%fname)
-       call vedinew(8)   !,1,npunti)
-!       call abilita_tasti2()
-   endif
-
-!   if (add_data == 0) call init_dati()
-!
-   end subroutine work_on_pattern
-
 !---------------------------------------------------------------------------
 
    subroutine run_peaksearch(gui)
@@ -146,6 +114,76 @@ END MODULE datamod
 !
    end subroutine run_peaksearch
 
+END MODULE datamod
+
+!---------------------------------------------------------------------------
+
+   subroutine work_on_pattern(datas,add_data)
+!   USE Conteggi, only: npunti
+   USE view, only: vedinew
+!   USE messagemod
+!   USE enable_amb
+   USE datasetmod, only: dataset_type
+   USE molcom, only: jscreen
+!   USE datamod, only: abilita_tasti2
+   implicit none
+   type(dataset_type), intent(in) :: datas
+   integer, intent(in)            :: add_data
+!
+!   if(add_data == 0) call dataset_to_expo(datas)
+
+   if (jscreen > 0) then
+!       call init_messages()
+!       call write_message_pattern(datas%fname)
+       call vedinew(8)   !,1,npunti)
+!       call abilita_tasti2()
+   endif
+
+!   if (add_data == 0) call init_dati()
+!
+   end subroutine work_on_pattern
+
+!---------------------------------------------------------------------------
+!corr
+!corr   subroutine run_peaksearch(gui)
+!corr   USE peak_mod
+!corr   USE variables, only: dataset
+!corr   USE arrayutil
+!corr   USE view, only: vedinew
+!corr   implicit none
+!corr   logical, intent(in), optional   :: gui
+!corr   real, dimension(:), allocatable :: yc
+!corr   real, parameter                 :: SRANGE = 0.15 ! 2theta-range for peak_search at 1.54056
+!corr   logical                         :: guivar
+!corr!
+!corr   if (present(gui)) then
+!corr       guivar = gui
+!corr   else
+!corr       guivar = .true.
+!corr   endif
+!corr!
+!corr!  Subtract background
+!corr   if (.not.dataset(1)%has_back()) then
+!corr       call dataset(1)%make_background()
+!corr   endif
+!corr
+!corr   if (guivar) call update_peak_graph()
+!corr   allocate(yc(dataset(1)%npoints()))
+!corr   yc(:) = dataset(1)%y(:) - dataset(1)%yb(:)
+!corr!
+!corr!  compute srange
+!corr   pkcond%srange = init_peak_range(dataset(1)%x,yc,dataset(1)%wave(1))
+!corr   !write(0,*)'SRANGE =',pkcond%srange
+!corr!
+!corr   call peak_create(dataset(1)%x,yc,pkind,pkcond,dataset(1)%wave(1),pkindtot)
+!corr   pkcond%maxpk = -1 ! unset max number of peaks for GUI
+!corr   pkcond%minpk = -1 ! unset min number of peaks for GUI
+!corr!
+!corr   if (guivar) call update_peak_graph()
+!corr   !call write_column('picchi.txt',xcol1=pkind%getx(),metad='#2theta values')
+!corr!
+!corr   end subroutine run_peaksearch
+!corr
 ! ---------------------------------------------------------------------
 
    subroutine update_peak_graph()
@@ -253,13 +291,14 @@ END MODULE datamod
    USE plotstyle
    USE arrayutil
    USE variables, only: dataset
+   USE datamod
 !
    implicit none
-   interface
-     subroutine run_peaksearch(gui)
-     logical, intent(in), optional :: gui
-     end subroutine run_peaksearch
-   end interface
+!corr   interface
+!corr     subroutine run_peaksearch(gui)
+!corr     logical, intent(in), optional :: gui
+!corr     end subroutine run_peaksearch
+!corr   end interface
    integer, intent(in) :: paction
    real, intent(in)    :: xp,yp
    type(point_type)    :: padd

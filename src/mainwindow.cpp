@@ -46,6 +46,7 @@ extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 extern "C" void delete_peaksC(int pkvet[], int npeak);
 extern "C" void process_action_points(int kaction, double xp, double yp,int *ier);
 extern "C" void apply_background_subtraction();
+extern "C" void kalpha2_stripping();
 extern "C" int peak_number();
 extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave);
 extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
@@ -197,6 +198,7 @@ void MainWindow::actionsSetup()
     connect(ui->actionExport_Background, &QAction::triggered, this, &MainWindow::onActionBackgroundExportTriggered);
     connect(ui->actionSubtract_Background, &QAction::triggered, this, &MainWindow::onActionSubtractBackgroundTriggered);
     connect(ui->actionSmoothing, &QAction::triggered, this, &MainWindow::onActionSmoothingTriggered);
+    connect(ui->actionK_alpha2_Stripping, &QAction::triggered, this, &MainWindow::onActionKAlpha2StrippingTriggered);
     connect(ui->actionPeak_Search, &QAction::triggered, this, &MainWindow::onActionPeakSearchTriggered);
     connect(ui->actionLoad_Peaks, &QAction::triggered, this, &MainWindow::onActionLoadPeaksTriggered);
     connect(ui->actionSave_Peaks, &QAction::triggered, this, &MainWindow::onActionSavePeaksTriggered);
@@ -1185,6 +1187,11 @@ void MainWindow::onActionSmoothingTriggered()
 {
     smoothingDialog->setSmoothing();
     smoothingDialog->show();
+}
+
+void MainWindow::onActionKAlpha2StrippingTriggered()
+{
+    kalpha2_stripping();
 }
 
 void MainWindow::deleteSelectedPeaks(const QVector<int> &selected)
