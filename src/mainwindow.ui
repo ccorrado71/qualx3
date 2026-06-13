@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -138,32 +138,23 @@
     <property name="title">
      <string>Pattern</string>
     </property>
-    <widget class="QMenu" name="menuBackground">
-     <property name="title">
-      <string>Background</string>
-     </property>
-     <addaction name="actionBackground"/>
-     <addaction name="actionSubtract_Background"/>
-     <addaction name="actionAdd_Background_Point"/>
-     <addaction name="actionDelete_Background_Point"/>
-     <addaction name="actionExport_Background"/>
-    </widget>
-    <widget class="QMenu" name="menuPeaks">
-     <property name="title">
-      <string>Peaks</string>
-     </property>
-     <addaction name="actionPeak_Search"/>
-     <addaction name="actionPeak_Search_Conditions"/>
-     <addaction name="actionAdd_Peak"/>
-     <addaction name="actionDelete_Peak"/>
-     <addaction name="actionLoad_Peaks"/>
-     <addaction name="actionSave_Peaks"/>
-    </widget>
     <addaction name="actionRange"/>
-    <addaction name="menuBackground"/>
+    <addaction name="separator"/>
+    <addaction name="actionBackground"/>
+    <addaction name="actionSubtract_Background"/>
+    <addaction name="actionAdd_Background_Point"/>
+    <addaction name="actionDelete_Background_Point"/>
+    <addaction name="actionExport_Background"/>
+    <addaction name="separator"/>
+    <addaction name="actionPeak_Search"/>
+    <addaction name="actionPeak_Search_Conditions"/>
+    <addaction name="actionAdd_Peak"/>
+    <addaction name="actionDelete_Peak"/>
+    <addaction name="actionLoad_Peaks"/>
+    <addaction name="actionSave_Peaks"/>
+    <addaction name="separator"/>
     <addaction name="actionSmoothing"/>
     <addaction name="actionK_alpha2_Stripping"/>
-    <addaction name="menuPeaks"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
