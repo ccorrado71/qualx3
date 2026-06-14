@@ -31,6 +31,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMenu>
 #include <QMessageBox>
 
 #include <algorithm>
@@ -116,6 +117,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(xpdViewer(), &XpdViewWidget::addDeletePointSignal, this, &MainWindow::addDeleteSelectedPoint);
     connect(xpdViewer(), &XpdViewWidget::fileDropped, this, &MainWindow::onActionFileDropped);
     ui->actionLegend->setChecked(xpdViewer()->pSettings().legendVisible);
+
+    ui->xpdWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->xpdWidget, &QWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+        QMenu menu(this);
+        menu.addActions(ui->menuView->actions());
+        menu.exec(ui->xpdWidget->mapToGlobal(pos));
+    });
 
     //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
     // currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";

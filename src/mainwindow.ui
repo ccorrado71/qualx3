@@ -160,21 +160,15 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <widget class="QMenu" name="menuZoom">
-     <property name="title">
-      <string>Zoom</string>
-     </property>
-     <addaction name="actionReset_Zoom"/>
-     <addaction name="actionHorizontal_Zoom"/>
-     <addaction name="actionRectangle_Zoom"/>
-     <addaction name="actionPan"/>
-     <addaction name="actionAutoscale"/>
-    </widget>
-    <addaction name="actionPlot_Style"/>
-    <addaction name="separator"/>
     <addaction name="actionSelection_Mode"/>
-    <addaction name="menuZoom"/>
+    <addaction name="actionReset_Zoom"/>
+    <addaction name="actionHorizontal_Zoom"/>
+    <addaction name="actionRectangle_Zoom"/>
+    <addaction name="actionPan"/>
+    <addaction name="actionAutoscale"/>
     <addaction name="actionLegend"/>
+    <addaction name="separator"/>
+    <addaction name="actionPlot_Style"/>
    </widget>
    <widget class="QMenu" name="menuEntry">
     <property name="title">
@@ -198,8 +192,8 @@
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuPattern"/>
    <addaction name="menuView"/>
+   <addaction name="menuPattern"/>
    <addaction name="menuDatabase"/>
    <addaction name="menuEntry"/>
    <addaction name="menuHelp"/>
