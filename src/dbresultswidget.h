@@ -72,8 +72,8 @@ private:
     TextFilterProxyModel* filterModel;
     PaginationModel*      pageModel;
 
-    int            m_sortColumn = -1;
-    Qt::SortOrder  m_sortOrder  = Qt::AscendingOrder;
+    int            m_sortColumn = 8; // FOM column: results are sorted by FOM (best match first) by default
+    Qt::SortOrder  m_sortOrder  = Qt::DescendingOrder;
 
     QToolBar   *navToolBar = nullptr;
     QToolButton *firstBtn  = nullptr;

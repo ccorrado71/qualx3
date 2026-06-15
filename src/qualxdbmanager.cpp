@@ -62,7 +62,7 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
         info.valid           = true;
     }
 
-    QSqlQuery q2(dbInfo.db());
+    QSqlQuery q2(dbMain.db());
     q2.prepare("SELECT authors, journal, journal_year, journal_volume, page_start, page_end, "
                "color, crystal_density, type, volume, density, z, a, b, c, alpha, beta, gamma, "
                "`mu(CuKa)`, h, k, l FROM info WHERE id=" + idCard);

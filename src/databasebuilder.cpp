@@ -8,10 +8,12 @@
 
 #include <QObject>
 #include <QApplication>
+#include <QEventLoop>
 #include <QFileInfo>
 #include <QProgressDialog>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QTimer>
 #include <QUuid>
 
 bool DatabaseBuilder::buildPdfDatabase(const QString &basePath,
@@ -66,7 +68,16 @@ bool DatabaseBuilder::buildPdfDatabase(const QString &basePath,
     dlg.setWindowTitle(QObject::tr("Creating Database"));
     dlg.setWindowModality(Qt::WindowModal);
     dlg.setMinimumDuration(0);
+    dlg.setMinimumWidth(350);
     dlg.setValue(0);
+    dlg.show();
+    {
+        // Give the window manager time to map and paint the dialog before
+        // starting the blocking parse below.
+        QEventLoop loop;
+        QTimer::singleShot(20, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
 
     // Track cancellation via a local flag instead of dlg.wasCanceled() after close:
     // QProgressDialog::closeEvent() may call cancel() which sets the internal flag,
@@ -164,6 +175,15 @@ bool DatabaseBuilder::buildCifDatabase(const QString &basePath,
     dlg.setWindowTitle(QObject::tr("Creating Database"));
     dlg.setWindowModality(Qt::WindowModal);
     dlg.setMinimumDuration(0);
+    dlg.setMinimumWidth(350);
+    dlg.show();
+    {
+        // Give the window manager time to map and paint the dialog before
+        // starting the blocking scan below.
+        QEventLoop loop;
+        QTimer::singleShot(20, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
 
     QObject::connect(&reader, &CifReader::cifFound,
                      [&](const QString &cifPath) {

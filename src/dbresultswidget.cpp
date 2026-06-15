@@ -76,7 +76,7 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     ui->table->setItemDelegateForColumn(9, new FloatDelegate(this, 3));
 
     ui->table->horizontalHeader()->setSortIndicatorShown(true);
-    ui->table->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
+    ui->table->horizontalHeader()->setSortIndicator(m_sortColumn, m_sortOrder);
 
     // ── Navigation toolbar ──────────────────────────────────────────
     // Use addAction() for buttons so they get native toolbar-button rendering
@@ -171,6 +171,11 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
         populateRow(i, results[i]);
     sourceModel->blockSignals(false);
 
+    if (m_sortColumn >= 0) {
+        sourceModel->sort(m_sortColumn, m_sortOrder);
+        ui->table->horizontalHeader()->setSortIndicator(m_sortColumn, m_sortOrder);
+    }
+
     pageModel->setCurrentPage(0);
     ui->table->resizeColumnsToContents();
     emit hasResultsChanged(hasResults());
@@ -240,6 +245,11 @@ void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
     for (int i = 0; i < toAdd.size(); ++i)
         populateRow(startRow + i, toAdd[i]);
     sourceModel->blockSignals(false);
+
+    if (m_sortColumn >= 0) {
+        sourceModel->sort(m_sortColumn, m_sortOrder);
+        ui->table->horizontalHeader()->setSortIndicator(m_sortColumn, m_sortOrder);
+    }
 
     pageModel->setCurrentPage(0);
     ui->table->resizeColumnsToContents();

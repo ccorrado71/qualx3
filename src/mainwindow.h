@@ -103,6 +103,7 @@ private slots:
     void onActionSaveProjectAsTriggered();
     void onActionExportDiffractionPattern();
     void onActionImagePowderPatternTriggered();
+    void onActionPrintTriggered();
     void onActionFileDropped(const QStringList &fileList);
 
     //Pattern
@@ -133,8 +134,8 @@ private slots:
     //Entry
     void onActionLoadAddTriggered();
 
-    //Print
-    void onActionPrintTriggered();
+    //Window
+    void onActionDefaultLayoutTriggered();
 
     //Help
     void onActionDocumentationHtmlTriggered();
@@ -184,6 +185,7 @@ private:
     void createRecentActions();
     void updateRecentFileActions();
     void setRecentFiles(const QString &fullFileName, const QString &fileType);
+    QByteArray defaultState;
 
     void testSelection(DbQueryBuilder &builder, int testCase);
     void executeSearch(DbQueryBuilder &builder, bool merge = false);

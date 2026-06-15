@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVector>
 #include <QStringList>
+#include <QHash>
 
 // A single diffraction peak: d-spacing and relative intensity
 struct Pdf2Peak {
@@ -41,7 +42,8 @@ struct Pdf2Card {
     float muCuKa = -1.0f;  // Absorption coefficient mu(CuKa) (cm⁻¹)
 
     // From record type 9 (bibliographic reference – first occurrence only)
-    QString journal;        // Journal CODEN (e.g. "ANCHAM")
+    QString journal;        // Full journal name (resolved from CODEN via codens.dat,
+                             // falls back to the raw CODEN, e.g. "ANCHAM", if not found)
     QString journalVolume;  // Volume number
     QString journalYear;    // Publication year (4 chars)
     QString pageStart;      // First page
@@ -103,6 +105,7 @@ private:
 
     void processLine(const QByteArray &line);
     void finalizeCard();
+    void loadCodensFile(const QString &pdf2FilePath);
 
     void parseRecordType1(const QByteArray &line);
     void parseRecordType3(const QByteArray &line);
@@ -123,4 +126,7 @@ private:
     int     m_recordCount      = 0;  // total 80-byte records read so far
     int     m_cardStartRecord  = 0;  // record number when the current card started
     qint64  m_fileSize         = 0;  // total file size in bytes (set at start of parse)
+
+    // CODEN -> full journal name, loaded from "codens.dat" (same folder as the PDF-2 file)
+    QHash<QString, QString> m_codenMap;
 };

@@ -74,6 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
     , projectFileSaved(true)
 {
     ui->setupUi(this);
+    ui->cardBrowser->setOpenExternalLinks(true);
     ui->resultsWidget->setEntryToolBar(ui->toolBarEntry);
     ui->resultsWidget->setContextMenuActions({
         ui->actionLoad_Add,
@@ -125,12 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
         menu.exec(ui->xpdWidget->mapToGlobal(pos));
     });
 
-    //currentDatabase = "/home/corrado/temp/cod/cod2205/cod2205";
-    // currentDatabase = "/home/corrado/temp/cod/cod2509/cod2509";
-    // if (!AppState::db().openDatabases(currentDatabase)) {
-    //     qCritical() << "Error opening databases";
-    // }
-
+    defaultState = saveState();
     readSettings();
     createRecentActions();
     enableActions(InitAction);
@@ -232,6 +228,13 @@ void MainWindow::actionsSetup()
     //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
+
+    //Window menu
+    QList<QAction *> actions = createPopupMenu()->actions();
+    foreach (QAction *action, actions) {
+        ui->menuWindow->addAction(action);
+    }
+    connect(ui->actionDefault_Layout, &QAction::triggered, this, &MainWindow::onActionDefaultLayoutTriggered);
 
     //Help menu
     connect(ui->actionDocumentation_HTML,   &QAction::triggered, this, &MainWindow::onActionDocumentationHtmlTriggered);
@@ -1144,6 +1147,110 @@ void MainWindow::onActionFileDropped(const QStringList &fileList)
     }
 }
 
+static QString modelToHtml(QAbstractItemModel *model,
+                           const QString &title,
+                           const QList<int> &skipCols = {})
+{
+    QString html =
+        "<html><head><style>"
+        "body{font-family:sans-serif;font-size:10pt;}"
+        "h2{color:#003366;}"
+        "table{border-collapse:collapse;width:100%;}"
+        "th{background:#003366;color:white;padding:4px 8px;text-align:left;}"
+        "td{border:1px solid #ccc;padding:3px 8px;}"
+        "tr:nth-child(even){background:#f0f4ff;}"
+        "</style></head><body>";
+    html += "<h2>" + title.toHtmlEscaped() + "</h2><table><tr>";
+
+    for (int c = 0; c < model->columnCount(); ++c) {
+        if (skipCols.contains(c)) continue;
+        html += "<th>" + model->headerData(c, Qt::Horizontal).toString().toHtmlEscaped() + "</th>";
+    }
+    html += "</tr>";
+
+    for (int r = 0; r < model->rowCount(); ++r) {
+        html += "<tr>";
+        for (int c = 0; c < model->columnCount(); ++c) {
+            if (skipCols.contains(c)) continue;
+            html += "<td>" + model->data(model->index(r, c)).toString().toHtmlEscaped() + "</td>";
+        }
+        html += "</tr>";
+    }
+
+    html += "</table></body></html>";
+    return html;
+}
+
+static void printHtml(QPrinter *printer, const QString &html)
+{
+    QTextDocument doc;
+    doc.setHtml(html);
+    doc.print(printer);
+}
+
+static void printWidget(QPrinter *printer, QWidget *widget)
+{
+    QPixmap pix = widget->grab();
+    QPainter painter(printer);
+    QRect pr = printer->pageLayout().paintRectPixels(printer->resolution());
+    QSize scaled = pix.size().scaled(pr.size(), Qt::KeepAspectRatio);
+    QRect target(pr.topLeft(), scaled);
+    painter.drawPixmap(target, pix);
+}
+
+void MainWindow::onActionPrintTriggered()
+{
+    PrintDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QPrinter printer(QPrinter::HighResolution);
+    QPrintDialog printDlg(&printer, this);
+    if (printDlg.exec() != QDialog::Accepted)
+        return;
+
+    switch (dlg.selectedArea()) {
+
+    case PrintDialog::Report:
+        ui->reportWidget->print(&printer);
+        break;
+
+    case PrintDialog::ResultList:
+        printHtml(&printer,
+                  modelToHtml(ui->resultsWidget->sourceModel,
+                              tr("Result List"),
+                              {0}));   // skip checkbox column
+        break;
+
+    case PrintDialog::PeakList:
+        printHtml(&printer,
+                  modelToHtml(ui->peakListWidget->peakListModel,
+                              tr("Peak List")));
+        break;
+
+    case PrintDialog::Pattern: {
+        QCPPainter cpPainter(&printer);
+        QRect pr = printer.pageLayout().paintRectPixels(printer.resolution());
+        ui->xpdWidget->toPainter(&cpPainter, pr.width(), pr.height());
+        break;
+    }
+
+    case PrintDialog::Card:
+        ui->cardBrowser->print(&printer);
+        break;
+
+    case PrintDialog::Quantitative:
+        printWidget(&printer, ui->quantWidget);
+        break;
+
+    case PrintDialog::Compare:
+        printHtml(&printer,
+                  modelToHtml(ui->peakCompareWidget->m_model,
+                              tr("Compare")));
+        break;
+    }
+}
+
 //
 //  Pattern Menu
 //
@@ -1861,6 +1968,14 @@ void MainWindow::onCardSelected(const QString &id)
     html += row("Type",             info.type);
     if (!ref.isEmpty())
         html += "<tr><td><b>Reference</b></td><td>" + ref + "</td></tr>";
+
+    int dbNcard;
+    QString dbType;
+    AppState::db().getInfo(dbNcard, dbType);
+    if (dbType == "COD") {
+        const QString codUrl = QString("https://www.crystallography.net/cod/%1.html").arg(info.id);
+        html += QString("<tr><td><b>COD Entry</b></td><td><a href='%1'>%1</a></td></tr>").arg(codUrl);
+    }
     html += "</table>";
 
     // --- Reflections table ---
@@ -2098,115 +2213,22 @@ void MainWindow::onActionDocumentationPdfTriggered()
            "Run 'bash docs/make_pdf.sh' to generate it."));
 }
 
-// ---------------------------------------------------------------------------
+//
+//  Window Menu
+//
+
+void MainWindow::onActionDefaultLayoutTriggered()
+{
+    //bool nextVisible = ui->toolBarNext->isVisible();
+    restoreState(defaultState);
+    // resizeDocks({ui->dockWidget,ui->dockWidget_2},{50,50},Qt::Horizontal);
+    // qInfo() << "Next is visible: " << nextVisible;
+    // ui->toolBarNext->setVisible(nextVisible);
+}
+
+//
 // Helpers
-// ---------------------------------------------------------------------------
-
-static QString modelToHtml(QAbstractItemModel *model,
-                            const QString &title,
-                            const QList<int> &skipCols = {})
-{
-    QString html =
-        "<html><head><style>"
-        "body{font-family:sans-serif;font-size:10pt;}"
-        "h2{color:#003366;}"
-        "table{border-collapse:collapse;width:100%;}"
-        "th{background:#003366;color:white;padding:4px 8px;text-align:left;}"
-        "td{border:1px solid #ccc;padding:3px 8px;}"
-        "tr:nth-child(even){background:#f0f4ff;}"
-        "</style></head><body>";
-    html += "<h2>" + title.toHtmlEscaped() + "</h2><table><tr>";
-
-    for (int c = 0; c < model->columnCount(); ++c) {
-        if (skipCols.contains(c)) continue;
-        html += "<th>" + model->headerData(c, Qt::Horizontal).toString().toHtmlEscaped() + "</th>";
-    }
-    html += "</tr>";
-
-    for (int r = 0; r < model->rowCount(); ++r) {
-        html += "<tr>";
-        for (int c = 0; c < model->columnCount(); ++c) {
-            if (skipCols.contains(c)) continue;
-            html += "<td>" + model->data(model->index(r, c)).toString().toHtmlEscaped() + "</td>";
-        }
-        html += "</tr>";
-    }
-
-    html += "</table></body></html>";
-    return html;
-}
-
-static void printHtml(QPrinter *printer, const QString &html)
-{
-    QTextDocument doc;
-    doc.setHtml(html);
-    doc.print(printer);
-}
-
-static void printWidget(QPrinter *printer, QWidget *widget)
-{
-    QPixmap pix = widget->grab();
-    QPainter painter(printer);
-    QRect pr = printer->pageLayout().paintRectPixels(printer->resolution());
-    QSize scaled = pix.size().scaled(pr.size(), Qt::KeepAspectRatio);
-    QRect target(pr.topLeft(), scaled);
-    painter.drawPixmap(target, pix);
-}
-
-// ---------------------------------------------------------------------------
-
-void MainWindow::onActionPrintTriggered()
-{
-    PrintDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
-
-    QPrinter printer(QPrinter::HighResolution);
-    QPrintDialog printDlg(&printer, this);
-    if (printDlg.exec() != QDialog::Accepted)
-        return;
-
-    switch (dlg.selectedArea()) {
-
-    case PrintDialog::Report:
-        ui->reportWidget->print(&printer);
-        break;
-
-    case PrintDialog::ResultList:
-        printHtml(&printer,
-                  modelToHtml(ui->resultsWidget->sourceModel,
-                               tr("Result List"),
-                               {0}));   // skip checkbox column
-        break;
-
-    case PrintDialog::PeakList:
-        printHtml(&printer,
-                  modelToHtml(ui->peakListWidget->peakListModel,
-                               tr("Peak List")));
-        break;
-
-    case PrintDialog::Pattern: {
-        QCPPainter cpPainter(&printer);
-        QRect pr = printer.pageLayout().paintRectPixels(printer.resolution());
-        ui->xpdWidget->toPainter(&cpPainter, pr.width(), pr.height());
-        break;
-    }
-
-    case PrintDialog::Card:
-        ui->cardBrowser->print(&printer);
-        break;
-
-    case PrintDialog::Quantitative:
-        printWidget(&printer, ui->quantWidget);
-        break;
-
-    case PrintDialog::Compare:
-        printHtml(&printer,
-                  modelToHtml(ui->peakCompareWidget->m_model,
-                               tr("Compare")));
-        break;
-    }
-}
+//
 
 void MainWindow::onActionCheckForUpdatesTriggered()
 {

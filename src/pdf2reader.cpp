@@ -1,6 +1,7 @@
 #include "pdf2reader.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QDebug>
 
 // -----------------------------------------------------------------------
@@ -67,6 +68,8 @@ bool Pdf2Reader::parse(const QString &filePath)
         return false;
     }
 
+    loadCodensFile(filePath);
+
     m_current           = {};
     m_hasCurrentCard    = false;
     m_formulaContinues  = false;
@@ -93,6 +96,40 @@ bool Pdf2Reader::parse(const QString &filePath)
 
     emit finished(m_cardsEmitted);
     return !m_cancelled;
+}
+
+// -----------------------------------------------------------------------
+// loadCodensFile – CODEN -> full journal name lookup table
+// -----------------------------------------------------------------------
+
+/*
+ * "codens.dat" is expected in the same folder as the PDF-2 file. It is a
+ * stream of 80-byte records (no line separators), each containing:
+ *   [0 - 5]  journal CODEN (6 chars, A6)
+ *   [6]      separator space
+ *   [7 -79]  full journal name (73 chars, free text)
+ */
+void Pdf2Reader::loadCodensFile(const QString &pdf2FilePath)
+{
+    m_codenMap.clear();
+
+    const QFileInfo fi(pdf2FilePath);
+    QFile file(fi.absolutePath() + QStringLiteral("/codens.dat"));
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Pdf2Reader: codens.dat not found in" << fi.absolutePath();
+        return;
+    }
+
+    QByteArray record(80, '\0');
+    while (!file.atEnd()) {
+        const qint64 bytesRead = file.read(record.data(), 80);
+        if (bytesRead < 80) break;
+
+        const QString coden  = field(record, 0, 6);
+        const QString journal = field(record, 7, 73);
+        if (!coden.isEmpty())
+            m_codenMap.insert(coden, journal);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -259,7 +296,8 @@ void Pdf2Reader::parseRecordType4(const QByteArray &line)
  * Type '9' – Bibliographic reference
  * NBS*AIDS83 layout (0-based):
  * Type-9 record layout (0-based, data area [0-71]):
- *   [0 - 5]  journal CODEN (6 chars, e.g. "ANCHAM")
+ *   [0 - 5]  journal CODEN (6 chars, e.g. "ANCHAM"); resolved to the full
+ *            journal name via codens.dat (see loadCodensFile)
  *   [6 - 9]  volume number (4 chars, right-justified)
  *   [10-14]  first page (5 chars, right-justified)
  *   [15]     separator space
@@ -281,7 +319,9 @@ void Pdf2Reader::parseRecordType9(const QByteArray &line)
     // Only store the first bibliography record encountered for this card
     if (!m_current.journal.isEmpty()) return;
 
-    m_current.journal       = field(line,  0,  6);
+    const QString coden = field(line, 0, 6);
+    const auto it = m_codenMap.constFind(coden);
+    m_current.journal       = (it != m_codenMap.constEnd()) ? it.value() : coden;
     m_current.journalVolume = field(line,  6,  4);
     m_current.pageStart     = field(line, 10,  5);
     m_current.journalYear   = field(line, 16,  4);  // [15] is separator space
