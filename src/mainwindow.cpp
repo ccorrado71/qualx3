@@ -165,6 +165,9 @@ void MainWindow::createDialogs()
     connect(ui->resultsWidget, &DbResultsWidget::cardSelected,
             this, &MainWindow::onCardSelected);
 
+    connect(ui->quantWidget, &QuantWidget::cardSelected,
+            this, &MainWindow::onCardSelected);
+
     connect(ui->resultsWidget, &DbResultsWidget::cardDataSelected,
             this, [this](const CardType &card) {
                 ui->peakCompareWidget->setSelectedCard(
@@ -224,7 +227,6 @@ void MainWindow::actionsSetup()
     connect(ui->actionSearch_Match_Options, &QAction::triggered, this, &MainWindow::onActionSearchMatchOptionsTriggered);
     connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
-    connect(ui->actionDatabaseInfo, &QAction::triggered, this, &MainWindow::onActionDatabaseInfoTriggered);
     //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
@@ -297,10 +299,39 @@ void MainWindow::actionsSetup()
     });
 }
 
+static int loadExperimentalPeaks(); // defined below
+
+static QStringList buildActiveRestraints(RestraintsDialog *dlg)
+{
+    if (!dlg) return {};
+    QStringList list;
+    if (!dlg->compositionFormula().isEmpty())     list << "Composition";
+    if (!dlg->chemicalName().isEmpty())           list << "Chemical name";
+    if (!dlg->crystalSystemStrings().isEmpty())   list << "Crystal system";
+    if (!dlg->spaceGroupStrings().isEmpty())       list << "Space group";
+    if (!dlg->subfilesCodes().isEmpty())           list << "Subfiles";
+    if (!dlg->entryIds().isEmpty())                list << "Entry IDs";
+    const auto cell = dlg->cellQuery();
+    for (double v : cell.values)
+        if (v >= 0) { list << "Unit cell"; break; }
+    return list;
+}
+
+void MainWindow::updateReport()
+{
+    if (peakSearchDialog)
+        ui->reportWidget->setPeakSearchSettings(peakSearchDialog->settings());
+    const QStringList activeR = buildActiveRestraints(m_restraintsDialog);
+    ui->reportWidget->setRestraintsInfo(!activeR.isEmpty(), activeR);
+    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+}
+
 void MainWindow::updatePeakListTable()
 {
     if (ui->peakListWidget->isVisible())
         ui->peakListWidget->updatePeakListTable();
+    loadExperimentalPeaks();
+    updateReport();
 }
 
 void MainWindow::enableActions(EnabledActions action, bool state)
@@ -586,6 +617,7 @@ void MainWindow::openRecentFile()
 //                outputFileName = fileOut;
                 setWindowTitle(currentFile);
                 markProjectModified();
+                updateReport();
             }
             break;
         }
@@ -626,6 +658,7 @@ void MainWindow::loadDiffractionPatterns(QStringList files)
 //            outputFileName = outFile;
             setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
             markProjectModified();
+            updateReport();
         }
     }
 }
@@ -769,13 +802,13 @@ void MainWindow::loadProject(QString fileName)
         for (const QJsonValue &val : root["results"].toArray())
             cards.append(cardFromJson(val.toObject(), wave));
         ui->resultsWidget->setResults(cards);
-        ui->reportWidget->updateReport(AppState::peaks(), cards);
         if (ui->resultsWidget->hasResults()) {
             ui->resultsWidget->selectFirstCard();
             ui->dockWidgetCompare->show();
             ui->dockWidgetCompare->raise();
         }
     }
+    updateReport();
 
     // ── Accepted phases ──────────────────────────────────────────────
     if (root.contains("phases")) {
@@ -1296,6 +1329,7 @@ void MainWindow::onActionBackgroundExportTriggered()
 void MainWindow::onActionSubtractBackgroundTriggered()
 {
     apply_background_subtraction();
+    updateReport();
 }
 
 void MainWindow::onActionSmoothingTriggered()
@@ -1307,6 +1341,7 @@ void MainWindow::onActionSmoothingTriggered()
 void MainWindow::onActionKAlpha2StrippingTriggered()
 {
     kalpha2_stripping();
+    updateReport();
 }
 
 void MainWindow::deleteSelectedPeaks(const QVector<int> &selected)
@@ -1326,17 +1361,24 @@ void MainWindow::addDeleteSelectedPoint(int action, double xp, double yp, int &i
 
 void MainWindow::onActionPeakSearchTriggered()
 {
+    ui->peakDockWidget->show();
+    ui->peakDockWidget->raise();
     run_peaksearchwin();
+    updateReport();
 }
 
 void MainWindow::onActionPeakSearchConditionsTriggered()
 {
+    ui->peakDockWidget->show();
+    ui->peakDockWidget->raise();
     peakSearchDialog->setOptions();
     peakSearchDialog->show();
 }
 
 void MainWindow::onActionLoadPeaksTriggered()
 {
+    ui->peakDockWidget->show();
+    ui->peakDockWidget->raise();
     QSettings settings;
     QString selectedFilter = "2 theta values (*.dat *.txt *.pea)";
     QString exts = "2 theta values (*.dat *.txt *.pea);;"
@@ -1349,6 +1391,7 @@ void MainWindow::onActionLoadPeaksTriggered()
         int tipo = (selectedFilter.startsWith("2 theta")) ? 1 : 2;
         int ier;
         LoadPeaksC(fileName.toStdString().c_str(), fileName.length(), tipo, &ier);
+        updateReport();
     }
 }
 
@@ -1423,6 +1466,8 @@ void MainWindow::zoomGroupTriggered(QAction *action)
         if (mAction != DeleteBackgroundPoint) setAction(DeleteBackgroundPoint, false);
     } else if (action == ui->actionAdd_Peak) {
         if (mAction != AddPeak) setAction(AddPeak, false);
+        ui->peakDockWidget->show();
+        ui->peakDockWidget->raise();
     } else if (action == ui->actionDelete_Peak) {
         if (mAction != DeletePeak) setAction(DeletePeak, false);
     }
@@ -1665,7 +1710,7 @@ void MainWindow::onActionSearchMatchTriggered()
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
     ui->reportWidget->clearQuantitative();
-    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    updateReport();
     if (ui->resultsWidget->hasResults()) {
         ui->resultsWidget->selectFirstCard();
         ui->dockWidgetCompare->show();
@@ -1713,7 +1758,7 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
     ui->reportWidget->clearQuantitative();
-    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    updateReport();
     if (ui->resultsWidget->hasResults()) {
         ui->resultsWidget->selectFirstCard();
         ui->dockWidgetCompare->show();
@@ -1859,7 +1904,7 @@ void MainWindow::onRestraintsSearchMatch()
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
     ui->reportWidget->clearQuantitative();
-    ui->reportWidget->updateReport(AppState::peaks(), ui->resultsWidget->allCards());
+    updateReport();
     if (ui->resultsWidget->hasResults()) {
         ui->resultsWidget->selectFirstCard();
         ui->dockWidgetCompare->show();
@@ -1883,14 +1928,6 @@ void MainWindow::runSearch(const SearchOptions &opts)
     }
 
     executeSearch(builder);
-}
-
-void MainWindow::onActionDatabaseInfoTriggered()
-{
-    int ncard;
-    QString type;
-    AppState::db().getInfo(ncard, type);
-    qInfo() << "Ncard: " << ncard << "Type: " << type;
 }
 
 void MainWindow::onActionTestDatabaseTriggered()

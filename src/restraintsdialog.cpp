@@ -288,6 +288,7 @@ QStringList RestraintsDialog::crystalSystemStrings() const
 RestraintsDialog::CellQuery RestraintsDialog::cellQuery() const
 {
     CellQuery q;
+    if (!ui->cellSearch) return q;
     const QLineEdit *edits[6] = {
         ui->cellSearch->lineEditA(),  ui->cellSearch->lineEditB(),
         ui->cellSearch->lineEditC(),  ui->cellSearch->lineEditAl(),
@@ -295,12 +296,15 @@ RestraintsDialog::CellQuery RestraintsDialog::cellQuery() const
     };
     bool ok;
     for (int i = 0; i < 6; ++i) {
+        if (!edits[i]) continue;
         const double v = edits[i]->text().trimmed().toDouble(&ok);
         if (ok && v > 0.0)
             q.values[i] = v;
     }
-    q.lenTol = ui->cellSearch->doubleSpinLenTol()->value();
-    q.angTol = ui->cellSearch->doubleSpinAngTol()->value();
+    if (ui->cellSearch->doubleSpinLenTol())
+        q.lenTol = ui->cellSearch->doubleSpinLenTol()->value();
+    if (ui->cellSearch->doubleSpinAngTol())
+        q.angTol = ui->cellSearch->doubleSpinAngTol()->value();
     return q;
 }
 

@@ -41,6 +41,14 @@ QuantWidget::QuantWidget(QWidget *parent)
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
     ui->tableView->setItemDelegateForColumn(3, new FloatDelegate(this, 2));
+
+    connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
+            this, [this](const QModelIndex &current, const QModelIndex &) {
+        if (!current.isValid()) return;
+        const QString id = m_model->item(current.row(), 1)->text();
+        if (!id.isEmpty())
+            emit cardSelected(id);
+    });
 }
 
 QuantWidget::~QuantWidget()

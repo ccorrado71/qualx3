@@ -5,8 +5,10 @@
 #include <QVector>
 #include <QPair>
 #include <QColor>
+#include <QStringList>
 #include "experimentalpeaks.h"
 #include "cardtype.h"
+#include "peaksearchdialog.h"
 
 class QPrinter;
 
@@ -30,17 +32,23 @@ public:
     void clearQuantitative();
     void print(QPrinter *printer);
 
+    void setPeakSearchSettings(const peakSearchSettings &s);
+    void setRestraintsInfo(bool hasRestraints, const QStringList &active);
+
 private:
     void generateHtml();
     static QPixmap renderPieChart(const QVector<QPair<QColor, double>> &slices, int size);
 
     Ui::ReportWidget  *ui;
 
-    ExperimentalPeaks  m_ep;
-    QVector<CardType>  m_cards;
-    int                m_maxCards = 100;
-    QVector<CardType>  m_phases;
-    QVector<double>    m_quant;
+    ExperimentalPeaks   m_ep;
+    QVector<CardType>   m_cards;
+    int                 m_maxCards = 100;
+    QVector<CardType>   m_phases;
+    QVector<double>     m_quant;
+    peakSearchSettings  m_pkSettings  = {};
+    bool                m_hasRestraints = false;
+    QStringList         m_activeRestraints;
 };
 
 #endif // REPORTWIDGET_H

@@ -39,8 +39,11 @@ void PeakListWidget::createContextMenu(QPoint pos)
     QMenu *menu=new QMenu(this);
     menu->addAction(addPeakAction);
     menu->addAction(deletePeakAction);
+    menu->addSeparator();
+    menu->addAction(clearSelectionAction);
 
     deletePeakAction->setEnabled(indexMenu.isValid());
+    clearSelectionAction->setEnabled(!ui->peakTableView->selectionModel()->selectedRows().isEmpty());
 
     menu->popup(ui->peakTableView->viewport()->mapToGlobal(pos));
 }
@@ -162,6 +165,16 @@ void PeakListWidget::createContextMenuActions()
     connect(deletePeakAction, &QAction::triggered, this, &PeakListWidget::deletePeaks);
     addPeakAction = new QAction("Add Peak", this);
     connect(addPeakAction, &QAction::triggered, this, &PeakListWidget::addPeak);
+    clearSelectionAction = new QAction(tr("Clear Selection"), this);
+    clearSelectionAction->setShortcut(QKeySequence(Qt::Key_Escape));
+    clearSelectionAction->setShortcutContext(Qt::WidgetShortcut);
+    connect(clearSelectionAction, &QAction::triggered, this, &PeakListWidget::clearSelection);
+    ui->peakTableView->addAction(clearSelectionAction);
+}
+
+void PeakListWidget::clearSelection()
+{
+    ui->peakTableView->clearSelection();
 }
 
 void PeakListWidget::updatePeakListModel()

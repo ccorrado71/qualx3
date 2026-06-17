@@ -225,6 +225,7 @@ set(FORTRAN_SOURCES
     mapinfo.f90
     marquardt.f90
     math_util.F90
+    messages.f90
     modeltype.f90
     moduli.f90
     molgraph.f90

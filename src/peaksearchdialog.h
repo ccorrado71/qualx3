@@ -29,6 +29,8 @@ public:
     void setOptions();
     ~PeakSearchDialog();
 
+    const peakSearchSettings &settings() const { return pkSettings; }
+
 private slots:
     void onNumPeaksSpinBoxValueChanged();
     void onButtonBoxClicked(QAbstractButton *button);

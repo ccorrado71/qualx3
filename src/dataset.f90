@@ -36,6 +36,7 @@ MODULE datasetmod
      integer                                     :: zcode=0,sdcode=0,stcode=0
      logical                                     :: data_scaled = .false.
      logical                                     :: back_subtracted = .false.
+     logical                                     :: alpha2_subtracted = .false.
 !
 !    background variables
      real, dimension(:), allocatable             :: yb          ! background

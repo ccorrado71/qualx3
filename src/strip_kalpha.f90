@@ -82,6 +82,7 @@ contains
    use datamod
 !
    call alphastrip(dataset(1))
+   dataset(1)%alpha2_subtracted = .true.
 !
    if (dataset(1)%has_back()) then
        call dataset(1)%make_background()

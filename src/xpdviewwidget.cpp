@@ -501,7 +501,14 @@ void XpdViewWidget::setAction(const MouseAction &action)
 
 void XpdViewWidget::drawSelectedPeaks(const QVector<int> &selected)
 {
-    if (selected.size() == 0) return;
+    if (selected.size() == 0) {
+        int id = selectedPeak.getGraphIndex();
+        if (id >= 0) {
+            graph(id)->setData({}, {});
+            replot();
+        }
+        return;
+    }
     int idPeak = peaks.getGraphIndex();
     if (idPeak < 0) return;
 

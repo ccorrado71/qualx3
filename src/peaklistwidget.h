@@ -31,6 +31,7 @@ private slots:
     void createContextMenu(QPoint pos);
     void deletePeaks();
     void addPeak();
+    void clearSelection();
     void peakListTableChanged(const QModelIndex &topLeft, const QModelIndex &);
     void markSelectedPeaks();
 
@@ -39,6 +40,7 @@ private:
     QSortFilterProxyModel *peakListProxyModel;
     QAction *deletePeakAction;
     QAction *addPeakAction;
+    QAction *clearSelectionAction;
     bool tableChangedEnabled;
 
     void createPeakListModel();

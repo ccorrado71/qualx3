@@ -189,9 +189,10 @@ END MODULE datamod
    subroutine update_peak_graph()
    USE molcom, only: jscreen
    !USE enable_amb
-   !USE messagemod
-   !USE peak_mod
+   USE messagemod
+   USE peak_mod
    USE view
+   USE strutil
    implicit none
    interface
       subroutine update_peak_list() bind(C,name="update_peak_list")
@@ -199,8 +200,7 @@ END MODULE datamod
    end interface
 !
    if (jscreen > 0) then
-       !call write_message('Number of peaks: ',inum=numpeaks(pkind),pos=2)
-!FIX LATER       call write_message_peak()
+       call set_status_message('Number of peaks: '//i_to_s(numpeaks(pkind)))
        call update_peak_list()
 !qt       call abilita_tasti('peaks',state=1)
        call vedinew(5, rescale=0)
@@ -212,16 +212,17 @@ END MODULE datamod
 
    subroutine update_peak_graph1(pos_message)
    USE molcom, only: jscreen
-!FIX LATER   USE messagemod
+   USE messagemod
    USE peak_mod
    USE view
+   USE strutil
    implicit none
 !
    integer, intent(in) :: pos_message
 !
-!!!TOFIX: move all functions in GUI, except for vedinew
    if (jscreen > 0) then
-!FIX LATER       call write_message('Number of peaks:',inum=numpeaks(pkind),pos=pos_message)
+       !call write_message('Number of peaks:',inum=numpeaks(pkind),pos=pos_message)
+       call set_status_message('Number of peaks: '//i_to_s(numpeaks(pkind)))
        call vedinew(5,rescale=0)   !!!!,1,npunti)
    endif
 !

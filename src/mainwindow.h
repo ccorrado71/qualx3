@@ -129,7 +129,6 @@ private slots:
     void actionRestraintsTriggered();
     void actionManageDatabasesTriggered();
     void onActionTestDatabaseTriggered();
-    void onActionDatabaseInfoTriggered();
 
     //Entry
     void onActionLoadAddTriggered();
@@ -147,6 +146,7 @@ private:
     void createDialogs();
     void createActionGroup();
     void actionsSetup();
+    void updateReport();
     void writeSettings();
     void readSettings();
     void readAction();

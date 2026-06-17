@@ -19,6 +19,9 @@ public:
     explicit QuantWidget(QWidget *parent = nullptr);
     ~QuantWidget();
 
+signals:
+    void cardSelected(const QString &id);
+
 public slots:
     void addPhase(const CardType &card);
 

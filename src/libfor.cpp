@@ -122,6 +122,11 @@ extern "C" void dosingleiteration() {
     QCoreApplication::processEvents();
 }
 
+extern "C" void c_set_status_message(const char *msg) {
+    if (!mMainWindow) return;
+    mMainWindow->setStatusMessage(QString::fromUtf8(msg));
+}
+
 // extern "C" void cprintmessage(char *string) {
 //     if(!jscreen)
 //        return;

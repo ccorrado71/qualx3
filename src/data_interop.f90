@@ -90,4 +90,53 @@ contains
 
    end subroutine set_diffraction_data
 
+! ---------------------------------------------------------------------------
+
+! Returns lightweight metadata about the current dataset for the report.
+! wave and ratio arrays must be pre-allocated by the caller (max 4 elements).
+   subroutine get_dataset_info(filename, filename_len, npoints, &
+                                tmin, tmax, tstep,              &
+                                back_subtracted, alpha2_subtracted, &
+                                radtype, nwave, wave, ratio)    &
+              bind(C, name='get_dataset_info')
+   USE strutil
+   USE variables, only: dataset
+   integer(C_INT), value,        intent(in)  :: filename_len
+   character(kind=C_CHAR),       intent(out) :: filename(*)
+   integer(C_INT),               intent(out) :: npoints, radtype, nwave
+   real(C_FLOAT),                intent(out) :: tmin, tmax, tstep
+   logical(C_BOOL),              intent(out) :: back_subtracted, alpha2_subtracted
+   real(C_FLOAT),                intent(out) :: wave(*), ratio(*)
+   integer :: n, i
+
+   if (.not. allocated(dataset) .or. size(dataset) == 0) then
+       call copy_string_to_c_array('', filename, filename_len)
+       npoints           = 0_C_INT
+       tmin              = 0.0_C_FLOAT
+       tmax              = 0.0_C_FLOAT
+       tstep             = 0.0_C_FLOAT
+       back_subtracted   = logical(.false., C_BOOL)
+       alpha2_subtracted = logical(.false., C_BOOL)
+       radtype           = 0_C_INT
+       nwave             = 0_C_INT
+       return
+   end if
+
+   n = dataset(1)%npoints()
+   call copy_string_to_c_array(trim(dataset(1)%fname), filename, filename_len)
+   npoints           = int(n,                             C_INT)
+   tmin              = real(dataset(1)%tmin,              C_FLOAT)
+   tmax              = real(dataset(1)%tmax,              C_FLOAT)
+   tstep             = real(dataset(1)%tstep,             C_FLOAT)
+   back_subtracted   = logical(dataset(1)%back_subtracted,   C_BOOL)
+   alpha2_subtracted = logical(dataset(1)%alpha2_subtracted, C_BOOL)
+   radtype           = int(dataset(1)%radtype,            C_INT)
+   nwave             = int(dataset(1)%nwave,              C_INT)
+   do i = 1, dataset(1)%nwave
+       wave(i)  = real(dataset(1)%wave(i),  C_FLOAT)
+       ratio(i) = real(dataset(1)%ratio(i), C_FLOAT)
+   end do
+
+   end subroutine get_dataset_info
+
 end module data_interop

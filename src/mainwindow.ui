@@ -104,7 +104,6 @@
     <addaction name="actionSearch_Match"/>
     <addaction name="actionSearch_Match_Options"/>
     <addaction name="actionRestraints"/>
-    <addaction name="actionDatabaseInfo"/>
     <addaction name="actionTestDatabase"/>
     <addaction name="separator"/>
     <addaction name="actionManage_Databases"/>
@@ -423,14 +422,12 @@
    <addaction name="actionImportDiffractionPattern"/>
    <addaction name="actionExit"/>
   </widget>
-  <action name="actionDatabaseInfo">
-   <property name="text">
-    <string>Database Info</string>
-   </property>
-  </action>
   <action name="actionTestDatabase">
    <property name="text">
     <string>Test Database</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionLoad_Add">
