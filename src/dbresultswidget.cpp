@@ -151,6 +151,12 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
         emit selectedCardsChanged(selectedCards());
     });
 
+    clearSelAction = new QAction(tr("Clear Selection"), this);
+    clearSelAction->setShortcut(QKeySequence(Qt::Key_Escape));
+    clearSelAction->setShortcutContext(Qt::WidgetShortcut);
+    connect(clearSelAction, &QAction::triggered, ui->table, &QAbstractItemView::clearSelection);
+    ui->table->addAction(clearSelAction);
+
     updateButtons();
 }
 
@@ -391,6 +397,9 @@ void DbResultsWidget::setContextMenuActions(const QList<QAction *> &actions)
             else
                 menu.addSeparator();
         }
+        menu.addSeparator();
+        clearSelAction->setEnabled(hasSelection());
+        menu.addAction(clearSelAction);
         menu.exec(ui->table->viewport()->mapToGlobal(pos));
     });
 }

@@ -5,6 +5,8 @@
 #include "graphitem.h"
 #include "plotsettings.h"
 
+class CardType;
+
 typedef struct {
     int hkl[3];
     double x;
@@ -14,6 +16,7 @@ typedef struct {
     QVector<refInfo> ref;
     int visible;
     float wave;
+    QString id;
 } reflectionSet;
 
 struct CardPeakData {
@@ -70,6 +73,8 @@ public:
     void clearSystematicAbsences();
     void setLegendVisible(bool visible);
     void setCardPeaks(const QVector<CardPeakData> &peaks);
+    void addPhaseReflections(const CardType &card, const QColor &color);
+    void removePhaseReflections(const QString &id);
     void applyOffset(double yOffset = 0);
     void applyAutoScale();
     void enableRescalePlot(bool value);
@@ -147,6 +152,7 @@ private:
     QVector<CardPeakData> m_cardPeaks;
     QVector<QCPGraph *>   m_cardPeakGraphs;
     void drawCardPeaks();
+    void refreshAcceptedPhaseBars();
 };
 
 #endif // XPDVIEWWIDGET_H

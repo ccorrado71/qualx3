@@ -1,4 +1,5 @@
 #include "xpdviewwidget.h"
+#include "cardtype.h"
 #include "libcomune.h"
 #include "xpdutils.h"
 #include "nr.h"
@@ -107,9 +108,24 @@ void XpdViewWidget::setGraphicArea()
     yAxis->grid()->setZeroLinePen(Qt::NoPen); // hide zero-line
 
     nObserved = 0;
+    // Save accepted-card entries (id != "") before clearing; clearItems() above
+    // already destroyed their QCPItemLine objects, so reset their item indices.
+    QVector<graphItem>     savedRefl;
+    QVector<reflectionSet> savedRefSet;
+    for (int i = 0; i < refSet.size(); i++) {
+        if (!refSet[i].id.isEmpty()) {
+            graphItem gr = refl[i];
+            gr.itemIndexStart = -1;
+            gr.itemIndexEnd   = -1;
+            gr.setGraphIndex(-1); // clearGraphs() destroyed the QCPGraph objects
+            savedRefl.push_back(gr);
+            savedRefSet.push_back(refSet[i]);
+        }
+    }
+
     nReflections = 0;
-    refl.clear();
-    refSet.clear();
+    refl    = savedRefl;
+    refSet  = savedRefSet;
     nProfCurves = 0;
     yLowerRange = DBL_MAX;
     yUpperRange = -DBL_MIN;
@@ -775,7 +791,7 @@ void XpdViewWidget::myMoveEvent(QMouseEvent *event)
         // qInfo() << "REF: " << hkl[0] << hkl[1] << hkl[2] << tth << dval;
 
         QString label3 = QString("Refl: #%1 H: %2 K: %3 L: %4 %5: %6 d: %7 Phase: %8").
-                         arg(refIndex).
+                         arg(refIndex+1).
                          arg(hkl[0]).arg(hkl[1]).arg(hkl[2]).
                          arg(twoTheta).
                          arg(tth).arg(dval).
@@ -1423,4 +1439,134 @@ void XpdViewWidget::drawCardPeaks()
         g->setSelectable(QCP::stNone);
         m_cardPeakGraphs.append(g);
     }
+}
+
+void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &color)
+{
+    const QString id = card.getId();
+    // Remove existing entry for this card if already present (idempotent)
+    for (int k = refSet.size() - 1; k >= 0; k--) {
+        if (refSet[k].id == id) {
+            refl.removeAt(k);
+            refSet.removeAt(k);
+        }
+    }
+
+    reflectionSet rs;
+    rs.id      = id;
+    rs.visible = 1;
+    rs.wave    = plotWave.isEmpty() ? 1.54056f : static_cast<float>(plotWave.first());
+
+    const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
+    const QVector<double> &tth = card.getTth();
+    const QVector<double> &d   = card.getD();
+    for (int i = 0; i < tth.size(); i++) {
+        refInfo r;
+        r.hkl[0] = r.hkl[1] = r.hkl[2] = 0;
+        r.x = (useDValue && i < d.size()) ? d[i] : tth[i];
+        rs.ref.push_back(r);
+    }
+
+    graphItem item;
+    item.setGtype(graphItem::Reflections);
+    QPen pen(color, 1);
+    item.setPen(pen);
+    item.setVisible(true);
+    item.wave = rs.wave;
+    QString name = card.getChemicalName();
+    if (!card.getMineralName().isEmpty())
+        name += " [" + card.getMineralName() + "]";
+    item.setName(name);
+    item.itemIndexStart = -1;
+    item.itemIndexEnd   = -1;
+
+    refl.push_back(item);
+    refSet.push_back(rs);
+
+    refreshAcceptedPhaseBars();
+}
+
+void XpdViewWidget::removePhaseReflections(const QString &id)
+{
+    for (int k = refSet.size() - 1; k >= 0; k--) {
+        if (refSet[k].id == id) {
+            // Remove the dummy legend graph and keep plotWave in sync
+            const int gIdx = refl[k].getGraphIndex();
+            if (gIdx >= 0 && gIdx < graphCount()) {
+                removeGraph(graph(gIdx));
+                if (gIdx < plotWave.size())
+                    plotWave.remove(gIdx);
+                // Shift stored graph indices for all entries above gIdx
+                for (auto &gr : refl)
+                    if (gr.getGraphIndex() > gIdx)
+                        gr.setGraphIndex(gr.getGraphIndex() - 1);
+            }
+            refl.removeAt(k);
+            refSet.removeAt(k);
+        }
+    }
+    refreshAcceptedPhaseBars();
+}
+
+void XpdViewWidget::refreshAcceptedPhaseBars()
+{
+    if (graphCount() == 0) return; // no pattern displayed; bars drawn on next drawPlot()
+
+    double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04;
+    double lengthRef = spaceRef * 0.75;
+
+    // Remove all existing reflection QCPItemLine objects (collect by pointer to
+    // avoid index-shift issues during removal)
+    QList<QCPAbstractItem *> toRemove;
+    for (const auto &gr : refl) {
+        if (gr.itemIndexStart < 0) continue;
+        for (int ind = gr.itemIndexStart; ind <= gr.itemIndexEnd; ++ind) {
+            if (ind < itemCount())
+                toRemove.append(item(ind));
+        }
+    }
+    for (QCPAbstractItem *it : toRemove)
+        removeItem(it);
+    for (auto &gr : refl)
+        gr.itemIndexStart = gr.itemIndexEnd = -1;
+
+    // Recompute y range
+    int nVisibleRef = 0;
+    for (const auto &r : refl) if (r.isVisible()) nVisibleRef++;
+    yLowerRange = yLowerRangeNoRef - nVisibleRef * spaceRef;
+
+    // Re-draw all reflection bars at updated positions
+    int iVis = -1;
+    for (int i = 0; i < refl.size(); i++) {
+        if (!refl.at(i).isVisible()) continue;
+        ++iVis;
+        double ypos = yLowerRange + (nVisibleRef - iVis - 1) * spaceRef;
+        QPen mPen(refl[i].getPen());
+        drawReflections(refSet[i].ref, ypos, lengthRef, mPen,
+                        refl[i].itemIndexStart, refl[i].itemIndexEnd);
+        refl[i].setYPos(ypos);
+        refl[i].setLengthRef(lengthRef);
+    }
+
+    // Add dummy legend graph for phases that don't have one yet (graphIndex == -1).
+    // This happens when a phase is accepted while a pattern is already displayed
+    // (drawPlot() was already called and won't run again until the next pattern load).
+    for (int i = 0; i < refl.size(); i++) {
+        if (refl[i].getGraphIndex() >= 0) continue;
+        QPen mPen(refl[i].getPen());
+        refl[i].setGraphIndex(graphCount());
+        plotWave.append(refl[i].wave);
+        addGraph();
+        graph()->setPen(mPen);
+        graph()->setName(refl[i].getName());
+        QPainterPath customScatterPath(QPointF(0,-10));
+        customScatterPath.lineTo(0,10);
+        graph()->setScatterStyle(QCPScatterStyle(customScatterPath, mPen));
+        graph()->setLineStyle(QCPGraph::lsNone);
+    }
+    legend->setMaximumSize(legend->minimumOuterSizeHint());
+
+    yAxis->setRange(yLowerRange, yUpperRange);
+    updateMinMax();
+    replot();
 }

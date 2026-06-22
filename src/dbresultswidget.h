@@ -82,6 +82,8 @@ private:
     QToolButton *nextBtn   = nullptr;
     QToolButton *lastBtn   = nullptr;
     QSpinBox    *maxRowSpin = nullptr;
+
+    QAction *clearSelAction = nullptr;
 };
 
 #endif // DBRESULTSWIDGET_H

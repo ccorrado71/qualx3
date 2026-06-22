@@ -9,7 +9,7 @@
 //const QColor listColors[] = {Qt::blue, Qt::red, Qt::green, Qt::black, Qt::gray, Qt::cyan, Qt::magenta, Qt::darkRed, Qt::darkBlue, Qt::darkCyan};
 //const size_t sizePalette = sizeof(listColors)/sizeof(listColors[0]);
 
-const QList<QColor> listColors = {Qt::blue, Qt::red, Qt::green, Qt::black, Qt::gray, Qt::cyan, Qt::magenta, Qt::darkRed, Qt::darkBlue, Qt::darkCyan};
+const QList<QColor> listColors = {Qt::blue, Qt::red, Qt::green, Qt::magenta, Qt::gray, Qt::cyan, Qt::black, Qt::darkRed, Qt::darkBlue, Qt::darkCyan};
 const QStringList graphItem::ItemTypeString = {"Observed", "Calculated", "Background", "Background_Points",
                                                "Difference", "Cumulative", "Reflections", "Peaks", "Smoothing",
                                                "Unindexed_Peaks", "Systematic_Absences", "Selected_Reflections",

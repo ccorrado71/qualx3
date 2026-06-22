@@ -180,10 +180,19 @@ void MainWindow::createDialogs()
                 ui->peakCompareWidget->addAcceptedPhase(card);
                 ui->reportWidget->updateQuantitative(
                     ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
+                xpdViewer()->addPhaseReflections(card, cardColor(card.getId()));
                 ui->dockWidgetQuant->show();
                 ui->dockWidgetQuant->raise();
                 if (SearchOptionsDialog::savedResidualSearching())
                     performResidualSearch(card);
+            });
+
+    connect(ui->quantWidget, &QuantWidget::phaseRemoved,
+            this, [this](const CardType &card) {
+                ui->resultsWidget->addCard(card);
+                ui->reportWidget->updateQuantitative(
+                    ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
+                xpdViewer()->removePhaseReflections(card.getId());
             });
 }
 
@@ -278,8 +287,7 @@ void MainWindow::actionsSetup()
         setStatusMessage(tr("%1 card(s)").arg(ui->resultsWidget->allCards().size()));
     });
 
-    connect(ui->resultsWidget, &DbResultsWidget::selectedCardsChanged,
-            this, [this](const QVector<CardType> &cards) {
+    auto buildAndShowPeaks = [this](const QVector<CardType> &cards) {
         QVector<CardPeakData> peaks;
         peaks.reserve(cards.size());
         for (const CardType &card : cards) {
@@ -296,7 +304,13 @@ void MainWindow::actionsSetup()
             peaks.append(cpd);
         }
         xpdViewer()->setCardPeaks(peaks);
-    });
+    };
+
+    connect(ui->resultsWidget, &DbResultsWidget::selectedCardsChanged,
+            this, buildAndShowPeaks);
+
+    connect(ui->quantWidget, &QuantWidget::selectedPhasesChanged,
+            this, buildAndShowPeaks);
 }
 
 static int loadExperimentalPeaks(); // defined below
@@ -515,6 +529,7 @@ void MainWindow::readSettings()
     }
 
     restoreState(settings.value(QUALX_STATE_KEY).toByteArray());
+    ui->peakDockWidget->raise();
     //ui->splitter1->restoreState(settings.value(EXPO_SPLITSIZE_KEY1).toByteArray());
     //ui->splitter2->restoreState(settings.value(EXPO_SPLITSIZE_KEY2).toByteArray());
 }

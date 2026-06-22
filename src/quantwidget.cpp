@@ -5,6 +5,7 @@
 
 #include <QStandardItemModel>
 #include <QHeaderView>
+#include <QMenu>
 
 #include <algorithm>
 #include <cmath>
@@ -49,6 +50,38 @@ QuantWidget::QuantWidget(QWidget *parent)
         if (!id.isEmpty())
             emit cardSelected(id);
     });
+
+    connect(ui->tableView->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, [this]() {
+        const auto selected = ui->tableView->selectionModel()->selectedRows();
+        QVector<CardType> cards;
+        for (const QModelIndex &idx : selected) {
+            if (idx.row() < m_phases.size())
+                cards.append(m_phases.at(idx.row()));
+        }
+        emit selectedPhasesChanged(cards);
+    });
+
+    m_clearSelAction = new QAction(tr("Clear Selection"), this);
+    m_clearSelAction->setShortcut(QKeySequence(Qt::Key_Escape));
+    m_clearSelAction->setShortcutContext(Qt::WidgetShortcut);
+    connect(m_clearSelAction, &QAction::triggered, ui->tableView, &QAbstractItemView::clearSelection);
+    ui->tableView->addAction(m_clearSelAction);
+
+    m_removePhaseAction = new QAction(tr("Remove Phase"), this);
+    connect(m_removePhaseAction, &QAction::triggered, this, &QuantWidget::removeSelectedPhase);
+
+    ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableView, &QWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+        const bool hasSel = ui->tableView->selectionModel()->hasSelection();
+        m_clearSelAction->setEnabled(hasSel);
+        m_removePhaseAction->setEnabled(hasSel);
+        QMenu menu(this);
+        menu.addAction(m_removePhaseAction);
+        menu.addSeparator();
+        menu.addAction(m_clearSelAction);
+        menu.exec(ui->tableView->viewport()->mapToGlobal(pos));
+    });
 }
 
 QuantWidget::~QuantWidget()
@@ -67,6 +100,20 @@ void QuantWidget::clearPhases()
     m_phases.clear();
     m_quant.clear();
     m_model->setRowCount(0);
+}
+
+void QuantWidget::removeSelectedPhase()
+{
+    const QModelIndex current = ui->tableView->currentIndex();
+    if (!current.isValid()) return;
+    const int row = current.row();
+    if (row < 0 || row >= m_phases.size()) return;
+
+    const CardType card = m_phases.at(row);
+    m_phases.removeAt(row);
+    m_model->removeRow(row);
+    updateQuant();
+    emit phaseRemoved(card);
 }
 
 void QuantWidget::updateQuant()
