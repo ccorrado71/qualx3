@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QColor>
 #include "experimentalpeaks.h"
 #include "cardtype.h"
 
@@ -29,9 +30,15 @@ public:
 
     QStandardItemModel *m_model;
 
+signals:
+    void selectedComparePointsChanged(const QVector<double> &tth,
+                                      const QVector<double> &intensity,
+                                      const QVector<QColor> &colors);
+
 private:
     void rebuild();
     void updateDelegates(int totalColumns);
+    void emitSelectedComparePoints();
 
     Ui::PeakCompareWidget *ui;
 

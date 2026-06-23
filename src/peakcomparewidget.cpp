@@ -7,6 +7,7 @@
 #include <QStandardItemModel>
 #include <QHeaderView>
 #include <QSet>
+#include <QItemSelectionModel>
 #include <algorithm>
 
 PeakCompareWidget::PeakCompareWidget(QWidget *parent)
@@ -16,9 +17,14 @@ PeakCompareWidget::PeakCompareWidget(QWidget *parent)
 
     m_model = new QStandardItemModel(this);
     ui->tableView->setModel(m_model);
+        ui->tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
+        ui->tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->tableView->verticalHeader()->setDefaultSectionSize(22);
     ui->tableView->verticalHeader()->hide();
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+        connect(ui->tableView->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, [this]() { emitSelectedComparePoints(); });
 
     updateDelegates(3);
 }
@@ -269,4 +275,74 @@ void PeakCompareWidget::rebuild()
     }
 
     ui->tableView->resizeColumnsToContents();
+    emitSelectedComparePoints();
+}
+
+void PeakCompareWidget::emitSelectedComparePoints()
+{
+    const QModelIndexList selected = ui->tableView->selectionModel()
+                                     ? ui->tableView->selectionModel()->selectedIndexes()
+                                     : QModelIndexList();
+
+    QVector<double> tth;
+    QVector<double> intensity;
+    QVector<QColor> colors;
+
+    // Avoid duplicates when both columns (2theta/intensity) of the same pair are selected.
+    QSet<quint64> seenPairs;
+
+    auto parseDoubleAt = [this](int row, int col, double &out) -> bool {
+        const QModelIndex idx = m_model->index(row, col);
+        if (!idx.isValid()) return false;
+        bool ok = false;
+        const double v = idx.data(Qt::DisplayRole).toDouble(&ok);
+        if (!ok) return false;
+        out = v;
+        return true;
+    };
+
+    auto colorForPair = [this](int pairTthCol) -> QColor {
+        if (pairTthCol < 2) {
+            // Experimental peaks: color will be resolved in XpdViewWidget from peaks.getPen().color().
+            return QColor();
+        }
+
+        const int nAcc = m_acceptedPhases.size();
+        const int selectedBase = 2 + 2 * nAcc;
+        if (m_hasCard && pairTthCol >= selectedBase)
+            return cardColor(m_cardId);
+
+        const int phaseIndex = (pairTthCol - 2) / 2;
+        if (phaseIndex >= 0 && phaseIndex < nAcc)
+            return cardColor(m_acceptedPhases[phaseIndex].getId());
+
+        return QColor();
+    };
+
+    for (const QModelIndex &idx : selected) {
+        if (!idx.isValid()) continue;
+
+        const int row = idx.row();
+        const int col = idx.column();
+        const int pairTthCol = (col % 2 == 0) ? col : col - 1;
+        const int pairICol = pairTthCol + 1;
+        if (pairTthCol < 0 || pairICol >= m_model->columnCount()) continue;
+
+        const quint64 key = (static_cast<quint64>(row) << 32)
+                            | static_cast<quint64>(pairTthCol);
+        if (seenPairs.contains(key))
+            continue;
+
+        double x = 0.0;
+        double y = 0.0;
+        if (!parseDoubleAt(row, pairTthCol, x)) continue;
+        if (!parseDoubleAt(row, pairICol, y)) continue;
+
+        seenPairs.insert(key);
+        tth.append(x);
+        intensity.append(y);
+        colors.append(colorForPair(pairTthCol));
+    }
+
+    emit selectedComparePointsChanged(tth, intensity, colors);
 }

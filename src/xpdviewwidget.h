@@ -67,6 +67,9 @@ public:
     void clearSelectedPeaks();
     void drawSelectedRef();
     void clearSelectedRef();
+    void drawSelectedComparePoints(const QVector<double> &tth,
+                                   const QVector<double> &intensity,
+                                   const QVector<QColor> &colors);
     void setSelectedRef(const QVector<int> &selected);
     void setSystematicAbsences(const QVector<int> &refIndex);
     void drawSystematicAbsences();
@@ -151,7 +154,9 @@ private:
 
     QVector<CardPeakData> m_cardPeaks;
     QVector<QCPGraph *>   m_cardPeakGraphs;
+    QVector<QCPGraph *>   m_selectedCompareGraphs;
     void drawCardPeaks();
+    void clearSelectedComparePoints();
     void refreshAcceptedPhaseBars();
 };
 

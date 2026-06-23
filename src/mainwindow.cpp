@@ -194,6 +194,13 @@ void MainWindow::createDialogs()
                     ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
                 xpdViewer()->removePhaseReflections(card.getId());
             });
+
+    connect(ui->peakCompareWidget, &PeakCompareWidget::selectedComparePointsChanged,
+            this, [this](const QVector<double> &tth,
+                         const QVector<double> &intensity,
+                         const QVector<QColor> &colors) {
+                xpdViewer()->drawSelectedComparePoints(tth, intensity, colors);
+            });
 }
 
 void MainWindow::actionsSetup()

@@ -4,6 +4,7 @@
 #include "scopedtimer.h"
 #include "cardtype.h"
 
+#include <QCoreApplication>
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -508,8 +509,15 @@ QVector<CardType> QualxDbManager::makeQuery(const DbQueryBuilder &builder, Progr
 
         QString idsString;
         if (query.exec()) {
+            int n = 0;
             while (query.next()) {
+                if (m_cancelSearch) {
+                    qInfo() << "Search canceled while building id list";
+                    break;
+                }
                 idsString.append("'"+query.value(0).toString()+"',");
+                if (++n % 500 == 0)
+                    QCoreApplication::processEvents();
             }
             idsString.chop(1); //rimove last ','
             qInfo() << "End query for idsString";
@@ -623,13 +631,20 @@ void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<C
 
     // Collect candidate IDs as plain strings (no quotes)
     QStringList idList;
+    int nScanned = 0;
     while (query.next()) {
+        if (m_cancelSearch) {
+            qInfo() << "Search canceled while scanning strongest table at" << nScanned;
+            break;
+        }
         const QString id      = query.value(0).toString();
         const int     n       = query.value(1).toInt();
         const QString dvalStr = query.value(2).toString();
         const QVector<double> dStrong = SearchUtil::extractNumbers(dvalStr, n, 3);
         if (SearchUtil::checkStrongValuesWithTolerance(builder.getDValues(), builder.getDTol(), dStrong))
             idList.append(id);
+        if (++nScanned % 500 == 0)
+            QCoreApplication::processEvents();
     }
     qInfo() << "Number of strongest matches:" << idList.size();
 
@@ -673,8 +688,16 @@ void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
         q.prepare(fetchQuery);
         QStringList idList;
         if (q.exec()) {
-            while (q.next())
+            int n = 0;
+            while (q.next()) {
+                if (m_cancelSearch) {
+                    qInfo() << "Search canceled while fetching candidate ids at" << n;
+                    break;
+                }
                 idList.append(q.value(0).toString());
+                if (++n % 500 == 0)
+                    QCoreApplication::processEvents();
+            }
         }
         qInfo() << "makeQueryWithoutStrongest: total candidates =" << idList.size();
 

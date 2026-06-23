@@ -6,6 +6,7 @@
 
 #include <cfloat>
 #include <QLabel>
+#include <QHash>
 
 XpdViewWidget::XpdViewWidget(QWidget *parent)
     : CustomPlotZoom(parent)
@@ -91,6 +92,7 @@ void XpdViewWidget::setGraphicArea()
     disableTracer();
     clearGraphs();
     m_cardPeakGraphs.clear(); // pointers invalidated by clearGraphs()
+    m_selectedCompareGraphs.clear(); // pointers invalidated by clearGraphs()
     clearPlottables();
     clearItems();
 
@@ -613,6 +615,70 @@ void XpdViewWidget::drawSelectedRef()
 void XpdViewWidget::clearSelectedRef()
 {
     clearGraphSelection(selectedRef);
+}
+
+void XpdViewWidget::clearSelectedComparePoints()
+{
+    for (QCPGraph *g : m_selectedCompareGraphs) {
+        for (int i = 0; i < graphCount(); ++i) {
+            if (graph(i) == g) {
+                removeGraph(g);
+                if (i < plotWave.size())
+                    plotWave.remove(i);
+                break;
+            }
+        }
+    }
+    m_selectedCompareGraphs.clear();
+}
+
+void XpdViewWidget::drawSelectedComparePoints(const QVector<double> &tth,
+                                              const QVector<double> &intensity,
+                                              const QVector<QColor> &colors)
+{
+    clearSelectedComparePoints();
+
+    if (tth.isEmpty() || intensity.isEmpty() || tth.size() != intensity.size()) {
+        replot();
+        return;
+    }
+
+    const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
+    const double wave = plotWave.isEmpty() ? 1.54056 : plotWave.first();
+    const QColor expColor = peaks.getPen().color();
+
+    QHash<QRgb, QVector<double>> groupedX;
+    QHash<QRgb, QVector<double>> groupedY;
+
+    for (int i = 0; i < tth.size(); ++i) {
+        double x = tth[i];
+        if (useDValue) {
+            if (x <= 0.0) continue;
+            x = xpdutils::dvalue(x, wave);
+        }
+
+        const QColor c = (i < colors.size() && colors[i].isValid()) ? colors[i] : expColor;
+        const QRgb key = c.rgb();
+        groupedX[key].append(x);
+        groupedY[key].append(intensity[i]);
+    }
+
+    for (auto it = groupedX.constBegin(); it != groupedX.constEnd(); ++it) {
+        const QRgb key = it.key();
+        const QColor c(key);
+
+        QCPGraph *g = addGraph();
+        plotWave.append(wave);   // keeps plotWave in sync with graph count
+        g->setLineStyle(QCPGraph::lsNone);
+        g->setPen(QPen(c));
+        g->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssTriangleInverted, c, c, 8));
+        g->setData(it.value(), groupedY.value(key));
+        g->setSelectable(QCP::stNone);
+        g->removeFromLegend();
+        m_selectedCompareGraphs.append(g);
+    }
+
+    replot();
 }
 
 void XpdViewWidget::setSystematicAbsences(const QVector<int> &refIndex)
