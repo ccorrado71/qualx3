@@ -128,6 +128,7 @@ private slots:
     void onActionSearchMatchOptionsTriggered();
     void actionRestraintsTriggered();
     void actionManageDatabasesTriggered();
+    void onActionCancelSearchTriggered();
     void onActionTestDatabaseTriggered();
 
     //Entry

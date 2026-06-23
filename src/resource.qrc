@@ -32,5 +32,6 @@
         <file>images/about.png</file>
         <file>images/logo_CNR_compatto.png</file>
         <file>images/logo_IC.png</file>
+        <file>images/stop.png</file>
     </qresource>
 </RCC>

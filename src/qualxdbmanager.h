@@ -50,6 +50,9 @@ public:
     CardInfo queryCard(const QString &idCard) const;
     QList<QPair<QString,int>> querySpaceGroups() const;
     QList<QPair<QString,int>> queryColors() const;
+    void cancelSearch() { m_cancelSearch = true; }
+    void resetCancelFlag() { m_cancelSearch = false; }
+    bool isCanceled() const { return m_cancelSearch; }
 
 private:
     DbManager dbMain;
@@ -57,6 +60,7 @@ private:
     DbManager dbInfoStat;
     DbManager dbSearch;
     int nStrongest;
+    volatile bool m_cancelSearch = false;
 
     static QVector<double> blobToDoubleVector(const QByteArray &blob);
 

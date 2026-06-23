@@ -263,6 +263,10 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
     if (queryIds.exec()) {
         if (builder.getCalcFom()) {
             while (queryIds.next()) {
+                if (m_cancelSearch) {
+                    qInfo() << "Search canceled at" << nId << "of" << actualCount;
+                    break;
+                }
                 nId++;
                 float perc = (actualCount > 0) ? 100.0f*nId/actualCount : 0.0f;
                 int prog = static_cast<int>(perc);
@@ -306,6 +310,10 @@ void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQ
             }
         } else {
             while (queryIds.next()) {
+                if (m_cancelSearch) {
+                    qInfo() << "Search canceled at" << nId << "of" << actualCount;
+                    break;
+                }
                 nId++;
                 float perc = (actualCount > 0) ? 100.0f*nId/actualCount : 0.0f;
                 int prog = static_cast<int>(perc);
@@ -405,6 +413,7 @@ int QualxDbManager::stringInnerJoin(const QStringList &list1, const QStringList 
 
 QVector<CardType> QualxDbManager::makeQuery(const DbQueryBuilder &builder, ProgressCallback progress)
 {
+    resetCancelFlag();
     // QString resultSearch;
     // makeQuerySearchStrongest(resultSearch);
     // makeQuerySearch(builder.deletedEnabled(), resultSearch);
@@ -601,6 +610,7 @@ void QualxDbManager::applyRestraintsToIds(const DbQueryBuilder &builder,
 void QualxDbManager::makeQueryStrongest(const DbQueryBuilder &builder, QVector<CardType> &acceptedCards,
                                         ProgressCallback progress)
 {
+    resetCancelFlag();
     ScopedTimer timer("QualxDbManager::makeQueryStrongest->makeQueryInfoIdsWithFom");
 
     QSqlQuery query(dbSearch.db());
@@ -643,6 +653,7 @@ void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
                                                QVector<CardType> &acceptedCards,
                                                ProgressCallback progress)
 {
+    resetCancelFlag();
     ScopedTimer timer("QualxDbManager::makeQueryWithoutStrongest");
 
     const bool hasRestraints = !builder.getQueryCellPar().isEmpty()

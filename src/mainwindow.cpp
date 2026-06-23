@@ -236,6 +236,7 @@ void MainWindow::actionsSetup()
     connect(ui->actionSearch_Match_Options, &QAction::triggered, this, &MainWindow::onActionSearchMatchOptionsTriggered);
     connect(ui->actionRestraints, &QAction::triggered, this, &MainWindow::actionRestraintsTriggered);
     connect(ui->actionTestDatabase, &QAction::triggered, this, &MainWindow::onActionTestDatabaseTriggered);
+    connect(ui->actionCancel_Search, &QAction::triggered, this, &MainWindow::onActionCancelSearchTriggered);
     //connect(ui->actionGetCard, &QAction::triggered, this, &MainWindow::onActionGetCardTriggered);
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
@@ -1737,6 +1738,12 @@ void MainWindow::onActionSearchMatchOptionsTriggered()
 {
     SearchOptionsDialog dlg(this);
     dlg.exec();
+}
+
+void MainWindow::onActionCancelSearchTriggered()
+{
+    AppState::db().cancelSearch();
+    setStatusMessage(tr("Search canceled"));
 }
 
 void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
