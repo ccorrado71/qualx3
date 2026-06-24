@@ -33,9 +33,6 @@ public:
     static void saveSettings(const QList<DatabaseEntry> &databases);
     static QList<DatabaseEntry> loadSettings();
 
-signals:
-    void addRequested();
-
 private slots:
     void onCheckboxChanged(int row, bool checked);
     void onSelectionChanged();

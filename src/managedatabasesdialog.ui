@@ -67,6 +67,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="addButton">
+       <property name="toolTip">
+        <string>Add an existing QualX database (.sq) to the list</string>
+       </property>
        <property name="text">
         <string>Add</string>
        </property>

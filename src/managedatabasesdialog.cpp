@@ -195,7 +195,29 @@ void ManageDatabasesDialog::onRenameClicked()
 
 void ManageDatabasesDialog::onAddClicked()
 {
-    emit addRequested();
+    const QString sqFile = QFileDialog::getOpenFileName(
+        this, tr("Add Database"), QString(),
+        tr("QualX database (*.sq);;All files (*)"));
+
+    if (sqFile.isEmpty())
+        return;
+
+    const QStringList missing = CreateDatabaseDialog::missingSqFiles(sqFile);
+    if (!missing.isEmpty()) {
+        QMessageBox::critical(this, tr("Missing Files"),
+            tr("The following companion files are missing:\n%1").arg(missing.join('\n')));
+        return;
+    }
+
+    bool ok = false;
+    const QString name = QInputDialog::getText(
+        this, tr("Add Database"), tr("Enter a name for the database:"),
+        QLineEdit::Normal, QFileInfo(sqFile).completeBaseName(), &ok);
+
+    if (!ok || name.trimmed().isEmpty())
+        return;
+
+    registerExistingSqDatabase(sqFile, name.trimmed());
 }
 
 // Helper: append an entry for an existing .sq database and persist settings.

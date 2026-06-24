@@ -360,53 +360,36 @@ void MainWindow::enableActions(EnabledActions action, bool state)
 {
     //qInfo() << "Enable Actions: " << action << " State: " << state;
     switch (action) {
-    // case InitAction:  //Init
-    //     enableMenu(ui->menuExportData, false);
-    //     ui->actionSave_Project->setEnabled(false);
-    //     ui->actionSave_Project_As->setEnabled(false);
-    //     enableMenu(ui->menuPattern, false);
-    //     enableMenu(ui->menuView, false);
-    //     enableMenu(ui->menuInfo, false);
-    //     break;
-    // case PatternAction:   //Only Pattern
-    //     enableMenu(ui->menuExportData, true);
-    //     ui->actionSave_Project->setEnabled(true);
-    //     ui->actionSave_Project_As->setEnabled(true);
-    //     enableMenu(ui->menuPattern, true);
-    //     ui->actionIntervals->setEnabled(false);
-    //     // ui->actionAdd_Background_Point->setEnabled(true);
-    //     // ui->actionDelete_Background_Point->setEnabled(true);
-    //     enableMenu(ui->menuView, true);
-    //     ui->actionDirect_Methods->setEnabled(true);
-    //     ui->actionExplore_Trials->setEnabled(false);
-    //     ui->actionSimulated_Annealing->setEnabled(true);
-    //     ui->menuSuperflip->setEnabled(true);
-    //     enableMenu(ui->menuSuperflip, true);
-    //     ui->actionRAMM_Procedure->setEnabled(false);
-    //     ui->actionRecycle_in_Extra->setEnabled(is_extraction_active());
-    //     enableMenu(ui->menuRefine, false);
-    //     ui->actionRietveld->setEnabled(true);
-    //     enableMenu(ui->menuInfo, true);
-    //     ui->actionProfile->setEnabled(false);
-    //     break;
-    // case DialogOpenAction:
-    //     enableMenu(ui->menuFile, false);
-    //     enableMenu(ui->menuPattern, false);
-    //     // ui->actionAdd_Background_Point->setEnabled(false);
-    //     // ui->actionDelete_Background_Point->setEnabled(false);
-    //     enableMenu(ui->menuSolve, false);
-    //     enableMenu(ui->menuRefine, false);
-    //     ui->crystalWidget->updateModify(3);
-    //     ui->toolBarRun->setEnabled(false);
-    //     break;
-    // case RunAction:     //Run procedure
-    //     ui->toolBarRun->setEnabled(state);
-    //     ui->actionSkip->setEnabled(false);
-    //     break;
-    // case RunSkipAction:  //Run/Skip procedure
-    //     ui->toolBarRun->setEnabled(state);
-    //     ui->actionSkip->setEnabled(state);
-    //     break;
+    case InitAction:  //Init
+        ui->actionSave_Project->setEnabled(false);
+        ui->actionSave_Project_As->setEnabled(false);
+        ui->actionExport_Diffraction_Pattern->setEnabled(false);
+        ui->actionImage_Powder_Pattern->setEnabled(false);
+        ui->actionSearch_Match->setEnabled(false);
+        enableMenu(ui->menuPattern, false);
+        enableMenu(ui->menuView, false);
+        break;
+    case PatternAction:   //Only Pattern
+        ui->actionSave_Project->setEnabled(true);
+        ui->actionSave_Project_As->setEnabled(true);
+        ui->actionExport_Diffraction_Pattern->setEnabled(true);
+        ui->actionImage_Powder_Pattern->setEnabled(true);
+        ui->actionSearch_Match->setEnabled(true);
+        enableMenu(ui->menuPattern, true);
+        enableMenu(ui->menuView, true);
+        break;
+    case DialogOpenAction:
+        enableMenu(ui->menuFile, false);
+        enableMenu(ui->menuPattern, false);
+        ui->actionSearch_Match->setEnabled(false);
+        break;
+    case RunAction:
+        enableMenu(ui->menuFile, false);
+        enableMenu(ui->menuPattern, false);
+        enableMenu(ui->menuDatabase, false);
+        enableMenu(ui->menuEntry, false);
+        ui->actionCancel_Search->setEnabled(true);
+        break;
     case SaveAction:
         saveEnabledActions();
         break;
@@ -599,6 +582,8 @@ void MainWindow::onActionNewTriggered()
     clearProjectFile();
     currentFile.clear();
     setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
+
+    enableActions(InitAction);
 }
 
 void MainWindow::openRecentFile()
@@ -641,6 +626,7 @@ void MainWindow::openRecentFile()
                 setWindowTitle(currentFile);
                 markProjectModified();
                 updateReport();
+                enableActions(PatternAction);
             }
             break;
         }
@@ -682,6 +668,7 @@ void MainWindow::loadDiffractionPatterns(QStringList files)
             setCurrentFile(filename,QVariant::fromValue(RecentFileType::Data).toString());
             markProjectModified();
             updateReport();
+            enableActions(PatternAction);
         }
     }
 }
@@ -850,6 +837,8 @@ void MainWindow::loadProject(QString fileName)
 
     setCurrentFile(fileName, QVariant::fromValue(RecentFileType::Project).toString());
     setStatusMessage(tr("Project loaded: %1").arg(QFileInfo(fileName).fileName()));
+
+    enableActions(PatternAction);
 }
 
 void MainWindow::onActionLoadProjectTriggered()
@@ -1757,6 +1746,9 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
 {
     builder.buildQuery();
 
+    enableActions(SaveAction);
+    enableActions(RunAction);
+
     setStatusMessage(tr("Querying database..."));
     statusProgressBar->setRange(0, 100);
     statusProgressBar->setValue(0);
@@ -1770,6 +1762,8 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
     };
 
     QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
+
+    enableActions(RestoreAction);
 
     QApplication::restoreOverrideCursor();
     statusProgressBar->hide();
