@@ -18,6 +18,7 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include "updater.h"
+#include "maintenancetool.h"
 #include "printdialog.h"
 #include "reportwidget.h"
 #include <QPrinter>

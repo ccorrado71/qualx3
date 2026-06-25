@@ -72,6 +72,8 @@ set(PROJECT_SOURCES
     linestylewidget.ui
     locate.cpp
     main.cpp
+    maintenancetool.cpp
+    maintenancetool.h
     mainwindow.h
     mainwindow.cpp
     mainwindow.ui
@@ -328,11 +330,11 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
 
 #Setting the Application Icon
 if (WIN32)
-    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/pixmaps/qualx.rc")
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/images/qualx.rc")
     target_sources(${EXECUTABLE_NAME} PRIVATE ${app_icon_resource_windows})
 elseif (APPLE)
-    set(MACOSX_BUNDLE_ICON_FILE Expo.icns)
-    set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/pixmaps/qualx.icns")
+    set(MACOSX_BUNDLE_ICON_FILE qualx.icns)
+    set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/images/qualx.icns")
     set_source_files_properties(${app_icon_macos} PROPERTIES
            MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(${EXECUTABLE_NAME} PRIVATE ${app_icon_macos})
