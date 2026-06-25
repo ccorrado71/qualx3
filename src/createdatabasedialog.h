@@ -45,6 +45,7 @@ private slots:
     void onAutoDirToggled(bool checked);
     void onSourceChanged();
     void onUserSourceTypeChanged();
+    void onSourceExclusiveToggled(bool checked);
 
 private:
     Ui::CreateDatabaseDialog *ui;

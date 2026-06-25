@@ -4,6 +4,7 @@
 #include "fileselectorwidget.h"
 
 #include <QFileInfo>
+#include <QGroupBox>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QDir>
@@ -25,6 +26,11 @@ CreateDatabaseDialog::CreateDatabaseDialog(QWidget *parent)
     connect(ui->checkCod,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
     connect(ui->checkPdf,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
     connect(ui->checkUser, &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceChanged);
+
+    // Source groupboxes behave like radio buttons: only one can be checked
+    connect(ui->checkCod,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceExclusiveToggled);
+    connect(ui->checkPdf,  &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceExclusiveToggled);
+    connect(ui->checkUser, &QGroupBox::toggled, this, &CreateDatabaseDialog::onSourceExclusiveToggled);
 
     ui->codSqFileSelector->setFilter(tr("QualX database (*.sq);;All files (*)"));
     ui->pdfFileSelector->setFilter(tr("PDF-2 files (*.dat);;All files (*)"));
@@ -166,6 +172,21 @@ void CreateDatabaseDialog::onSourceChanged()
 {
     if (ui->checkAutoName->isChecked())
         ui->nameLineEdit->setText(generateAutoName());
+}
+
+void CreateDatabaseDialog::onSourceExclusiveToggled(bool checked)
+{
+    if (!checked)
+        return;
+
+    QGroupBox *source = qobject_cast<QGroupBox *>(sender());
+    if (!source)
+        return;
+
+    for (QGroupBox *box : { ui->checkCod, ui->checkPdf, ui->checkUser }) {
+        if (box != source && box->isChecked())
+            box->setChecked(false);
+    }
 }
 
 void CreateDatabaseDialog::onUserSourceTypeChanged()
