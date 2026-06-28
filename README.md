@@ -1,92 +1,178 @@
-# QualX3
+# QualX
 
+**Qualitative phase analysis software for X-ray powder diffraction patterns**, developed at the [Institute of Crystallography (IC-CNR), Bari](https://www.ic.cnr.it/).
 
+QualX helps identify the crystalline phases present in a powder diffraction pattern by comparing it against large reference databases (PDF-2, COD) and crystallographic data imported from CIF files.
 
-## Getting started
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](LICENSE)
+![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C)
+![Qt6](https://img.shields.io/badge/Qt-6-41CD52)
+![Fortran](https://img.shields.io/badge/Fortran-modern-734F96)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Table of contents
 
-## Add your files
+- [About](#about)
+- [Features](#features)
+- [Reference databases](#reference-databases)
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [Linux (quick install)](#linux-quick-install)
+  - [Manual build](#manual-build)
+- [Usage](#usage)
+  - [Graphical interface](#graphical-interface)
+  - [Command-line database creation](#command-line-database-creation)
+- [Documentation](#documentation)
+- [Repository structure](#repository-structure)
+- [Citing QualX](#citing-qualx)
+- [License](#license)
+- [Authors and acknowledgments](#authors-and-acknowledgments)
+- [Contributing](#contributing)
+- [Support](#support)
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## About
 
-```
-cd existing_repo
-git remote add origin https://baltig.cnr.it/corrado.cuocci/qualx3.git
-git branch -M main
-git push -uf origin main
-```
+QualX is a Qt6/C++ desktop application, with a Fortran computational core, for **qualitative phase analysis (phase identification)** of powder X-ray diffraction data. It lets researchers search a diffraction pattern against crystallographic reference databases to identify which known phases are present in a sample.
 
-## Integrate with your tools
+The application can work with:
+- **PDF-2** (Powder Diffraction File) reference data,
+- **COD** (Crystallography Open Database) entries,
+- custom databases built from a folder of **CIF** files.
 
-- [ ] [Set up project integrations](https://baltig.cnr.it/corrado.cuocci/qualx3/-/settings/integrations)
+## Features
 
-## Collaborate with your team
+- Qualitative phase identification against large crystallographic databases
+- Built-in database creation/import tools (from PDF-2 or CIF files)
+- Search engine based on top d-value indexing for fast pattern matching
+- Cross-platform: Linux, Windows, macOS
+- GUI workflow plus a scriptable command-line interface for database creation
+- Fortran computational core for crystallographic calculations, interfaced with C++ via `iso_c_binding`
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## Reference databases
 
-## Test and Deploy
+QualX databases are composed of four files sharing a common base name:
 
-Use the built-in continuous integration in GitLab.
+| Extension       | Content                                   |
+|------------------|--------------------------------------------|
+| `.sq`            | Main data (id, chemical formula, subfiles) |
+| `.sq.info`       | Crystallographic and bibliographic data    |
+| `.sq.infostat`   | Statistical tables                         |
+| `.sq.search`     | Search index (top d-values)                |
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+A reference database built from the [COD](https://www.crystallography.net/cod/) inorganic subset is included under `DB/cod/`. It is large (the bundled `cod_inorg.sq*` files total roughly **1 GB**), so cloning the repository may take a while and require a stable connection.
 
-***
+You can also build your own database from PDF-2 data or a folder of CIF files — see [Command-line database creation](#command-line-database-creation).
 
-# Editing this README
+## Requirements
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- CMake ≥ 3.20
+- A C++17 compiler (GCC, Clang, or MSVC)
+- A Fortran compiler: `gfortran`, `ifort`, or `ifx`
+- Qt6 (components: `Widgets`, `Sql`, `PrintSupport`, `Network`)
+- SQLite (used via Qt SQL driver)
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+### Linux (quick install)
+
+An automatic installation script is provided for Debian-based and RedHat-based distributions:
+
+```bash
+./install.sh [fortran_compiler] [qt_prefix]
+```
+
+Examples:
+
+```bash
+./install.sh                  # uses gfortran, auto-detects Qt
+./install.sh gfortran /home/user/Qt/6.5.0/gcc_64
+```
+
+The script checks dependencies, configures the project with CMake, builds it, and installs it to `/opt/qualx-<version>` (requires `sudo` for the install step).
+
+### Manual build
+
+```bash
+cmake -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.y/gcc_64 \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_Fortran_COMPILER=gfortran \
+      -S . -B build
+
+cmake --build build -j$(nproc)
+sudo cmake --install build
+```
+
+Adjust `CMAKE_PREFIX_PATH` to point to your Qt6 installation, and `CMAKE_Fortran_COMPILER` to `gfortran`, `ifort`, or `ifx` as needed. Platform-specific packaging resources (icons, installer scripts) are available under `deploy/linux`, `deploy/Windows`, and `deploy/macOS`.
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Graphical interface
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Launch the installed executable (`qualx`) to open the GUI, load a diffraction pattern, select a reference database, and run a qualitative phase search.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Command-line database creation
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+QualX can also build reference databases without launching the GUI:
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```bash
+# From a PDF-2 file:
+qualx --createdb --pdf2 /path/to/pdf2.dat --dbout /path/to/output
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+# From a folder of CIF files:
+qualx --createdb --cifdir /path/to/cifs [--recursive] --dbout /path/to/output
+```
+
+## Documentation
+
+A user manual is available under `docs/` (built with [MkDocs](https://www.mkdocs.org/)):
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs build -f docs/mkdocs.yml
+bash docs/make_pdf.sh   # optional: generates docs/qualx_manual.pdf
+```
+
+## Repository structure
+
+```
+src/           C++ and Fortran sources
+src/CMakeLists.txt   list of all sources (PROJECT_SOURCES and FORTRAN_SOURCES)
+share/qualx/   runtime data files (syminfo.lib, AtomProperties.xen, ...)
+DB/            bundled SQLite reference databases (e.g. DB/cod/cod_inorg)
+deploy/        platform-specific packaging resources (Linux, Windows, macOS)
+docs/          user manual sources (MkDocs)
+configured/    files generated by CMake (config.h with version info)
+```
+
+## Citing QualX
+
+If you use QualX in your research, please cite one of the following works:
+
+1. Altomare, A., Corriero, N., Cuocci, C., Falcicchio, A., Moliterni, A. and Rizzi, R.,
+   *'Main features of QUALX2.0 software for qualitative phase analysis'* (2017). *Powder Diffr.*
+   [https://doi.org/10.1017/S0885715617000240](https://doi.org/10.1017/S0885715617000240)
+
+2. Altomare, A., Corriero, N., Cuocci, C., Falcicchio, A., Moliterni, A. and Rizzi, R.,
+   *'QUALX2.0: a qualitative phase analysis software using the freely available database POW_COD'* (2015). *J. Appl. Cryst.* **48**, 598–603.
+   [https://doi.org/10.1107/S1600576715002319](https://doi.org/10.1107/S1600576715002319)
+
+3. Altomare, A., Cuocci, C., Giacovazzo, C., Moliterni, A. and Rizzi, R.,
+   *'QUALX: A computer program for qualitative analysis using powder diffraction data'* (2008). *J. Appl. Cryst.* **41**(4), 815–817.
+   [https://doi.org/10.1107/S0021889808016956](https://doi.org/10.1107/S0021889808016956)
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+QualX is distributed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**. See [LICENSE](LICENSE) for the full text.
+
+## Authors and acknowledgments
+
+Developed and maintained at the **Institute of Crystallography, CNR (IC-CNR), Bari**, Italy.
+
+## Contributing
+
+Bug reports, feature requests, and merge requests are welcome. Please open an issue describing the problem or proposal before submitting larger changes.
+
+## Support
+
+For questions or issues, please use the project's issue tracker, or contact the maintainer (corrado.cuocci@cnr.it).
