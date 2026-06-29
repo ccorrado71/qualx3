@@ -347,7 +347,7 @@ if(WIN32)
 
     # Adds basic repository entries to config.xml file
     # Runs repogen command on the packages directory
-    cpack_ifw_add_repository("Expo2Repository" URL "https://www.ba.ic.cnr.it/content/old/expo2/repository")
+    cpack_ifw_add_repository("Qualx3Repository" URL "https://www.ba.ic.cnr.it/content/old/qualx3/repository")
 
     include(CPack)
 
