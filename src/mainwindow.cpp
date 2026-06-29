@@ -2237,9 +2237,10 @@ void MainWindow::onActionLoadAddTriggered()
 void MainWindow::onActionDocumentationHtmlTriggered()
 {
     const QDir appDir(QCoreApplication::applicationDirPath());
-    // Try development build layout (build_*/src/ → project_root/docs/site/)
-    // then installed layout (bin/ → share/qualx/docs/)
+    // Try development build layout: exe directly in build_*/ (single-config generators)
+    // or nested in build_*/<config>/ (multi-config generators), then installed layout.
     const QStringList candidates = {
+        appDir.filePath("../docs/site/index.html"),
         appDir.filePath("../../docs/site/index.html"),
         appDir.filePath("../share/qualx/docs/index.html"),
         appDir.filePath("docs/index.html"),
@@ -2259,6 +2260,7 @@ void MainWindow::onActionDocumentationPdfTriggered()
 {
     const QDir appDir(QCoreApplication::applicationDirPath());
     const QStringList candidates = {
+        appDir.filePath("../docs/qualx_manual.pdf"),
         appDir.filePath("../../docs/qualx_manual.pdf"),
         appDir.filePath("../share/qualx/docs/qualx_manual.pdf"),
         appDir.filePath("docs/qualx_manual.pdf"),

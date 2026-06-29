@@ -29,6 +29,9 @@ pandoc \
   -V geometry:margin=2.5cm \
   -V fontsize=11pt \
   -V lang=en \
+  -V mainfont="DejaVu Serif" \
+  -V sansfont="DejaVu Sans" \
+  -V monofont="DejaVu Sans Mono" \
   --metadata title="QualX Manual"
 
 echo "PDF generated: ${OUT}"
