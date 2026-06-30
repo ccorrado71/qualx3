@@ -1,12 +1,13 @@
 # Getting Started
 
-## Step 1 — Configure the database
+## Step 1 — Install a reference database
 
-Before running the first search, add at least one reference database:
+Before running the first search, at least one crystallographic reference
+database must be installed. QualX automatically detects databases placed in the
+**QualxDB** folder inside your home directory.
 
-1. Open **Search → Manage Databases**
-2. Click **Add existing** and browse to your `.sq` database file
-3. Click **OK** — the database is now active
+For download links, installation instructions and advanced configuration see
+the [Database Installation](../database-installation.md) page.
 
 ## Step 2 — Import a diffraction pattern
 

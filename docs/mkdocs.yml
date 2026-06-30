@@ -22,7 +22,9 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Installation:
+    - Software Installation: installation.md
+    - Database Installation: database-installation.md
   - Introduction:
     - Overview: introduction/index.md
     - Getting Started: introduction/getting-started.md

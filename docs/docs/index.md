@@ -17,6 +17,7 @@ diffraction patterns against reference databases.
 ## Quick Links
 
 - [Installation](installation.md)
+- [Database Installation](database-installation.md)
 - [Getting Started](introduction/getting-started.md)
 - [Search & Match](search-match/search-match.md)
 
