@@ -7,7 +7,6 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
                                         QString &errorMessage, bool &test, QString &testFolder)
 {
     parser.addPositionalArgument("file1",QCoreApplication::translate("main","Input file, optionally"),"[file1]");
-    parser.addPositionalArgument("file2",QCoreApplication::translate("main","Output file, optionally"),"[file2]");
     const QCommandLineOption helpOption = parser.addHelpOption();
     const QCommandLineOption versionOption = parser.addVersionOption();
     const QCommandLineOption noguiOption("nogui", "Run the program without graphics");
@@ -124,7 +123,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
 
     const QStringList positionalArguments = parser.positionalArguments();
     if (!positionalArguments.isEmpty()) {
-        if (positionalArguments.size() > 2) {
+        if (positionalArguments.size() > 1) {
             errorMessage = "Several 'name' arguments specified.";
             return CommandLineError;
         }
@@ -134,7 +133,6 @@ CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString &fil
             return CommandLineOk;
         }
         filein = arg;
-        if (positionalArguments.size() == 2) fileout = positionalArguments.at(1);
     }
 
     return CommandLineOk;
