@@ -12,9 +12,10 @@
 
 // Database registry keys.
 // DB_INUSE_KEY / DB_NAME_KEY / DB_PATH_KEY expect a single %1 = zero-based index.
-#define DB_COUNT_KEY "databases/count"
-#define DB_INUSE_KEY "databases/%1/inUse"
-#define DB_NAME_KEY  "databases/%1/name"
-#define DB_PATH_KEY  "databases/%1/path"
+#define DB_COUNT_KEY       "databases/count"
+#define DB_INUSE_KEY       "databases/%1/inUse"
+#define DB_NAME_KEY        "databases/%1/name"
+#define DB_PATH_KEY        "databases/%1/path"
+#define DB_DEFAULT_DIR_KEY "databases/defaultDir"
 
 #endif // PROGKEYSETTINGS_H

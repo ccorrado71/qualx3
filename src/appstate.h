@@ -48,9 +48,22 @@ public:
     // Returns the experimental peaks loaded from the last get_d_delta_values call.
     static ExperimentalPeaks &peaks();
 
+    // Returns the configured default database folder (~/QualxDB if not set).
+    static QString defaultDbDir();
+
+    // Saves a new default database folder to QSettings.
+    static void setDefaultDbDir(const QString &dir);
+
 private:
     // Opens the active database (closes any previously open one first).
     static void openActiveDatabase();
+
+    // Recursively scans dir for *.sq files not yet in s_databases and adds them.
+    static void scanAndRegisterDatabases(const QString &dir);
+
+    // Shows a warning dialog when no databases are found and the default folder
+    // is missing, offering to pick a new folder or dismiss.
+    static void promptForDefaultDir();
 
     static QList<DatabaseEntry> s_databases;
     static QualxDbManager       s_db;

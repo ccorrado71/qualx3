@@ -1,9 +1,15 @@
 #include "appstate.h"
 #include "databasebuilder.h"
+#include "progkeysettings.h"
 
-#include <QCoreApplication>
 #include <QDir>
+#include <QDirIterator>
+#include <QFileDialog>
 #include <QFileInfo>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSet>
+#include <QSettings>
 
 QList<DatabaseEntry> AppState::s_databases;
 QualxDbManager       AppState::s_db;
@@ -14,21 +20,13 @@ void AppState::load()
 {
     s_databases = ManageDatabasesDialog::loadSettings();
 
-    // First launch (no databases configured): register the bundled default DB
-    // if it exists at <installdir>/DB/cod/cod_inorg
-    if (s_databases.isEmpty()) {
-        const QString appDir = QCoreApplication::applicationDirPath();
-        const QString dbPath = QDir::cleanPath(appDir + "/../DB/cod/cod_inorg");
-
-        if (QFileInfo::exists(dbPath + ".sq")) {
-            DatabaseEntry e;
-            e.inUse   = true;
-            e.name    = QStringLiteral("cod_inorg");
-            e.path    = dbPath;
-            e.entries = DatabaseBuilder::queryEntries(dbPath);
-            s_databases.append(e);
-            ManageDatabasesDialog::saveSettings(s_databases);
-        }
+    // Scan the default QualxDB folder every launch so that databases added
+    // manually to the folder are discovered without user intervention.
+    const QString defDir = defaultDbDir();
+    if (QDir(defDir).exists()) {
+        scanAndRegisterDatabases(defDir);
+    } else if (s_databases.isEmpty()) {
+        promptForDefaultDir();
     }
 
     openActiveDatabase();
@@ -63,6 +61,80 @@ QualxDbManager &AppState::db()
 ExperimentalPeaks &AppState::peaks()
 {
     return s_peaks;
+}
+
+QString AppState::defaultDbDir()
+{
+    QSettings s;
+    return s.value(DB_DEFAULT_DIR_KEY,
+                   QDir::homePath() + "/QualxDB").toString();
+}
+
+void AppState::setDefaultDbDir(const QString &dir)
+{
+    QSettings s;
+    s.setValue(DB_DEFAULT_DIR_KEY, dir);
+}
+
+void AppState::scanAndRegisterDatabases(const QString &dir)
+{
+    QSet<QString> known;
+    for (const DatabaseEntry &e : s_databases)
+        known.insert(e.path);
+
+    const int initialSize = s_databases.size();
+
+    QDirIterator it(dir, QStringList{QStringLiteral("*.sq")},
+                    QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString sqFile = it.next();
+        const QString base   = sqFile.chopped(3); // strip ".sq"
+        if (known.contains(base))
+            continue;
+
+        DatabaseEntry e;
+        // The first newly discovered database becomes active only if the list
+        // was empty before this scan (no databases were configured at all).
+        e.inUse       = (initialSize == 0) && (s_databases.size() == initialSize);
+        e.name        = QFileInfo(sqFile).baseName();
+        e.path        = base;
+        e.entries     = DatabaseBuilder::queryEntries(base);
+        e.contentType = DatabaseBuilder::queryContentType(base);
+        s_databases.append(e);
+    }
+
+    if (s_databases.size() > initialSize)
+        ManageDatabasesDialog::saveSettings(s_databases);
+}
+
+void AppState::promptForDefaultDir()
+{
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(QStringLiteral("No database found"));
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText(
+        QString("No crystallographic databases were found.\n\n"
+                "The default folder does not exist:\n  %1").arg(defaultDbDir()));
+    msgBox.setInformativeText(
+        "You can choose a different default folder, or manage databases "
+        "later via Search > Manage Databases.");
+
+    QPushButton *chooseBtn =
+        msgBox.addButton("Choose folder...", QMessageBox::ActionRole);
+    msgBox.addButton("Manage Databases later", QMessageBox::RejectRole);
+
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == chooseBtn) {
+        const QString dir = QFileDialog::getExistingDirectory(
+            nullptr,
+            QStringLiteral("Select QualxDB folder"),
+            QDir::homePath());
+        if (!dir.isEmpty()) {
+            setDefaultDbDir(dir);
+            scanAndRegisterDatabases(dir);
+        }
+    }
 }
 
 void AppState::openActiveDatabase()
