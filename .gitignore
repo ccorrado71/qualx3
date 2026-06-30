@@ -46,3 +46,6 @@ build*/
 docs/.venv/
 docs/site/
 docs/qualx_manual.pdf
+
+# Database files (too large for GitHub, distribute separately)
+DB/
