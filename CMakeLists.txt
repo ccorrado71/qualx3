@@ -322,7 +322,7 @@ set(CPACK_PACKAGE_DESCRIPTION "Automatic solution and refinement of crystal stru
 
 if(WIN32)
     set(CPACK_GENERATOR "IFW")
-    set(CPACK_IFW_ROOT "C:/Qt/QtIFW-4.7.0")
+    set(CPACK_IFW_ROOT "C:/Qt/QtIFW-4.8.1")
     set(CPACK_IFW_PACKAGE_NAME "QualX")
     set(CPACK_IFW_PACKAGE_TITLE "QualX")
     set(CPACK_IFW_PACKAGE_PUBLISHER "Corrado Cuocci")
