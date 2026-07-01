@@ -9,23 +9,23 @@ Component.prototype.createOperations = function()
     component.createOperations();
     if (systemInfo.productType === "windows") {
         component.addOperation("CreateShortcut",
-                               "@TargetDir@/bin/expo.exe",
-                               "@DesktopDir@/Expo2.lnk",
+                               "@TargetDir@/bin/qualx.exe",
+                               "@DesktopDir@/QualX.lnk",
                                "workingDirectory=@TargetDir@");
 
         component.addOperation("CreateShortcut",
-                               "@TargetDir@/bin/expo.exe",
-                               "@StartMenuDir@/Expo2.lnk",
+                               "@TargetDir@/bin/qualx.exe",
+                               "@StartMenuDir@/QualX.lnk",
                                "workingDirectory=@TargetDir@",
-                               "iconPath=@TargetDir@/bin/expo.exe", "iconId=0",
-                               "description=Start Expo");
+                               "iconPath=@TargetDir@/bin/qualx.exe", "iconId=0",
+                               "description=Start QualX");
 
         component.addOperation("CreateShortcut",
                                "@TargetDir@/MaintenanceTool.exe",
                                "@StartMenuDir@/Uninstall.lnk",
                                "workingDirectory=@TargetDir@",
                                "iconPath=@TargetDir@/MaintenanceTool.exe", "iconId=0",
-                               "description=Uninstall Expo",
+                               "description=Uninstall QualX",
                                "--start-uninstaller");
 
         // return value 3010 means it need a reboot, but in most cases it is not needed for running Qt application
