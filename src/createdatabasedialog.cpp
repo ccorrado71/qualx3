@@ -209,7 +209,7 @@ QString CreateDatabaseDialog::generateAutoName() const
 QString CreateDatabaseDialog::generateAutoDirectory() const
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
-                         + QDir::separator() + "QualxDB";
+                         + QDir::separator() + "QualXDB";
     int index = 1;
     while (true) {
         const QString candidate = base + QDir::separator()

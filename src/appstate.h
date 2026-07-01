@@ -48,7 +48,7 @@ public:
     // Returns the experimental peaks loaded from the last get_d_delta_values call.
     static ExperimentalPeaks &peaks();
 
-    // Returns the configured default database folder (~/QualxDB if not set).
+    // Returns the configured default database folder (~/QualXDB if not set).
     static QString defaultDbDir();
 
     // Saves a new default database folder to QSettings.

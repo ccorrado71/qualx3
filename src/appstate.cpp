@@ -20,7 +20,7 @@ void AppState::load()
 {
     s_databases = ManageDatabasesDialog::loadSettings();
 
-    // Scan the default QualxDB folder every launch so that databases added
+    // Scan the default QualXDB folder every launch so that databases added
     // manually to the folder are discovered without user intervention.
     const QString defDir = defaultDbDir();
     if (QDir(defDir).exists()) {
@@ -67,7 +67,7 @@ QString AppState::defaultDbDir()
 {
     QSettings s;
     return s.value(DB_DEFAULT_DIR_KEY,
-                   QDir::homePath() + "/QualxDB").toString();
+                   QDir::homePath() + "/QualXDB").toString();
 }
 
 void AppState::setDefaultDbDir(const QString &dir)
@@ -128,7 +128,7 @@ void AppState::promptForDefaultDir()
     if (msgBox.clickedButton() == chooseBtn) {
         const QString dir = QFileDialog::getExistingDirectory(
             nullptr,
-            QStringLiteral("Select QualxDB folder"),
+            QStringLiteral("Select QualXDB folder"),
             QDir::homePath());
         if (!dir.isEmpty()) {
             setDefaultDbDir(dir);

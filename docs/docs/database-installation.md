@@ -15,30 +15,30 @@ Pre-built databases are available for download from the
 | `cod.zip` | COD — complete database | 2.7 GB |
 
 Each archive contains a single folder (`cod_inorg` or `cod`) with all the
-required files. Extract it into your `QualxDB` folder following the
+required files. Extract it into your `QualXDB` folder following the
 instructions below.
 
 ## Default database folder
 
-QualX looks for databases in a dedicated folder called **QualxDB** inside your
+QualX looks for databases in a dedicated folder called **QualXDB** inside your
 home directory:
 
 | Platform | Default path |
 |----------|-------------|
-| Linux / macOS | `~/QualxDB` |
-| Windows | `C:\Users\<username>\QualxDB` |
+| Linux / macOS | `~/QualXDB` |
+| Windows | `C:\Users\<username>\QualXDB` |
 
 **At every launch** QualX scans this folder recursively for `.sq` files and
 registers any database it finds automatically — no manual configuration needed.
 You can organise the folder freely: subfolders are fully supported.
 
-## Setting up the QualxDB folder
+## Setting up the QualXDB folder
 
-1. Create the `QualxDB` folder in your home directory.
+1. Create the `QualXDB` folder in your home directory.
 2. Download one of the zip archives from the link above and extract it
-   directly into `QualxDB`. After extraction the folder should look like:
+   directly into `QualXDB`. After extraction the folder should look like:
    ```
-   ~/QualxDB/
+   ~/QualXDB/
    └── cod_inorg/          (or cod/)
        ├── cod_inorg.sq
        ├── cod_inorg.sq.info
@@ -49,7 +49,7 @@ You can organise the folder freely: subfolders are fully supported.
 
 ## What happens if the folder is not found
 
-If QualX starts without any configured database and the `QualxDB` folder does
+If QualX starts without any configured database and the `QualXDB` folder does
 not exist, a dialog is shown with two options:
 
 - **Choose folder…** — lets you select a different folder that will be saved

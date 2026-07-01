@@ -4,7 +4,7 @@
 
 Before running the first search, at least one crystallographic reference
 database must be installed. QualX automatically detects databases placed in the
-**QualxDB** folder inside your home directory.
+**QualXDB** folder inside your home directory.
 
 For download links, installation instructions and advanced configuration see
 the [Database Installation](../database-installation.md) page.
