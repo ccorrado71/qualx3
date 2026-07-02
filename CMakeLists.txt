@@ -87,16 +87,13 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/share/qualx DESTINATION share COMP
 # install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION . COMPONENT ${COMPONENT_NAME_MAIN})
 
 # Documentation (generated files — build with 'mkdocs build' and 'bash docs/make_pdf.sh' first)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/index.html)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/
-            DESTINATION share/qualx/docs
-            COMPONENT ${COMPONENT_NAME_MAIN})
-endif()
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
-            DESTINATION share/qualx/docs
-            COMPONENT ${COMPONENT_NAME_MAIN})
-endif()
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/
+        DESTINATION share/qualx/docs
+        COMPONENT ${COMPONENT_NAME_MAIN})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
+        DESTINATION share/qualx/docs
+        COMPONENT ${COMPONENT_NAME_MAIN}
+        OPTIONAL)
 
 # Linux: Desktop integration (icons + .desktop file)
 if(UNIX AND NOT APPLE)
