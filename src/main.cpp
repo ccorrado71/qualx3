@@ -12,18 +12,63 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QScopeGuard>
+#include <csetjmp>
+#include <csignal>
 
 extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *fileout, int lenOut, const char *exepath, int lenPath, int *ier);
 
+namespace {
+
+jmp_buf qtInitEnv;
+
+void onSigabrt(int)
+{
+    longjmp(qtInitEnv, 1);
+}
+
+// Tries to create a QApplication (needed for the GUI). If no display is
+// available, Qt aborts while initializing the "xcb" platform plugin; that
+// abort is trapped here and we fall back to a plain QCoreApplication so
+// command-line usage (e.g. over SSH without X11 forwarding) keeps working.
+QCoreApplication *loadQt(int &argc, char **argv)
+{
+    QCoreApplication *application = nullptr;
+
+    bool gui = true;
+    for (int i = 1; i < argc; ++i) {
+        if (!qstrcmp(argv[i], "--nogui"))
+            gui = false;
+    }
+
+    if (gui) {
+        if (setjmp(qtInitEnv) == 0) {
+            signal(SIGABRT, &onSigabrt);
+            application = new QApplication(argc, argv);
+        }
+        signal(SIGABRT, SIG_DFL);
+        if (!application)
+            qWarning() << qPrintable(formattedMessage("The Display cannot be accessed !!!\n"
+                                      "Program will go on without graphics", 50));
+    }
+    if (!application)
+        application = new QCoreApplication(argc, argv);
+    return application;
+}
+
+}
+
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QScopedPointer<QCoreApplication> a(loadQt(argc, argv));
+    bool isGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != 0);
 
+    if (isGuiApp) {
 #ifdef Q_OS_MACOS
     QApplication::setWindowIcon(QIcon(":/images/images/qualx.icns"));
 #else
     QApplication::setWindowIcon(QIcon(":/images/images/qualx.png"));
 #endif
+    }
     qApp->setApplicationVersion(APP_VERSION);
     qApp->setApplicationName(APP_NAME);
     qApp->setOrganizationName("IC");
@@ -66,6 +111,11 @@ int main(int argc, char *argv[])
         parser.showHelp();
         Q_UNREACHABLE();
     }
+
+    // If no display was available, loadQt() already fell back to a
+    // QCoreApplication: force nogui mode so we don't try to create a MainWindow.
+    if (!isGuiApp)
+        opt.nogui = 1;
 
     // Load databases only after early-exit cases (--version, --help, bad args).
     // Declared after 'a' so the scope guard is destroyed before QApplication,
@@ -178,6 +228,6 @@ int main(int argc, char *argv[])
             if (searchopt.enabled)
                 w.runSearch(searchopt);
         }
-        return a.exec();
+        return a->exec();
     }
 }
