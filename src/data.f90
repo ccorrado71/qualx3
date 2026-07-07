@@ -93,7 +93,7 @@ CONTAINS
    endif
 !
 !  Subtract background
-   if (.not.dataset(1)%has_back()) then
+   if (.not.dataset(1)%back_subtracted .and. .not.dataset(1)%has_back()) then
        call dataset(1)%make_background()
    endif
 
@@ -108,6 +108,7 @@ CONTAINS
    call peak_create(dataset(1)%x,yc,pkind,pkcond,dataset(1)%wave(1),pkindtot)
    pkcond%maxpk = -1 ! unset max number of peaks for GUI
    pkcond%minpk = -1 ! unset min number of peaks for GUI
+   write(0,*)'Numtot-run_peaksearch =',numpeaks(pkindtot)
 !
    if (guivar) call update_peak_graph()
    !call write_column('picchi.txt',xcol1=pkind%getx(),metad='#2theta values')

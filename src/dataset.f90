@@ -656,6 +656,7 @@ CONTAINS
    if (datas%has_back()) then
        datas%y = datas%y - datas%yb
        where (datas%y < 0.0) datas%y = 0.0
+       datas%yb = 0.0
        datas%back_subtracted = .true.
 
        if (datas%data_scaled) call scale_data(datas)
