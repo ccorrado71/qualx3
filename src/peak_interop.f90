@@ -306,6 +306,14 @@
 
 !-----------------------------------------------------------------------
 
+   subroutine delete_all_peaks() bind(C,name="delete_all_peaks")
+   use peak_mod
+   call clear_peaks(pkind)
+   call clear_peaks(pkindtot)
+   end subroutine delete_all_peaks
+
+!-----------------------------------------------------------------------
+
    subroutine peak_list_change(c_peak,irow,icol,ier) bind(C,name="peak_list_change")
 !
 !  Edit peak or add and edit peak

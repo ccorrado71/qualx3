@@ -11,6 +11,7 @@ OUT="${1:-${SCRIPT_DIR}/qualx_manual.pdf}"
 pandoc \
   "${SCRIPT_DIR}/docs/index.md" \
   "${SCRIPT_DIR}/docs/installation.md" \
+  "${SCRIPT_DIR}/docs/database-installation.md" \
   "${SCRIPT_DIR}/docs/introduction/index.md" \
   "${SCRIPT_DIR}/docs/introduction/getting-started.md" \
   "${SCRIPT_DIR}/docs/introduction/examples.md" \

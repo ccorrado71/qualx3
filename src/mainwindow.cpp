@@ -65,6 +65,7 @@ extern "C" void set_diffraction_data(float x[], float y[], int ndata, float yb[]
                                      float wave[], float ratio[], int nwave,
                                      int radtype,
                                      const char *filename, int filename_len);
+extern "C" void delete_all_peaks();
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -586,6 +587,7 @@ void MainWindow::onActionNewTriggered()
     ui->cardBrowser->clear();
 
     AppState::peaks().clear();
+    delete_all_peaks();
 
     clearProjectFile();
     currentFile.clear();
