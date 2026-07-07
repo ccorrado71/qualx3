@@ -12,7 +12,7 @@ module qualx_main
 
 contains
 
-   subroutine qualxmain(param_opt,fileinc,len_in,fileoutc,len_out,exepathcc,len_path,ier) bind(C,name="qualxmain")
+   subroutine qualxmain(param_opt,fileinc,len_in,exepathcc,len_path,ier) bind(C,name="qualxmain")
    use general, only: ifAutomatic
    use molcom, only: jscreen
    use strutil
@@ -20,14 +20,13 @@ contains
    use errormod
    use import_data_struct
    type(param_options_type)      :: param_opt
-   character(c_char), intent(in) :: fileinc(*),fileoutc(*),exepathcc(*)
-   integer(c_int), value         :: len_in, len_out, len_path
+   character(c_char), intent(in) :: fileinc(*),exepathcc(*)
+   integer(c_int), value         :: len_in, len_path
    integer(c_int)                :: ier
-   character(len=:), allocatable :: filein,fileout,exepath
+   character(len=:), allocatable :: filein,exepath
    type(error_type)              :: err
 !
    filein = toFortranString(fileinc,len_in)
-   fileout = toFortranString(fileoutc,len_out)
    exepath = toFortranString(exepathcc,len_path)
 
    call init_qualx()

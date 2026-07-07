@@ -15,7 +15,7 @@
 #include <csetjmp>
 #include <csignal>
 
-extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *fileout, int lenOut, const char *exepath, int lenPath, int *ier);
+extern "C" void qualxmain(ProgOptions *p, const char *filein, int lenIn, const char *exepath, int lenPath, int *ier);
 
 namespace {
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
     QString pathDataFiles = fileutils::getDirDataFiles(dataFiles,errPath);
     MainWindow::setPathDataFiles(pathDataFiles);
 
-    int ier;
+    int ier = 0;
     if (dbopt.enabled) {
         if (pathDataFiles.isEmpty()) {
             fputs(qPrintable(errPath), stderr);
@@ -222,9 +222,10 @@ int main(int argc, char *argv[])
             QMessageBox::critical(&w,"Problem Occurred",errPath,QMessageBox::Ok);
             return EXIT_FAILURE;
         } else {
-            qualxmain(&opt,filein.toLocal8Bit().constData(),filein.toLocal8Bit().size(),fileout.toLocal8Bit().constData(),
-                      fileout.toLocal8Bit().size(),pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
-            //test_crystal_info_from_cif();
+            qualxmain(&opt,filein.toLocal8Bit().constData(),filein.toLocal8Bit().size(),
+                      pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
+            if (!filein.isEmpty() && !ier)
+                w.enableActions(MainWindow::PatternAction);
             if (searchopt.enabled)
                 w.runSearch(searchopt);
         }
