@@ -25,6 +25,7 @@ public:
     void setSelectedCard(const CardType &card, const QString &cardId, double delta);
     void clearCard();
     void addAcceptedPhase(const CardType &card);
+    void removeAcceptedPhase(const QString &cardId);
     void clearAcceptedPhases();
     void refresh();
 

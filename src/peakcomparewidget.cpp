@@ -63,6 +63,17 @@ void PeakCompareWidget::addAcceptedPhase(const CardType &card)
     rebuild();
 }
 
+void PeakCompareWidget::removeAcceptedPhase(const QString &cardId)
+{
+    for (int i = 0; i < m_acceptedPhases.size(); ++i) {
+        if (m_acceptedPhases[i].getId() == cardId) {
+            m_acceptedPhases.remove(i);
+            break;
+        }
+    }
+    rebuild();
+}
+
 void PeakCompareWidget::clearAcceptedPhases()
 {
     m_acceptedPhases.clear();

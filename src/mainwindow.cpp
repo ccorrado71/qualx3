@@ -175,6 +175,12 @@ void MainWindow::createDialogs()
                     card, card.getId(), SearchOptionsDialog::savedDelta2theta());
             });
 
+    connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
+            this, [this](bool hasSelection) {
+                if (!hasSelection)
+                    ui->peakCompareWidget->clearCard();
+            });
+
     connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
             this, [this](const CardType &card) {
                 ui->quantWidget->addPhase(card);
@@ -191,6 +197,7 @@ void MainWindow::createDialogs()
     connect(ui->quantWidget, &QuantWidget::phaseRemoved,
             this, [this](const CardType &card) {
                 ui->resultsWidget->addCard(card);
+                ui->peakCompareWidget->removeAcceptedPhase(card.getId());
                 ui->reportWidget->updateQuantitative(
                     ui->quantWidget->phases(), ui->quantWidget->quantPercentages());
                 xpdViewer()->removePhaseReflections(card.getId());
