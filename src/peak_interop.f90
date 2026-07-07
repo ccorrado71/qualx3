@@ -84,7 +84,6 @@
         endif
         pSettings%threshold = pkcond%amp
         pSettings%numPeaks = numpeaks(pkind)
-        write(0,*)'Numtot=',numpeaks(pkindtot)
         pSettings%numPeaksTot = numpeaks(pkindtot)
         pSettings%sensitivity = sensitivity(pkcond%smcond(2),pkcond%smcond(1))
         pSettings%append = .false.

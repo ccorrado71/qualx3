@@ -103,12 +103,10 @@ CONTAINS
 !
 !  compute srange
    pkcond%srange = init_peak_range(dataset(1)%x,yc,dataset(1)%wave(1))
-   !write(0,*)'SRANGE =',pkcond%srange
 !
    call peak_create(dataset(1)%x,yc,pkind,pkcond,dataset(1)%wave(1),pkindtot)
    pkcond%maxpk = -1 ! unset max number of peaks for GUI
    pkcond%minpk = -1 ! unset min number of peaks for GUI
-   write(0,*)'Numtot-run_peaksearch =',numpeaks(pkindtot)
 !
    if (guivar) call update_peak_graph()
    !call write_column('picchi.txt',xcol1=pkind%getx(),metad='#2theta values')
