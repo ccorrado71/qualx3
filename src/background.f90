@@ -52,8 +52,8 @@
         if (backt%auto) then
            call autobackground(xcount,ycount,bcount,backt%btype,pointb,thzerob,coefb,backt%ncoef)
         else
-           call param_back(backt%btype,pointb,size(coefb),coefb,thmin0,thmax0,thzerob)
-           call getbackground(backt%btype,bcount,xcount,coefb,thzerob)
+           call param_back(backt%btype,pointb,backt%ncoef,coefb(:backt%ncoef),thmin0,thmax0,thzerob)
+           call getbackground(backt%btype,bcount,xcount,coefb(:backt%ncoef),thzerob)
         endif
 
       case (CSPLINE)

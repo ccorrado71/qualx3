@@ -138,7 +138,6 @@ void BackgroundDialog::applyNcoefChanged()
     if (bkCurrentSettings.autob) return;
 
     BackgroundCoefWidget *widget = qobject_cast<BackgroundCoefWidget*>(sender());
-    qInfo() << "Changed Applied, Ncoef: " << widget->getNcoef();
     bkCurrentSettings.ncoef = widget->getNcoef();
     modify_background(&bkCurrentSettings,1);
 }
