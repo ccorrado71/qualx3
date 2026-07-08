@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 get_filename_component(ProjectId ${CMAKE_CURRENT_LIST_DIR} NAME)
 string(REPLACE " " "_" ProjectId ${ProjectId})
-project(${ProjectId} VERSION 1.0.0 LANGUAGES CXX Fortran)
+project(${ProjectId} VERSION 1.0.1 LANGUAGES CXX Fortran)
 set(EXECUTABLE_NAME "qualx")
 
 # Option to build Debian package (installs to /usr)
