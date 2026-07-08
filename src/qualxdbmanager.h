@@ -68,7 +68,7 @@ private:
     int  makeQueryCellPar(const QString &qString, QString &result);
     int  makeQueryCellParameters(const QStringList &qParList, QString &result);
     int  makeQuerySymmetry(const QString &qString, QString &result);
-    void makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress=nullptr);
+    void makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress=nullptr, bool noFilter=false);
     QVector<CardType> makeQueryInfoIds(const QString &idsString, const DbQueryBuilder &builder, int count, ProgressCallback progress=nullptr);
     void makeQuerySearch(bool addDeleted, QString &result);
     void makeQuerySearchStrongest(QString &result);

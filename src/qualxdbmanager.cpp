@@ -234,9 +234,9 @@ int QualxDbManager::makeQuerySymmetry(const QString &qString, QString &result)
     return ndata;
 }
 
-void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress)
+void QualxDbManager::makeQueryInfoIdsWithFom(const QString &idsString, const DbQueryBuilder &builder, int count, QVector<CardType> &acceptedCards, ProgressCallback progress, bool noFilter)
 {
-    if (idsString.isEmpty())
+    if (idsString.isEmpty() && !noFilter)
         return;
 
     ScopedTimer timer("QualxDbManager::makeQueryInfoIdsWithFom");
@@ -715,7 +715,7 @@ void QualxDbManager::makeQueryWithoutStrongest(const DbQueryBuilder &builder,
         makeQueryInfoIdsWithFom(idsString, builder, count, acceptedCards, progress);
     } else {
         // No restraints: query all cards directly (idsString empty → no IN filter)
-        makeQueryInfoIdsWithFom(QString(), builder, 0, acceptedCards, progress);
+        makeQueryInfoIdsWithFom(QString(), builder, 0, acceptedCards, progress, /*noFilter=*/true);
     }
 
     qInfo() << "makeQueryWithoutStrongest: accepted =" << acceptedCards.size();
