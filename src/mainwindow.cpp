@@ -50,7 +50,7 @@ extern "C" void process_action_points(int kaction, double xp, double yp,int *ier
 extern "C" void apply_background_subtraction();
 extern "C" void kalpha2_stripping();
 extern "C" int peak_number();
-extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave);
+extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave, double delta2theta);
 extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
                            double w2thetad, double w_intensity, double w_phases, double delta2theta,
                            double *fompeakpos_out, double *fomintensity_out, double *scale_out,
@@ -1643,7 +1643,7 @@ static int loadExperimentalPeaks()
     float *intval    = new float[n];
     float *fwhmval   = new float[n];
     double wave;
-    get_d_delta_values(dval, deltadval, tthval, intval, fwhmval, &wave);
+    get_d_delta_values(dval, deltadval, tthval, intval, fwhmval, &wave, SearchOptionsDialog::savedDelta2theta());
 
     ExperimentalPeaks &ep = AppState::peaks();
     ep.d.resize(n); ep.deltaD.resize(n);
