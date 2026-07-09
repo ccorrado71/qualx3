@@ -2,6 +2,11 @@
 
 All notable changes to qualx are documented in this file.
 
+## [1.0.3] - 2026-07-09
+
+### Fixed
+- Strongest-peaks screening in database search ignored the 2theta tolerance configured in `SearchOptionsDialog` (`spinDelta`) and used a hardcoded value converted with the wrong (inverse) formula, causing the tolerance to be wildly oversized and the screening to accept almost every card.
+
 ## [1.0.2] - 2026-07-09
 
 ### Changed
