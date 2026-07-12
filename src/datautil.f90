@@ -66,9 +66,9 @@ contains
 !      Set wavelength 
        if (this%nwave == 0) then     ! wavelenght is not still defined
            if (nwave == 0) then      ! wavelength is not in data file
+               wave(1:2) = [DEF_WAVE,DEF_WAVE2]
+               ratio(1:2) = [1.0,0.5]
                if (gui) then
-                   wave(1:2) = [DEF_WAVE,DEF_WAVE2]
-                   ratio(1:2) = [1.0,0.5]
                    call openwave(irad,nwave,wave,ratio)
                    select case (irad)
                      case (2)
@@ -76,6 +76,8 @@ contains
                      case (3)
                        this%radtype = NEUTRON_SOURCE
                    end select
+               else
+                   nwave = 1
                endif
            endif
            call this%set_wave(nwave,wave,ratio)

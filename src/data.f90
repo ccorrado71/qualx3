@@ -30,6 +30,7 @@ CONTAINS
    USE datautil
    USE strutil
    USE variables, only: dataset
+   USE molcom, only: jscreen
    character(len=*), intent(in) :: input_file
    integer, intent(in), value   :: add_data
    integer, intent(out)         :: ier
@@ -39,7 +40,7 @@ CONTAINS
    type(dataset_type)           :: datas
 !
    ier = 0
-   call load_datafile(datas,input_file,.true.,ier)
+   call load_datafile(datas,input_file,(jscreen > 0),ier)
    if (ier == 0) then
        if (add_data == 0) then
 !           if (ifProject.ne.0) then   ! importante se esegui run successivi

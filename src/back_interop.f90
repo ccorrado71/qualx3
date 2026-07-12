@@ -126,13 +126,14 @@ module background_interop
    subroutine apply_background_subtraction() bind(C,name="apply_background_subtraction")
    USE variables, only: dataset
    USE VIEW
+   USE molcom, only: jscreen
 !
    if (.not.dataset(1)%back_subtracted) then
        if (.not.dataset(1)%has_back()) then
            call dataset(1)%make_background()
        endif
        call dataset(1)%subtract_background()
-       call vedinew()
+       if (jscreen > 0) call vedinew()
    endif
 !
    end subroutine apply_background_subtraction
