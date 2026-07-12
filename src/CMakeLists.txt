@@ -138,6 +138,8 @@ set(PROJECT_SOURCES
     printdialog.ui
     savedialog.cpp
     savedialog.h
+    searchmatch.cpp
+    searchmatch.h
     searchoptionsdialog.cpp
     searchoptionsdialog.h
     searchoptionsdialog.ui

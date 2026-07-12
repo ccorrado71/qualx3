@@ -5,6 +5,8 @@
 #include "databasebuilder.h"
 #include "libcomune.h"
 #include "appstate.h"
+#include "searchmatch.h"
+#include "searchoptionsdialog.h"
 #if USE_CONFIG_H
 #include "config.h"
 #endif
@@ -12,6 +14,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QScopeGuard>
+#include <algorithm>
 #include <csetjmp>
 #include <csignal>
 
@@ -53,6 +56,67 @@ QCoreApplication *loadQt(int &argc, char **argv)
     if (!application)
         application = new QCoreApplication(argc, argv);
     return application;
+}
+
+// Headless equivalent of Search > Match (MainWindow::onActionSearchMatchTriggered),
+// used when --search is given together with a data file in --nogui mode, where no
+// MainWindow (and thus no result widgets) exists. Prints the matching cards to stdout.
+void runSearchMatchCli(const SearchOptions &searchopt)
+{
+    int npeaks = ensurePeaksFound();
+    if (npeaks == 0) {
+        fputs("Error: no peaks found. Check the data/peak-search parameters and try again.\n", stderr);
+        return;
+    }
+
+    loadExperimentalPeaks();
+    const ExperimentalPeaks &ep = AppState::peaks();
+
+    DbQueryBuilder builder = buildSearchMatchQuery(ep);
+    builder.enableDeleted(SearchOptionsDialog::savedCheckDeleted());
+    if (!searchopt.composition.isEmpty()) {
+        builder.setElements(searchopt.composition);
+        if (searchopt.exactComposition)
+            builder.setBOperator(DbQueryBuilder::ONLY_OP);
+        else if (searchopt.containsAny)
+            builder.setBOperator(DbQueryBuilder::JUST_OP);
+    }
+    builder.buildQuery();
+
+    printf("Searching database...\n");
+    int lastProg = -1;
+    auto progress = [&lastProg](int current, int total) {
+        int prog = total > 0 ? (100 * current) / total : 0;
+        if (prog != lastProg) {
+            lastProg = prog;
+            printf("\r  %3d%%", prog);
+            fflush(stdout);
+        }
+    };
+
+    QVector<CardType> acceptedCards;
+    if (SearchOptionsDialog::savedCheckStrongest())
+        AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+    else
+        AppState::db().makeQueryWithoutStrongest(builder, acceptedCards, progress);
+
+    const int maxEntries = SearchOptionsDialog::savedMaxEntries();
+    if (acceptedCards.size() > maxEntries) {
+        std::sort(acceptedCards.begin(), acceptedCards.end(),
+                  [](const CardType &a, const CardType &b) {
+                      return a.getFom() > b.getFom();
+                  });
+        acceptedCards.resize(maxEntries);
+    }
+
+    printf("\rFound %d card(s):\n", (int)acceptedCards.size());
+    for (const CardType &card : acceptedCards) {
+        printf("  [%s] %-40s | %-50s | %s\n",
+               qPrintable(card.getId()),
+               qPrintable(card.getChemicalName()),
+               qPrintable(card.getChemicalFormula()),
+               qPrintable(card.getSpaceGroup()));
+    }
 }
 
 }
@@ -183,36 +247,52 @@ int main(int argc, char *argv[])
         }
         return 0;
     } else if (opt.nogui) {
-        if (searchopt.enabled) {
-            DbQueryBuilder builder;
-            if (!searchopt.composition.isEmpty()) {
-                builder.setElements(searchopt.composition);
-                if (searchopt.exactComposition)
-                    builder.setBOperator(DbQueryBuilder::ONLY_OP);
-                else if (searchopt.containsAny)
-                    builder.setBOperator(DbQueryBuilder::JUST_OP);
+        if (!filein.isEmpty()) {
+            if (pathDataFiles.isEmpty()) {
+                fputs(qPrintable(errPath), stderr);
+                fputs("\n", stderr);
+                return 1;
             }
-            builder.buildQuery();
+            qualxmain(&opt,filein.toLocal8Bit().constData(),filein.toLocal8Bit().size(),
+                      pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
+        }
 
-            printf("Searching database...\n");
-            int lastProg = -1;
-            auto progress = [&lastProg](int current, int total) {
-                int prog = total > 0 ? (100 * current) / total : 0;
-                if (prog != lastProg) {
-                    lastProg = prog;
-                    printf("\r  %3d%%", prog);
-                    fflush(stdout);
+        if (searchopt.enabled) {
+            if (!filein.isEmpty() && !ier) {
+                // A data file was loaded: search & match against its experimental
+                // peaks, as if the user had triggered Search > Match from the menu.
+                runSearchMatchCli(searchopt);
+            } else {
+                DbQueryBuilder builder;
+                if (!searchopt.composition.isEmpty()) {
+                    builder.setElements(searchopt.composition);
+                    if (searchopt.exactComposition)
+                        builder.setBOperator(DbQueryBuilder::ONLY_OP);
+                    else if (searchopt.containsAny)
+                        builder.setBOperator(DbQueryBuilder::JUST_OP);
                 }
-            };
+                builder.buildQuery();
 
-            QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
-            printf("\rFound %d card(s):\n", (int)cards.size());
-            for (const CardType &card : cards) {
-                printf("  [%s] %-40s | %-50s | %s\n",
-                       qPrintable(card.getId()),
-                       qPrintable(card.getChemicalName()),
-                       qPrintable(card.getChemicalFormula()),
-                       qPrintable(card.getSpaceGroup()));
+                printf("Searching database...\n");
+                int lastProg = -1;
+                auto progress = [&lastProg](int current, int total) {
+                    int prog = total > 0 ? (100 * current) / total : 0;
+                    if (prog != lastProg) {
+                        lastProg = prog;
+                        printf("\r  %3d%%", prog);
+                        fflush(stdout);
+                    }
+                };
+
+                QVector<CardType> cards = AppState::db().makeQuery(builder, progress);
+                printf("\rFound %d card(s):\n", (int)cards.size());
+                for (const CardType &card : cards) {
+                    printf("  [%s] %-40s | %-50s | %s\n",
+                           qPrintable(card.getId()),
+                           qPrintable(card.getChemicalName()),
+                           qPrintable(card.getChemicalFormula()),
+                           qPrintable(card.getSpaceGroup()));
+                }
             }
         }
     } else {
@@ -226,9 +306,19 @@ int main(int argc, char *argv[])
                       pathDataFiles.toLocal8Bit().constData(),pathDataFiles.toLocal8Bit().size(), &ier);
             if (!filein.isEmpty() && !ier)
                 w.enableActions(MainWindow::PatternAction);
-            if (searchopt.enabled)
-                w.runSearch(searchopt);
+            if (searchopt.enabled) {
+                if (!filein.isEmpty() && !ier)
+                    // A data file was loaded: search & match against its experimental
+                    // peaks, as if the user had triggered Search > Match from the menu.
+                    w.runSearchMatch();
+                else
+                    w.runSearch(searchopt);
+            }
         }
+        // --auto: run the requested search and close, instead of entering the
+        // interactive event loop.
+        if (opt.autom)
+            return ier ? EXIT_FAILURE : 0;
         return a->exec();
     }
 }

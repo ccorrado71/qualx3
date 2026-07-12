@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "appstate.h"
 #include "experimentalpeaks.h"
+#include "searchmatch.h"
 #include "peakassoc.h"
 #include "dbquerybuilder.h"
 #include "managedatabasesdialog.h"
@@ -50,7 +51,6 @@ extern "C" void process_action_points(int kaction, double xp, double yp,int *ier
 extern "C" void apply_background_subtraction();
 extern "C" void kalpha2_stripping();
 extern "C" int peak_number();
-extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave, double delta2theta);
 extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
                            double w2thetad, double w_intensity, double w_phases, double delta2theta,
                            double *fompeakpos_out, double *fomintensity_out, double *scale_out,
@@ -329,8 +329,6 @@ void MainWindow::actionsSetup()
     connect(ui->quantWidget, &QuantWidget::selectedPhasesChanged,
             this, buildAndShowPeaks);
 }
-
-static int loadExperimentalPeaks(); // defined below
 
 static QStringList buildActiveRestraints(RestraintsDialog *dlg)
 {
@@ -1628,49 +1626,9 @@ void MainWindow::plotStyleConfig()
 //  Search Menu
 //
 
-// Reads experimental peaks from Fortran and stores them in AppState::peaks().
-// Returns the number of peaks (0 if none).
-static int loadExperimentalPeaks()
-{
-    const int n = peak_number();
-    if (n <= 0) {
-        AppState::peaks().clear();
-        return 0;
-    }
-    float *dval      = new float[n];
-    float *deltadval = new float[n];
-    float *tthval    = new float[n];
-    float *intval    = new float[n];
-    float *fwhmval   = new float[n];
-    double wave;
-    get_d_delta_values(dval, deltadval, tthval, intval, fwhmval, &wave, SearchOptionsDialog::savedDelta2theta());
-
-    ExperimentalPeaks &ep = AppState::peaks();
-    ep.d.resize(n); ep.deltaD.resize(n);
-    ep.tth.resize(n); ep.intensity.resize(n); ep.intensityOrig.resize(n); ep.fwhm.resize(n);
-    ep.wave  = wave;
-    ep.valid = true;
-    for (int i = 0; i < n; ++i) {
-        ep.d[i]             = dval[i];
-        ep.deltaD[i]        = deltadval[i];
-        ep.tth[i]           = tthval[i];
-        ep.intensity[i]     = intval[i];
-        ep.intensityOrig[i] = intval[i]; // original value, never subtracted
-        ep.fwhm[i]          = fwhmval[i];
-    }
-    delete[] dval; delete[] deltadval; delete[] tthval; delete[] intval; delete[] fwhmval;
-    return n;
-}
-
 void MainWindow::onActionSearchMatchTriggered()
 {
-    apply_background_subtraction();
-
-    int npeaks = peak_number();
-    if (npeaks == 0) {
-        run_peaksearchwin();
-    }
-    npeaks = peak_number();
+    int npeaks = ensurePeaksFound();
     if (npeaks == 0) {
         QMessageBox::warning(this, tr("No Peaks Found"), tr("Please run Peak Search first."));
         return;
@@ -1679,16 +1637,7 @@ void MainWindow::onActionSearchMatchTriggered()
     loadExperimentalPeaks();
     const ExperimentalPeaks &ep0 = AppState::peaks();
 
-    DbQueryBuilder builder;
-    builder.setPrintEnabled(true);
-    builder.setDValues(ep0.d, ep0.deltaD);
-    builder.setWave(ep0.wave);
-    builder.setCalcFom(true);
-    builder.setMinFom(SearchOptionsDialog::savedMinFom());
-    builder.setWeight2thetaD(SearchOptionsDialog::savedWeight2thetaD());
-    builder.setWeightIntensity(SearchOptionsDialog::savedWeightIntensity());
-    builder.setWeightPhases(SearchOptionsDialog::savedWeightPhases());
-    builder.setDelta2theta(SearchOptionsDialog::savedDelta2theta());
+    DbQueryBuilder builder = buildSearchMatchQuery(ep0);
     applyDialogRestraints(builder);
     builder.buildQuery();
 
@@ -1961,6 +1910,11 @@ void MainWindow::runSearch(const SearchOptions &opts)
     }
 
     executeSearch(builder);
+}
+
+void MainWindow::runSearchMatch()
+{
+    onActionSearchMatchTriggered();
 }
 
 void MainWindow::onActionTestDatabaseTriggered()

@@ -76,6 +76,7 @@ public:
     void clearStatusMessage();
     QProgressBar *getStatusProgressBar() const;
     void runSearch(const SearchOptions &opts);
+    void runSearchMatch();
     void updatePeakListTable();
     void checkAction(MouseAction action);
     void saveAction();
