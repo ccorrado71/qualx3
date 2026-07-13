@@ -100,7 +100,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/share/qualx DESTINATION share COMP
 # Documentation (generated files — build with 'mkdocs build' and 'bash docs/make_pdf.sh' first)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/
         DESTINATION share/qualx/docs
-        COMPONENT ${COMPONENT_NAME_MAIN})
+        COMPONENT ${COMPONENT_NAME_MAIN}
+        OPTIONAL)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
         DESTINATION share/qualx/docs
         COMPONENT ${COMPONENT_NAME_MAIN}
