@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=QualX
+Comment=Software for qualitative X-ray powder diffraction analysis
+Exec=qualx %f
+Terminal=false
+Icon=qualx
+Type=Application
+Categories=Education;Science;

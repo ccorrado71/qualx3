@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1
+# ============================================================
+#  Builds a qualx3 AppImage inside an Ubuntu base old enough to
+#  keep glibc/libstdc++ compatibility with newer host systems.
+#
+#  Unlike Dockerfile.deb (one build per *target* Ubuntu version), a
+#  single AppImage is meant to run on virtually any modern distro, so
+#  this always builds against one fixed, deliberately old LTS — the
+#  oldest that still ships qt6-base-dev in its main repository
+#  (Ubuntu 22.04) — instead of a matrix of versions.
+#
+#  The final "export" stage contains only the produced .AppImage
+#  file, so it can be retrieved with `docker build -o <dir> ...`
+#  (BuildKit local exporter) without creating/removing containers.
+# ============================================================
+ARG UBUNTU_VERSION=22.04
+
+FROM ubuntu:${UBUNTU_VERSION} AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    pkg-config \
+    gfortran \
+    qt6-base-dev \
+    libqt6opengl6-dev \
+    libqt6openglwidgets6 \
+    libqt6sql6-sqlite \
+    libgl1-mesa-dev \
+    patchelf \
+    desktop-file-utils \
+    file \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Plain gfortran — no MPI needed for qualx3
+ENV FC=gfortran
+ENV CC=gcc
+ENV CXX=g++
+
+# linuxdeploy/appimagetool are themselves AppImages; `docker build` has
+# no /dev/fuse, so run them pre-extracted instead.
+ENV APPIMAGE_EXTRACT_AND_RUN=1
+
+ARG LINUXDEPLOY_URL=https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+ARG APPIMAGETOOL_URL=https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+
+RUN curl -fsSL -o /usr/local/bin/linuxdeploy "$LINUXDEPLOY_URL" \
+    && curl -fsSL -o /usr/local/bin/appimagetool "$APPIMAGETOOL_URL" \
+    && chmod +x /usr/local/bin/linuxdeploy /usr/local/bin/appimagetool
+
+WORKDIR /src
+COPY . .
+
+# Configure + build + install into a portable AppDir/usr tree (same
+# "bundle everything" layout as a manual /opt install — see
+# BUILD_APPIMAGE in CMakeLists.txt).
+RUN cmake -B build_appimage -S . \
+        -DCMAKE_Fortran_COMPILER=gfortran \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_APPIMAGE=ON \
+        -DCMAKE_INSTALL_PREFIX=/src/AppDir/usr \
+    && cmake --build build_appimage -j"$(nproc)" \
+    && cmake --install build_appimage
+
+# AppDir metadata: desktop file with a relative Exec=, plus icon.
+RUN install -Dm644 deploy/linux/qualx.appimage.desktop \
+        /src/AppDir/usr/share/applications/qualx.desktop \
+    && install -Dm644 deploy/linux/icons/256x256/qualx.png \
+        /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png
+
+# linuxdeploy pulls in non-Qt runtime deps not already bundled by the
+# CMake install (libgfortran, libquadmath, ...), writes AppRun, and
+# wires the desktop file + icon into the AppDir root.
+RUN linuxdeploy \
+        --appdir /src/AppDir \
+        --executable /src/AppDir/usr/bin/qualx \
+        --desktop-file /src/AppDir/usr/share/applications/qualx.desktop \
+        --icon-file /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png
+
+RUN VERSION="$(grep -m1 'project\s*(' CMakeLists.txt | sed 's/.*VERSION[[:space:]]\+\([0-9][0-9.]*\).*/\1/')" \
+    && ARCH=x86_64 appimagetool /src/AppDir "/src/qualx-${VERSION:-unknown}-x86_64.AppImage"
+
+# ============================================================
+#  Export stage — holds only the generated .AppImage
+# ============================================================
+FROM scratch AS export
+COPY --from=builder /src/*.AppImage /
