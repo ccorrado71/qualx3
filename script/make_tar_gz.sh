@@ -2,9 +2,10 @@
 #
 # Usage: ./make_tar_gz.sh <package_name>
 #
-# Creates an installation .tar.gz from a git repository hosted on baltig.cnr.it.
-# The script clones the repository, configures it with cmake, builds the source
-# package, copies the resulting .tar.gz to the current directory, and then cleans up.
+# Creates an installation .tar.gz from a git repository hosted on GitHub
+# (github.com/ccorrado71). The script clones the repository, configures it
+# with cmake, builds the source package, copies the resulting .tar.gz to the
+# current directory, and then cleans up.
 #
 # Examples:
 #   ./make_tar_gz.sh sir
@@ -21,7 +22,7 @@ fi
 package_name="$1"
 
 # 2) Execute a git clone
-git clone git@baltig.cnr.it:corrado.cuocci/$package_name.git
+git clone git@github.com:ccorrado71/$package_name.git
 
 # 3) Create a build folder named build + package_name
 mkdir build_$package_name

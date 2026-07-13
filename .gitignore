@@ -20,6 +20,8 @@ CMakeLists.txt.user
 #executable and objects files
 expo
 expo_*
+*.deb
+*.AppImage
 debug/
 debug_gfor/
 release/

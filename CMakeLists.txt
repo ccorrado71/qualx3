@@ -5,8 +5,19 @@ string(REPLACE " " "_" ProjectId ${ProjectId})
 project(${ProjectId} VERSION 1.0.3 LANGUAGES CXX Fortran)
 set(EXECUTABLE_NAME "qualx")
 
+# Defines CMAKE_INSTALL_BINDIR/LIBDIR/etc. Needed explicitly (rather than
+# relying on qt_standard_project_setup(), which only pulls this in for
+# Qt >= 6.3) since e.g. Ubuntu 22.04 still ships Qt 6.2.
+include(GNUInstallDirs)
+
 # Option to build Debian package (installs to /usr)
 option(BUILD_DEB_PACKAGE "Build for Debian package installation in /usr" OFF)
+
+# Option to build a portable tree for AppImage packaging.
+# Uses the same "bundle everything" install layout as a manual /opt install
+# (see below), but skips the per-user desktop-integration install step,
+# which makes no sense when installing into an AppDir.
+option(BUILD_APPIMAGE "Build a portable tree for AppImage packaging" OFF)
 
 # Set default installation prefix
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -102,30 +113,36 @@ if(UNIX AND NOT APPLE)
         ${CMAKE_BINARY_DIR}/qualx.desktop
         @ONLY
     )
-    file(WRITE ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake "
-        set(HOME \"\$ENV{HOME}\")
-        set(APPS_DIR \"\${HOME}/.local/share/applications\")
-        set(ICON_BASE \"\${HOME}/.local/share/icons/hicolor\")
+    # Registering the app in a user's desktop/icon cache only makes sense
+    # for a "make install" done directly on that user's machine — skip it
+    # for AppImage builds, where installation happens into a throwaway
+    # AppDir (often inside a container with no meaningful $HOME).
+    if(NOT BUILD_APPIMAGE)
+        file(WRITE ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake "
+            set(HOME \"\$ENV{HOME}\")
+            set(APPS_DIR \"\${HOME}/.local/share/applications\")
+            set(ICON_BASE \"\${HOME}/.local/share/icons/hicolor\")
 
-        file(MAKE_DIRECTORY \"\${APPS_DIR}\")
-        file(COPY \"${CMAKE_BINARY_DIR}/qualx.desktop\"
-             DESTINATION \"\${APPS_DIR}\")
+            file(MAKE_DIRECTORY \"\${APPS_DIR}\")
+            file(COPY \"${CMAKE_BINARY_DIR}/qualx.desktop\"
+                 DESTINATION \"\${APPS_DIR}\")
 
-        foreach(SIZE 16 32 48 256)
-            set(SRC \"${CMAKE_SOURCE_DIR}/deploy/linux/icons/\${SIZE}x\${SIZE}/qualx.png\")
-            if(EXISTS \"\${SRC}\")
-                set(DEST \"\${ICON_BASE}/\${SIZE}x\${SIZE}/apps\")
-                file(MAKE_DIRECTORY \"\${DEST}\")
-                file(COPY \"\${SRC}\" DESTINATION \"\${DEST}\")
-            endif()
-        endforeach()
+            foreach(SIZE 16 32 48 256)
+                set(SRC \"${CMAKE_SOURCE_DIR}/deploy/linux/icons/\${SIZE}x\${SIZE}/qualx.png\")
+                if(EXISTS \"\${SRC}\")
+                    set(DEST \"\${ICON_BASE}/\${SIZE}x\${SIZE}/apps\")
+                    file(MAKE_DIRECTORY \"\${DEST}\")
+                    file(COPY \"\${SRC}\" DESTINATION \"\${DEST}\")
+                endif()
+            endforeach()
 
-        execute_process(COMMAND gtk-update-icon-cache -f -t \"\${ICON_BASE}\" ERROR_QUIET)
-        execute_process(COMMAND update-desktop-database \"\${APPS_DIR}\" ERROR_QUIET)
-        message(STATUS \"Desktop integration installed for user \${HOME}\")
-    ")
-    install(SCRIPT ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake
-            COMPONENT ${COMPONENT_NAME_MAIN})
+            execute_process(COMMAND gtk-update-icon-cache -f -t \"\${ICON_BASE}\" ERROR_QUIET)
+            execute_process(COMMAND update-desktop-database \"\${APPS_DIR}\" ERROR_QUIET)
+            message(STATUS \"Desktop integration installed for user \${HOME}\")
+        ")
+        install(SCRIPT ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake
+                COMPONENT ${COMPONENT_NAME_MAIN})
+    endif()
 endif()
 
 # Linux: Install Qt libraries and plugins manually (skip for Debian package)
@@ -224,7 +241,15 @@ elseif(NOT BUILD_DEB_PACKAGE)
                     COMPONENT ${COMPONENT_NAME_MAIN}
             )
         endif()
-        
+
+        # Install sqldrivers (libqsqlite, ...) — required, qualx links Qt6::Sql
+        if(EXISTS "${QT6_PLUGINS_DIR}/sqldrivers")
+            install(DIRECTORY "${QT6_PLUGINS_DIR}/sqldrivers"
+                    DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
+                    COMPONENT ${COMPONENT_NAME_MAIN}
+            )
+        endif()
+
         # Install platforminputcontexts for input method support
         if(EXISTS "${QT6_PLUGINS_DIR}/platforminputcontexts")
             install(DIRECTORY "${QT6_PLUGINS_DIR}/platforminputcontexts"
@@ -286,9 +311,15 @@ if(UNIX AND NOT APPLE AND Qt6_VERSION VERSION_GREATER_EQUAL 6.5 AND NOT BUILD_DE
                 COMPONENT ${COMPONENT_NAME_MAIN}
         )
     endif()
-    
-    # Create a custom qt.conf that uses relative paths for portability
-    # This allows the software to work regardless of installation prefix
+endif()
+
+# Create a custom qt.conf that uses relative paths for portability, so the
+# software works regardless of installation prefix (AppImage, /opt install, ...).
+# Needed for every Qt6 version, not just >= 6.5: qt_generate_deploy_app_script()
+# (which writes its own qt.conf) only exists from Qt 6.5 onward. Without this,
+# Qt falls back to its compile-time plugin path, which does not exist outside
+# of the machine (or container) the app was built on.
+if(UNIX AND NOT APPLE AND NOT BUILD_DEB_PACKAGE)
     file(WRITE ${CMAKE_BINARY_DIR}/install_qtconf.cmake
 "# Determine relative paths based on installation structure
 file(WRITE \"\${CMAKE_INSTALL_PREFIX}/bin/qt.conf\"
@@ -376,7 +407,7 @@ elseif(UNIX AND NOT APPLE)
     set(CPACK_DEBIAN_FILE_NAME "${EXECUTABLE_NAME}-${PROJECT_VERSION}-${DISTRO_CODENAME}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
     set(CPACK_DEBIAN_PACKAGE_NAME "qualx")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Corrado Cuocci <corrado.cuocci@ic.cnr.it>")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgfortran5, libqt6core6 | libqt6core6t64, libqt6gui6 | libqt6gui6t64, libqt6widgets6 | libqt6widgets6t64, libqt6sql6 | libqt6sql6t64, libqt6printsupport6 | libqt6printsupport6t64, libqt6network6 | libqt6network6t64, libqt6opengl6 | libqt6opengl6t64, libqt6openglwidgets6 | libqt6openglwidgets6t64")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgfortran5, libqt6core6 | libqt6core6t64, libqt6gui6 | libqt6gui6t64, libqt6widgets6 | libqt6widgets6t64, libqt6sql6 | libqt6sql6t64, libqt6sql6-sqlite, libqt6printsupport6 | libqt6printsupport6t64, libqt6network6 | libqt6network6t64, libqt6opengl6 | libqt6opengl6t64, libqt6openglwidgets6 | libqt6openglwidgets6t64")
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
     set(CPACK_SOURCE_GENERATOR "TGZ")
     include(CPack)
