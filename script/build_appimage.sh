@@ -8,8 +8,11 @@
 # Produces build_appimage/qualx-<version>-x86_64.AppImage (also copied
 # next to this script's source tree root).
 #
-# Requires: cmake, a Qt6 dev install, curl (to fetch linuxdeploy and
-# appimagetool on first run — cached under build_appimage/tools/).
+# Requires: cmake, a Qt6 dev install, patchelf, curl (to fetch linuxdeploy
+# and appimagetool on first run — cached under build_appimage/tools/).
+# For a native GTK/GNOME look (instead of Qt's generic Fusion style), also
+# install qt6-gtk-platformtheme before building: its plugin is bundled only
+# if present at build time.
 
 set -e
 
@@ -103,12 +106,25 @@ export APPIMAGE_EXTRACT_AND_RUN=1
 # Step 4: let linuxdeploy pull in non-Qt runtime deps not already bundled
 # by the CMake install (libgfortran, libquadmath, ...), write AppRun, and
 # wire the desktop file + icon into the AppDir root.
+#
+# Qt plugins (platforms/xcb, platformthemes/gtk3, sqldrivers/sqlite, ...)
+# are loaded via dlopen(), so linuxdeploy never sees them by walking the
+# qualx executable's own link graph. Pass each one explicitly via
+# --library so linuxdeploy also discovers and bundles *their* transitive
+# dependencies (e.g. libqgtk3.so pulls in GTK3/glib/atspi) instead of
+# silently falling back to the host's — possibly incompatible — copies.
 echo -e "${YELLOW}Step 5/5: Running linuxdeploy and appimagetool...${NC}"
-"$LINUXDEPLOY" \
-    --appdir "$APPDIR" \
-    --executable "$APPDIR/usr/bin/qualx" \
-    --desktop-file "$APPDIR/usr/share/applications/qualx.desktop" \
+linuxdeploy_args=(
+    --appdir "$APPDIR"
+    --executable "$APPDIR/usr/bin/qualx"
+    --desktop-file "$APPDIR/usr/share/applications/qualx.desktop"
     --icon-file "$APPDIR/usr/share/icons/hicolor/256x256/apps/qualx.png"
+)
+while IFS= read -r -d '' plugin_lib; do
+    linuxdeploy_args+=(--library "$plugin_lib")
+done < <(find "$APPDIR/usr/plugins" -name '*.so' -print0)
+
+"$LINUXDEPLOY" "${linuxdeploy_args[@]}"
 
 VERSION="$(grep -m1 'project\s*(' "$SRC_DIR/CMakeLists.txt" | sed 's/.*VERSION[[:space:]]\+\([0-9][0-9.]*\).*/\1/')"
 OUTPUT="$BUILD_DIR/qualx-${VERSION:-unknown}-x86_64.AppImage"

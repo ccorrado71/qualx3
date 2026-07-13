@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libqt6opengl6-dev \
     libqt6openglwidgets6 \
     libqt6sql6-sqlite \
+    qt6-gtk-platformtheme \
     libgl1-mesa-dev \
     patchelf \
     desktop-file-utils \
@@ -75,11 +76,18 @@ RUN install -Dm644 deploy/linux/qualx.appimage.desktop \
 # linuxdeploy pulls in non-Qt runtime deps not already bundled by the
 # CMake install (libgfortran, libquadmath, ...), writes AppRun, and
 # wires the desktop file + icon into the AppDir root.
-RUN linuxdeploy \
-        --appdir /src/AppDir \
-        --executable /src/AppDir/usr/bin/qualx \
-        --desktop-file /src/AppDir/usr/share/applications/qualx.desktop \
-        --icon-file /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png
+#
+# Qt plugins (platforms/xcb, platformthemes/gtk3, sqldrivers/sqlite, ...)
+# are loaded via dlopen(), so linuxdeploy never sees them by walking the
+# qualx executable's own link graph. Pass each one explicitly via
+# --library so linuxdeploy also discovers and bundles *their* transitive
+# dependencies (e.g. libqgtk3.so pulls in GTK3/glib/atspi) instead of
+# silently falling back to the host's — possibly incompatible — copies.
+RUN linuxdeploy_args="--appdir /src/AppDir --executable /src/AppDir/usr/bin/qualx --desktop-file /src/AppDir/usr/share/applications/qualx.desktop --icon-file /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png" \
+    && for plugin_lib in $(find /src/AppDir/usr/plugins -name '*.so'); do \
+        linuxdeploy_args="$linuxdeploy_args --library $plugin_lib"; \
+    done \
+    && linuxdeploy $linuxdeploy_args
 
 RUN VERSION="$(grep -m1 'project\s*(' CMakeLists.txt | sed 's/.*VERSION[[:space:]]\+\([0-9][0-9.]*\).*/\1/')" \
     && ARCH=x86_64 appimagetool /src/AppDir "/src/qualx-${VERSION:-unknown}-x86_64.AppImage"
