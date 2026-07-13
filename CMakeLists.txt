@@ -294,6 +294,25 @@ elseif(NOT BUILD_DEB_PACKAGE)
                     FILES_MATCHING PATTERN "*.qm"
             )
         endif()
+
+        # The plugin .so files above are copied verbatim from the system Qt
+        # install and keep their original RPATH (baked in for their real
+        # system location, e.g. /usr/lib/x86_64-linux-gnu/qt6/plugins/<cat>/).
+        # That path does not exist in a relocated/portable install, so at
+        # runtime the loader silently falls back to system search paths and
+        # can pick up a *different*, ABI-incompatible system Qt install
+        # instead of our bundled one. Force their RPATH back to our lib dir.
+        find_program(PATCHELF_EXECUTABLE patchelf)
+        if(PATCHELF_EXECUTABLE)
+            install(CODE "
+                file(GLOB_RECURSE _qt_plugin_libs \"\${CMAKE_INSTALL_PREFIX}/plugins/*.so\")
+                foreach(_lib \${_qt_plugin_libs})
+                    execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"\$ORIGIN/../../lib\" \"\${_lib}\")
+                endforeach()
+            " COMPONENT ${COMPONENT_NAME_MAIN})
+        else()
+            message(WARNING "patchelf not found: bundled Qt plugins keep their original system RPATH and may load an incompatible system Qt at runtime. Install patchelf for a portable/AppImage build.")
+        endif()
     endif()
 endif()
 
