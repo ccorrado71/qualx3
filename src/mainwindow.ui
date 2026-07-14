@@ -106,6 +106,8 @@
     <addaction name="actionRestraints"/>
     <addaction name="actionTestDatabase"/>
     <addaction name="separator"/>
+    <addaction name="actionRecalculate_FOM"/>
+    <addaction name="separator"/>
     <addaction name="actionManage_Databases"/>
    </widget>
    <widget class="QMenu" name="menuFile">
@@ -625,6 +627,17 @@
    </property>
    <property name="text">
     <string>Search-Match Options</string>
+   </property>
+  </action>
+  <action name="actionRecalculate_FOM">
+   <property name="text">
+    <string>Recalculate FOMs</string>
+   </property>
+   <property name="toolTip">
+    <string>Recompute the figure of merit of all cards using the current experimental peaks and search options</string>
+   </property>
+   <property name="statusTip">
+    <string>Recompute the figure of merit of all cards using the current experimental peaks and search options</string>
    </property>
   </action>
   <action name="actionChange_Color">

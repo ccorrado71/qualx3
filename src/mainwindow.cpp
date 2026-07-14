@@ -257,6 +257,12 @@ void MainWindow::actionsSetup()
     connect(ui->actionLoad_Add, &QAction::triggered, this, &MainWindow::onActionLoadAddTriggered);
     connect(ui->actionManage_Databases, &QAction::triggered, this, &MainWindow::actionManageDatabasesTriggered);
 
+    ui->actionRecalculate_FOM->setEnabled(false);
+    connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
+            ui->actionRecalculate_FOM, &QAction::setEnabled);
+    connect(ui->actionRecalculate_FOM, &QAction::triggered,
+            this, &MainWindow::onActionRecalculateFomTriggered);
+
     //Window menu
     QList<QAction *> actions = createPopupMenu()->actions();
     foreach (QAction *action, actions) {
@@ -2100,13 +2106,30 @@ void MainWindow::performResidualSearch(const CardType &acceptedCard)
     ep.tth = newTth; ep.intensity = newI; ep.intensityOrig = newIOrig;
     ep.d = newD; ep.deltaD = newDD; ep.fwhm = newFwhm;
 
-    // ── Step 4: recompute FOMs for all remaining cards ──
-    QVector<CardType> cards = ui->resultsWidget->allCards();
+    // ── Step 4: recompute FOMs for all remaining cards, discard non-matching ones ──
+    recalculateFOMs(tr(" after residual search"));
+}
+
+// Recomputes the FOM of every card currently in the results widget against the
+// experimental peaks in AppState::peaks(), using the search options currently saved
+// in SearchOptionsDialog. Cards whose recomputed FOM is <= 0 or below the saved
+// minimum FOM are dropped, the remaining ones are re-sorted by descending FOM and
+// truncated to the saved max entries, mirroring the filtering applied right after a
+// database search. Used both after a residual search (performResidualSearch) and
+// when the user explicitly asks to recalculate FOMs (e.g. after editing peaks or
+// changing search-match options).
+void MainWindow::recalculateFOMs(const QString &statusSuffix)
+{
+    ExperimentalPeaks &ep = AppState::peaks();
+    const double delta   = SearchOptionsDialog::savedDelta2theta();
+    const double wIntens = SearchOptionsDialog::savedWeightIntensity();
     const int expSize = ep.tth.size();
+
+    QVector<CardType> cards = ui->resultsWidget->allCards();
 
     for (CardType &card : cards) {
         if (expSize == 0) {
-            // No experimental peaks remain: FOM is meaningless
+            // No experimental peaks: FOM is meaningless
             card.setFom(0.0);
             continue;
         }
@@ -2125,16 +2148,27 @@ void MainWindow::performResidualSearch(const CardType &acceptedCard)
         // Note: card scale is intentionally not updated here
     }
 
-    // ── Step 5: discard cards whose FOM is <= 0 ──
+    // Discard cards whose FOM is <= 0 or below the saved minimum FOM
+    const double minFom = SearchOptionsDialog::savedMinFom();
     cards.erase(std::remove_if(cards.begin(), cards.end(),
-                               [](const CardType &c){ return c.getFom() <= 0.0; }),
+                               [minFom](const CardType &c){ return c.getFom() <= 0.0 || c.getFom() < minFom; }),
                 cards.end());
 
-    // ── Step 6: update the results widget and statusbar ──
     std::sort(cards.begin(), cards.end(),
               [](const CardType &a, const CardType &b){ return a.getFom() > b.getFom(); });
+
+    // Keep only the top maxEntries cards by descending FOM
+    const int maxEntries = SearchOptionsDialog::savedMaxEntries();
+    if (cards.size() > maxEntries)
+        cards.resize(maxEntries);
+
     ui->resultsWidget->setResults(cards);
-    setStatusMessage(tr("%1 card(s) after residual search").arg(cards.size()));
+    setStatusMessage(tr("%1 card(s)%2").arg(cards.size()).arg(statusSuffix));
+}
+
+void MainWindow::onActionRecalculateFomTriggered()
+{
+    recalculateFOMs();
 }
 
 void MainWindow::onActionLoadAddTriggered()

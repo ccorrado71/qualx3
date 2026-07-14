@@ -134,6 +134,7 @@ private slots:
 
     //Entry
     void onActionLoadAddTriggered();
+    void onActionRecalculateFomTriggered();
 
     //Window
     void onActionDefaultLayoutTriggered();
@@ -196,6 +197,7 @@ private:
     void onCardSelected(const QString &id);
     void applyDialogRestraints(DbQueryBuilder &builder);
     void performResidualSearch(const CardType &acceptedCard);
+    void recalculateFOMs(const QString &statusSuffix = QString());
     void loadDiffractionPatterns(QStringList files);
     void loadProject(QString fileName);
 };
