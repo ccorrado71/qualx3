@@ -15,7 +15,7 @@ else
    echo "app is used as volume name (displayed in the Finder sidebar and window title)"
    echo "app is also used as icon file name (app.icns)"
    echo "and as dmg background file name (app.png)"
-   echo "Example: ./make_dmg.sh expo ExpoforMonterey"
+   echo "Example: ./make_dmg.sh qualx qualx-1.0.3-arm64"
    echo "Options:"
    echo "  --skip-deploy"
    echo "      does not run macdeployqt"
@@ -128,7 +128,7 @@ set_icon "${DMG_NAME}" "${VOLUME_ICON_FILE}"
 
 NAME=""
 NAME2=""
-ICON_Y="2"
+ICON_Y="200"
 ICONP_X="140"
 ICONA_X="330"
 SKIP_DEPLOY=""
@@ -136,7 +136,7 @@ ONLY_DMG=""
 
 CURDIR=$PWD
 
-openbabeldir=`pkg-config --variable=prefix openbabel-3`
+openbabeldir=`pkg-config --variable=prefix openbabel-3 2>/dev/null`
 
 #Check arguments
 let nargs=$#
@@ -180,7 +180,6 @@ fi
 APPNAME="${NAME}.app"
 DMGNAME="${NAME2}.dmg"
 
-#cd ../..
 if ! test -d ${APPNAME}; then
    error "Missing ${APPNAME}. You must build your project, using Release option before run this shell"
 fi
@@ -196,69 +195,101 @@ else
    SKIP_DEPLOY="yes"
 fi
 if test -z  $SKIP_DEPLOY; then
-    a=`which macdeployqt` 
+    a=`which macdeployqt`
     if test -z $a; then
         error "macdeployqt directory must be in your path"
     fi
-    #cd ../..
-    macdeployqt ${APPNAME} -verbose=2 -dmg
+    macdeployqt ${APPNAME} -verbose=2
     cd $CURDIR
 fi
 
-cd ./${APPNAME}/Contents/share/openbabel_formats
+# Fix openbabel plugin libraries (only if openbabel_formats directory exists)
+OPENBABEL_FORMATS_DIR="./${APPNAME}/Contents/share/openbabel_formats"
+FRAMEWORKS_DIR="./${APPNAME}/Contents/Frameworks"
 
-echo "copy missing openbabel libraries in Frameworks"
-for file in *.so
-do
-   b=`otool -L $file | grep "${openbabeldir}"|cut -f1 -d" " |sed s/^" "*//`
-
-#copy missing libraries in Frameworks
-      for i in $b; do
-        if test -f $i; then
-          nome=`basename $i`
-	  if ! test -f ../../Frameworks/$nome; then
-             echo "copying $nome"
-	     cp $i ../../Frameworks/$nome
-	  fi
-          install_name_tool -change $i @executable_path/../Frameworks/$nome $file
-        fi
-      done
-done
-
-echo "now fix all libraries in Frameworks"
-#now fix all libraries in Frameworks
-
-cd ../../Frameworks
-for file in *.dylib
-do
-   b=`otool -L $file | grep "${openbabeldir}"|cut -f1 -d" " |sed s/^" "*//`
-
-      for i in $b; do
-        if test -f $i; then
-          nome=`basename $i`
-          install_name_tool -change $i @executable_path/../Frameworks/$nome $file
-        fi
-      done
-
-
-   install_name_tool -id @executable_path/../Frameworks/$file $file
-done
-
-
-#fix problem with libgcc_s.1.dylib used by libgfortran.5.dylib
-LIBGCC="/opt/homebrew/opt/gcc/lib/gcc/current/libgcc_s.1.1.dylib"
-if test -f $LIBGCC; then
-   #copy in the current folder: Frameworks
-   cp $LIBGCC .
-   install_name_tool -id @executable_path/../Frameworks/libgcc_s.1.dylib $LIBGCC
-   install_name_tool -change $LIBGCC @executable_path/../Frameworks/libgcc_s.1.dylib libgfortran.5.dylib
+if test -d "${OPENBABEL_FORMATS_DIR}" && ! test -z "${openbabeldir}"; then
+    cd "${OPENBABEL_FORMATS_DIR}"
+    echo "copy missing openbabel libraries in Frameworks"
+    for file in *.so
+    do
+       b=`otool -L $file | grep "${openbabeldir}"|cut -f1 -d" " |sed s/^" "*//`
+       for i in $b; do
+         if test -f $i; then
+           nome=`basename $i`
+           if ! test -f ../../Frameworks/$nome; then
+              echo "copying $nome"
+              cp $i ../../Frameworks/$nome
+           fi
+           install_name_tool -change $i @executable_path/../Frameworks/$nome $file
+         fi
+       done
+    done
+    cd $CURDIR
 fi
 
-cd $CURDIR
+if test -d "${FRAMEWORKS_DIR}"; then
+    echo "now fix all libraries in Frameworks"
+    cd "${FRAMEWORKS_DIR}"
 
-# Sign the app bundle - this fix the error: Code Signature Invalid
-sudo codesign --force --deep --sign - ./expo.app 
-#sudo codesign --force --deep --sign - ./${APPNAME}
+    if ! test -z "${openbabeldir}"; then
+        for file in *.dylib
+        do
+           b=`otool -L $file | grep "${openbabeldir}"|cut -f1 -d" " |sed s/^" "*//`
+           for i in $b; do
+             if test -f $i; then
+               nome=`basename $i`
+               install_name_tool -change $i @executable_path/../Frameworks/$nome $file
+             fi
+           done
+           install_name_tool -id @executable_path/../Frameworks/$file $file
+        done
+    fi
+
+#    #fix problem with libgcc_s.1.dylib used by libgfortran.5.dylib
+#    LIBGCC="/opt/homebrew/opt/gcc/lib/gcc/current/libgcc_s.1.1.dylib"
+#    if test -f $LIBGCC; then
+#       cp $LIBGCC .
+#       install_name_tool -id @executable_path/../Frameworks/libgcc_s.1.1.dylib libgcc_s.1.1.dylib
+#       install_name_tool -change $LIBGCC @executable_path/../Frameworks/libgcc_s.1.1.dylib libgfortran.5.dylib
+#    fi
+
+    #fix problem with libgcc_s.1.1.dylib used by libgfortran.5.dylib
+    if test -f libgfortran.5.dylib; then
+        LIBGCC_RPATH=$(otool -L libgfortran.5.dylib | grep libgcc_s | awk '{print $1}')
+        LIBGCC_NAME=$(basename "$LIBGCC_RPATH")
+        # otool returns @rpath/... not a real path; use gfortran to resolve the actual location
+        LIBGCC_REAL=$(gfortran -print-file-name="$LIBGCC_NAME" 2>/dev/null)
+        if test -f "$LIBGCC_REAL"; then
+            cp "$LIBGCC_REAL" .
+            install_name_tool -id "@executable_path/../Frameworks/$LIBGCC_NAME" "$LIBGCC_NAME"
+            install_name_tool -change "$LIBGCC_RPATH" "@executable_path/../Frameworks/$LIBGCC_NAME" libgfortran.5.dylib
+        else
+            echo "WARNING: $LIBGCC_NAME not found via gfortran -print-file-name"
+        fi
+    fi
+
+    cd $CURDIR
+fi
+
+# Sign the app bundle from the inside out (required on Apple Silicon / macOS 12+)
+# install_name_tool invalidates existing signatures, so each component must be re-signed
+echo "Signing frameworks and dylibs..."
+find "./${APPNAME}/Contents/Frameworks" -name "*.dylib" | while read f; do
+    codesign --force --sign - "$f"
+done
+find "./${APPNAME}/Contents/Frameworks" -name "*.framework" -type d | while read f; do
+    codesign --force --sign - "$f"
+done
+find "./${APPNAME}/Contents/PlugIns" -name "*.dylib" 2>/dev/null | while read f; do
+    codesign --force --sign - "$f"
+done
+echo "Signing app bundle..."
+codesign --force --deep --sign - "./${APPNAME}"
+
+# Remove quarantine/provenance attributes that prevent launch from Finder
+echo "Removing quarantine and provenance attributes..."
+xattr -r -d com.apple.quarantine "./${APPNAME}" 2>/dev/null
+xattr -r -d com.apple.provenance "./${APPNAME}" 2>/dev/null
 
 ##Make dmg with background
 crea_dmg $NAME $DMGNAME

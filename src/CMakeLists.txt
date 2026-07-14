@@ -42,7 +42,6 @@ set(PROJECT_SOURCES
     elementbutton.cpp
     elementbutton.h
     experimentalpeaks.h
-    exportqualx.F90
     fileselectorwidget.cpp
     fileselectorwidget.h
     fileselectorwidget.ui
@@ -170,7 +169,8 @@ set(PROJECT_SOURCES
     xpdviewwidget.cpp
 )
 
-set(FORTRAN_SOURCES 
+set(FORTRAN_SOURCES
+    exportqualx.F90
     abscorr.f90
     arrayutil.f90
     atombasic.f90
@@ -279,10 +279,16 @@ set(LIBRARY_INCLUDES "./" "${CMAKE_BINARY_DIR}/configured_files/include")
 
 qt_add_resources(PROJECT_SOURCES resource.qrc)
 
+# Compile Fortran sources in a separate OBJECT library so that Qt framework
+# include flags (-iframework, macOS-only, C/C++ only) are not passed to gfortran.
+add_library(qualx_fortran OBJECT ${FORTRAN_SOURCES})
+target_include_directories(qualx_fortran PRIVATE ${LIBRARY_INCLUDES})
+target_compile_definitions(qualx_fortran PRIVATE USE_CONFIG_H)
+
 qt_add_executable(${EXECUTABLE_NAME}
-	${PROJECT_SOURCES}
-        ${FORTRAN_SOURCES}
-        cardtype.h cardtype.cpp
+    ${PROJECT_SOURCES}
+    $<TARGET_OBJECTS:qualx_fortran>
+    cardtype.h cardtype.cpp
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE
