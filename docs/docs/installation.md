@@ -2,7 +2,7 @@
 
 ## Windows
 
-1. Download the Windows installer (`qualx-<version>_install.exe`) from the project download page.
+1. Download the Windows installer (`qualx-<version>_install.exe`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
 2. Run the installer and follow the on-screen instructions.
 3. QualX will be available from the Start Menu and the desktop shortcut.
 
@@ -14,7 +14,7 @@
 
 ## macOS
 
-1. Download the macOS DMG file (`qualx-<version>_macos.dmg`) from the project download page.
+1. Download the macOS DMG file (`qualx-<version>_macos.dmg`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
 2. Double-click the DMG to mount it.
 3. Drag the **QualX** icon into the **Applications** folder.
 4. Eject the mounted volume.
@@ -28,40 +28,32 @@
 
 ## Linux
 
-### Option A — Debian/Ubuntu package (.deb)
+### Option A — AppImage (recommended)
 
-This is the recommended method for Debian-based distributions (Ubuntu, Linux Mint, etc.).
+The AppImage is a self-contained executable that bundles Qt6, the Fortran
+runtime and all other dependencies. It runs on most recent x86_64 Linux
+distributions without installing anything.
 
-**1. Install the runtime dependencies**
+**1. Download**
+
+Download `qualx-<version>-x86_64.AppImage` (e.g. `qualx-1.0.3-x86_64.AppImage`)
+from the [download page](https://github.com/ccorrado71/qualx3/releases).
+
+**2. Make it executable and run it**
 
 ```bash
-sudo apt-get update
-sudo apt-get install libgfortran5 \
-    libqt6core6 libqt6gui6 libqt6widgets6 \
-    libqt6sql6 libqt6printsupport6 libqt6network6 \
-    libqt6opengl6 libqt6openglwidgets6
+chmod +x qualx-<version>-x86_64.AppImage
+./qualx-<version>-x86_64.AppImage
 ```
 
 !!! note
-    On Ubuntu 24.04 and later the library names may have the `t64` suffix
-    (e.g. `libqt6core6t64`). Run `apt-cache search libqt6core6` to check
-    which variant is available on your system.
-
-**2. Install the package**
-
-```bash
-sudo dpkg -i qualx-<version>-<distro>_amd64.deb
-# or, to resolve missing dependencies automatically:
-sudo apt install ./qualx-<version>-<distro>_amd64.deb
-```
-
-The executable is installed to `/usr/bin/qualx`.
-
-**3. Uninstall**
-
-```bash
-sudo dpkg -r qualx
-```
+    AppImages require FUSE. If you get a "FUSE not found" error, either
+    install `libfuse2` (`sudo apt-get install libfuse2` on Debian/Ubuntu) or
+    extract and run the AppImage without FUSE:
+    ```bash
+    ./qualx-<version>-x86_64.AppImage --appimage-extract
+    ./squashfs-root/AppRun
+    ```
 
 ---
 
@@ -131,70 +123,13 @@ sudo cmake --install build
 
 ---
 
-### Option C — Docker image (.tar.gz)
-
-A pre-built Docker image is also available, distributed as a `.tar.gz`
-archive (`qualx-<version>-docker.tar.gz`). This is the simplest way to run
-QualX without installing any dependencies: the image already includes Qt6,
-the Fortran runtime, and the bundled COD reference database.
-
-!!! note
-    The image is large (about 1 GB) because it includes the COD database.
-
-**Requirements**
-
-- [Docker](https://docs.docker.com/engine/install/) installed on the host.
-
-**1. Load the image**
-
-```bash
-docker load -i qualx-<version>-docker.tar.gz
-```
-
-This registers the image as `qualx:<version>`. Verify with:
-
-```bash
-docker images qualx
-```
-
-**2. Run QualX with graphics (X11 forwarding on Linux)**
-
-```bash
-xhost +local:docker
-docker run --rm -it \
-    -e PUID="$(id -u)" -e PGID="$(id -g)" \
-    -e DISPLAY="$DISPLAY" \
-    -e QT_QPA_PLATFORM=xcb \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "$HOME/.Xauthority:/home/qualx/.Xauthority:ro" \
-    -v "$PWD:/work" \
-    qualx:<version> qualx
-```
-
-`PUID`/`PGID` make the container run as a user with the same UID/GID as the
-host user, so any file created in `/work` (the current directory, mounted
-inside the container) belongs to the host user instead of `root`.
-
-If the container has no access to a GPU, add `-e LIBGL_ALWAYS_SOFTWARE=1` to
-enable software OpenGL rendering.
-
-**3. Run QualX from the command line (no graphics)**
-
-```bash
-docker run --rm -v "$PWD:/work" \
-    -e PUID="$(id -u)" -e PGID="$(id -g)" \
-    qualx:<version> qualx --createdb --cifdir /work/cifs --dbout /work/mydb
-```
-
----
-
 ## Databases
 
 QualX requires at least one crystallographic reference database.
 
 | Database | Format | Notes |
 |----------|--------|-------|
-| COD (Crystallography Open Database) | COD/CIF | Free, included |
+| COD (Crystallography Open Database) | COD/CIF | Free — download separately, not bundled with QualX |
 | PDF-2 | PDF-2 DAT | Commercial — ICDD license required |
 
 Database files are managed through **Search → Manage Databases**.
