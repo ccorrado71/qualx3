@@ -3,12 +3,12 @@
 ## Windows
 
 1. Download the Windows installer (`qualx-<version>_install.exe`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
-2. Run the installer and follow the on-screen instructions.
+2. Run the installer and follow the on-screen instructions. The default installation folder is `C:\Program Files\Qualx`.
 3. QualX will be available from the Start Menu and the desktop shortcut.
 
 !!! note
-    The installer includes all required runtime libraries (Qt6, Fortran runtime).
-    No additional software needs to be installed separately.
+    If a previous version of QualX is already installed, it must be uninstalled
+    first before installing into the same folder.
 
 ---
 
@@ -133,6 +133,8 @@ QualX requires at least one crystallographic reference database.
 | PDF-2 | PDF-2 DAT | Commercial — ICDD license required |
 
 Database files are managed through **Search → Manage Databases**.
+
+For instructions on installing a database, see [Database Installation](database-installation.md).
 
 ---
 
