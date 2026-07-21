@@ -336,6 +336,28 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
 )
 
+# When compiling with Intel Fortran (ifx / ifort), bake the runtime library
+# path into the installed binary so it can be launched from the GNOME dash
+# (or any other launcher) without the oneAPI environment being active.
+# The path is derived from the compiler location, so it tracks the installed
+# oneAPI version automatically without needing to hardcode it here.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
+    CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM"))
+    get_filename_component(_intel_bin_dir "${CMAKE_Fortran_COMPILER}" DIRECTORY)
+    get_filename_component(_intel_linux_dir "${_intel_bin_dir}" DIRECTORY)
+    set_target_properties(${EXECUTABLE_NAME} PROPERTIES
+        INSTALL_RPATH "${_intel_linux_dir}/compiler/lib/intel64_lin"
+    )
+    # RUNPATH (the modern default) only covers direct dependencies of the
+    # binary that embeds it. Intel runtime libs have transitive dependencies
+    # among themselves (e.g. libifcoremt.so.5 → libintlc.so.5) that RUNPATH
+    # cannot reach. --disable-new-dtags makes the linker emit DT_RPATH
+    # instead of DT_RUNPATH: DT_RPATH propagates to all dependency lookups
+    # in the load chain, so every Intel library is found without oneAPI env.
+    target_link_options(${EXECUTABLE_NAME} PRIVATE "-Wl,--disable-new-dtags")
+endif()
+
 #Setting the Application Icon
 if (WIN32)
     set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/images/qualx.rc")
