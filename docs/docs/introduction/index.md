@@ -15,7 +15,9 @@ The main window is divided into several panels:
 - **Results List** (bottom/right dock): ranked list of candidate phases
 - **Peaks** (dock): list of experimental peaks
 - **Peak Compare** (dock): overlay of selected card reflections vs. experimental peaks
-- **Quantitative** (dock): accepted phases with RIR percentages
+- **Quantitative** (dock): accepted phases with RIR percentages. The RIR value is
+  actively used to perform a semi-quantitative analysis, shown as a pie chart
+- **Report** (dock): summary report of the analysis
 
 ## Workflow Overview
 

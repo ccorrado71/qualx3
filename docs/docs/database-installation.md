@@ -11,7 +11,7 @@ Pre-built databases are available for download from the
 
 | File | Contents | Size |
 |------|----------|------|
-| `cod_inorg.zip` | COD — inorganic phases only | 318.4 MB |
+| `cod_inorg.zip` | COD — inorganic phases only | 304 MB |
 | `cod.zip` | COD — complete database | 2.7 GB |
 
 Each archive contains a single folder (`cod_inorg` or `cod`) with all the

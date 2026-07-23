@@ -33,11 +33,17 @@ the [Database Installation](../database-installation.md) page.
 2. QualX queries the database and shows ranked results in the **Results List**
 3. Select a card to view its reflections overlaid on the experimental pattern
 
+If Step 3 and/or Step 4 are skipped and **Search & Match** is run directly,
+QualX automatically performs the missing steps (Background and/or Peak Search)
+before running the search.
+
 ## Step 6 — Accept a phase
 
 1. Select a card in the Results List
 2. Click **Accept** (✓ button) — the phase moves to the **Quantitative** panel
-3. QualX automatically performs a residual search on remaining peaks
+3. If residual search is enabled in the **Search & Match Options** dialog,
+   QualX automatically performs a residual search on remaining peaks — see the
+   [Search & Match](../search-match/search-match.md) page for details
 
 ## Step 7 — Save the project
 
