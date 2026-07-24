@@ -34,6 +34,7 @@ nav:
     - Background: data-reduction/background.md
     - Peak Search: data-reduction/peak-search.md
     - Smoothing: data-reduction/smoothing.md
+    - K-α2 Stripping: data-reduction/kalpha2-stripping.md
   - Search & Match:
     - Overview: search-match/index.md
     - Search Match: search-match/search-match.md

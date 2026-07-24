@@ -16,6 +16,16 @@ Open **Pattern → Background → Generate Background** to display the Backgroun
 | **Coefficients** | Number of polynomial terms (Chebyshev mode) |
 | **Range** | 2θ range to use for background fitting |
 
+It is possible to choose the background function that best fits the selected
+background points. The default function is the Chebyshev polynomial. The
+other available background functions are: polynomial, cosine Fourier series,
+cubic spline, Bézier spline, and a filter function based on the Brückner
+algorithm (Brückner, 2000).
+
+## Manual editing
+
+Background points selected automatically can be added or deleted using the mouse.
+
 ## Subtraction
 
 Click **Pattern → Subtract Background** (or press the button in the toolbar)
