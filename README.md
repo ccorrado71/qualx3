@@ -16,6 +16,7 @@ QualX helps identify the crystalline phases present in a powder diffraction patt
 - [About](#about)
 - [Features](#features)
 - [Reference databases](#reference-databases)
+  - [Installing a reference database](#installing-a-reference-database)
 - [Requirements](#requirements)
 - [Installation](#installation)
   - [Linux (quick install)](#linux-quick-install)
@@ -23,6 +24,7 @@ QualX helps identify the crystalline phases present in a powder diffraction patt
 - [Usage](#usage)
   - [Graphical interface](#graphical-interface)
   - [Command-line database creation](#command-line-database-creation)
+  - [Command-line search](#command-line-search)
 - [Documentation](#documentation)
 - [Repository structure](#repository-structure)
 - [Citing QualX](#citing-qualx)
@@ -63,6 +65,28 @@ QualX databases are composed of four files sharing a common base name:
 A reference database built from the [COD](https://www.crystallography.net/cod/) inorganic subset is included under `DB/cod/`. It is large (the bundled `cod_inorg.sq*` files total roughly **1 GB**), so cloning the repository may take a while and require a stable connection.
 
 You can also build your own database from PDF-2 data or a folder of CIF files — see [Command-line database creation](#command-line-database-creation).
+
+### Installing a reference database
+
+> ⚠️ **Important: Install a reference database before using QualX**
+>
+> QualX requires a crystallographic reference database to perform search & match analysis. Without a database installed, the software will not be able to identify phases.
+>
+> Two COD-based databases are available for download:
+> - one dedicated to inorganic phases
+> - one general-purpose database
+>
+> 📥 Download them here: <https://www.ba.ic.cnr.it/content/old/qualx3/Databases/>
+
+QualX looks for databases in a dedicated `QualXDB` folder inside your home directory (`~/QualXDB` on Linux/macOS, `C:\Users\<username>\QualXDB` on Windows). At every launch, QualX scans this folder recursively for `.sq` files and registers any database it finds automatically.
+
+To install a database:
+
+1. Create the `QualXDB` folder in your home directory (if it doesn't already exist).
+2. Download one of the zip archives from the link above and extract it directly into `QualXDB`.
+3. Launch QualX — the database is detected and registered automatically.
+
+You can also add a database stored elsewhere via **Search → Manage Databases → Add existing**. See the [Database Installation](docs/docs/database-installation.md) documentation page for full details.
 
 ## Requirements
 
@@ -121,6 +145,26 @@ qualx --createdb --pdf2 /path/to/pdf2.dat --dbout /path/to/output
 
 # From a folder of CIF files:
 qualx --createdb --cifdir /path/to/cifs [--recursive] --dbout /path/to/output
+```
+
+### Command-line search
+
+A qualitative phase search can also be run from the command line, against the currently configured reference database(s):
+
+```bash
+qualx --search /path/to/data_file
+```
+
+Add `--nogui` to run entirely without graphics (e.g. over SSH or in scripts):
+
+```bash
+qualx --search /path/to/data_file --nogui
+```
+
+Optional composition filters can be combined with `--search`:
+
+```bash
+qualx --search /path/to/data_file --nogui --composition "Al AND Si" [--exact | --contains-any]
 ```
 
 ## Documentation
