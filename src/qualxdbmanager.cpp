@@ -55,7 +55,8 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
         info.chemicalFormula = q1.value(3).toString().trimmed();
         info.spaceGroup      = q1.value(4).toString().trimmed();
         info.quality         = q1.value(5).toString().trimmed();
-        info.rir             = q1.value(6).toString().trimmed();
+        const double rirVal  = q1.value(6).toDouble();
+        info.rir             = rirVal != 0.0 ? QString::number(rirVal, 'f', 4) : QString();
         info.nrec            = q1.value(7).toInt();
         info.nd              = q1.value(8).toInt();
         info.dvalues         = blobToDoubleVector(q1.value(9).toByteArray());
@@ -63,10 +64,12 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
         info.valid           = true;
     }
 
-    QSqlQuery q2(dbMain.db());
+    // The "info" table (a, b, c, alpha, beta, gamma, h, k, l, ...) lives in
+    // dbInfo (.sq.info) for both database types.
+    QSqlQuery q2(dbInfo.db());
     q2.prepare("SELECT authors, journal, journal_year, journal_volume, page_start, page_end, "
                "color, crystal_density, type, volume, density, z, a, b, c, alpha, beta, gamma, "
-               "`mu(CuKa)`, h, k, l FROM info WHERE id=" + idCard);
+               "`mu(CuKa)`, h, k, l, mul FROM info WHERE id=" + idCard);
     if (q2.exec() && q2.first()) {
         info.authors        = q2.value(0).toString().trimmed();
         info.journal        = q2.value(1).toString().trimmed();
@@ -94,9 +97,10 @@ CardInfo QualxDbManager::queryCard(const QString &idCard) const
                 v.append(t.trimmed().toInt());
             return v;
         };
-        info.h = parseInts(q2.value(19).toString());
-        info.k = parseInts(q2.value(20).toString());
-        info.l = parseInts(q2.value(21).toString());
+        info.h   = parseInts(q2.value(19).toString());
+        info.k   = parseInts(q2.value(20).toString());
+        info.l   = parseInts(q2.value(21).toString());
+        info.mul = parseInts(q2.value(22).toString());
     }
 
     return info;

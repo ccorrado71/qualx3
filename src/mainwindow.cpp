@@ -1959,11 +1959,16 @@ void MainWindow::onCardSelected(const QString &id)
         return QString("<tr><td><b>%1</b></td><td>%2</td></tr>").arg(label).arg(value, 0, 'f', decimals);
     };
 
-    QString cellParams;
-    if (info.a != 0.0)
-        cellParams = QString("a=%1 b=%2 c=%3 &alpha;=%4 &beta;=%5 &gamma;=%6")
-                         .arg(info.a, 0, 'f', 4).arg(info.b, 0, 'f', 4).arg(info.c, 0, 'f', 4)
-                         .arg(info.alpha, 0, 'f', 3).arg(info.beta, 0, 'f', 3).arg(info.gamma, 0, 'f', 3);
+    // Only report cell parameters that are actually known (non-zero); e.g. for a
+    // cubic cell only "a" is stored and b, c, alpha, beta, gamma are left at 0.
+    QStringList cellParts;
+    if (info.a != 0.0)     cellParts << QString("a=%1").arg(info.a, 0, 'f', 4);
+    if (info.b != 0.0)     cellParts << QString("b=%1").arg(info.b, 0, 'f', 4);
+    if (info.c != 0.0)     cellParts << QString("c=%1").arg(info.c, 0, 'f', 4);
+    if (info.alpha != 0.0) cellParts << QString("&alpha;=%1").arg(info.alpha, 0, 'f', 3);
+    if (info.beta  != 0.0) cellParts << QString("&beta;=%1").arg(info.beta, 0, 'f', 3);
+    if (info.gamma != 0.0) cellParts << QString("&gamma;=%1").arg(info.gamma, 0, 'f', 3);
+    const QString cellParams = cellParts.join(" ");
 
     QString ref;
     if (!info.authors.isEmpty())
@@ -2020,6 +2025,9 @@ void MainWindow::onCardSelected(const QString &id)
         const bool hasHKL = (info.h.size() == dv.size() &&
                              info.k.size() == dv.size() &&
                              info.l.size() == dv.size());
+        // Multiplicities are only meaningful alongside h,k,l; without those,
+        // there's no reflection to attach a multiplicity to.
+        const bool hasMul = hasHKL && (info.mul.size() == dv.size());
 
         html += QString("<h4 style='margin:6px 0 2px 0'>Reflections "
                         "(&lambda; = %1 &Aring;)</h4>").arg(wave, 0, 'f', 5);
@@ -2028,6 +2036,7 @@ void MainWindow::onCardSelected(const QString &id)
         html += "<tr style='background:#ddd'>"
                 "<th>#</th><th>2&theta;</th><th>d (&Aring;)</th><th>I (%)</th>";
         if (hasHKL) html += "<th>h</th><th>k</th><th>l</th>";
+        if (hasMul) html += "<th>Mult</th>";
         html += "</tr>";
 
         for (int i = 0; i < dv.size(); ++i) {
@@ -2042,6 +2051,9 @@ void MainWindow::onCardSelected(const QString &id)
                 html += "<td align='center'>" + QString::number(info.h[i]) + "</td>";
                 html += "<td align='center'>" + QString::number(info.k[i]) + "</td>";
                 html += "<td align='center'>" + QString::number(info.l[i]) + "</td>";
+            }
+            if (hasMul) {
+                html += "<td align='center'>" + QString::number(info.mul[i]) + "</td>";
             }
             html += "</tr>";
         }

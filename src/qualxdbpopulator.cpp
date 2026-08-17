@@ -31,14 +31,15 @@ QualxDbPopulator::QualxDbPopulator(QualxDbCreator *db, QObject *parent)
     m_subQuery.prepare(
         "INSERT OR IGNORE INTO subfiles (id, subfile) VALUES (?, ?)");
 
-    m_infoQuery = QSqlQuery(m_db->mainDb());
+    // info table is in .sq.info (shared schema with CifFiles)
+    m_infoQuery = QSqlQuery(m_db->infoDb());
     m_infoQuery.prepare(
         "INSERT OR IGNORE INTO info "
         "(id, authors, journal, journal_year, journal_volume, journal_issue, "
         " page_start, page_end, color, crystal_density, z, spacegroup, type, "
-        " volume, density, \"mu(CuKa)\", a, b, c, alpha, beta, gamma, rir, "
-        " h, k, l, mul) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        " volume, density, \"mu(CuKa)\", natoms, nreflections, "
+        " a, b, c, alpha, beta, gamma, rir, h, k, l, mul) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
     m_topQuery = QSqlQuery(m_db->searchDb());
     m_topQuery.prepare(
@@ -179,17 +180,13 @@ void QualxDbPopulator::insertInfo(const Pdf2Card &card)
 {
     // All columns in the info table are NOT NULL.
     // For VARCHAR columns: use empty string when data is unavailable.
-    // For REAL columns (a,b,c,alpha,beta,gamma): use 0.0.
+    // For REAL columns (crystal_density,volume,density,a,b,c,alpha,beta,gamma): use 0.0.
+    // For INTEGER columns (natoms,nreflections): not available in PDF-2 powder
+    //   data (no atom-level/reflection-list info), use 0.
     // For BLOB columns (h,k,l,mul): not available in PDF-2 powder data;
     //   Qt's SQLite driver treats QByteArray() as NULL, so use a 1-byte placeholder.
     static const QByteArray emptyBlob(1, '\0');
 
-    // Helper: convert float to string; returns "" (not null) when unavailable.
-    // Important: QString() (null) would be bound as SQL NULL by Qt's SQLite driver,
-    // violating the NOT NULL constraints on all info columns.
-    auto floatStr = [](float v) -> QString {
-        return v > 0.0f ? QString::number(double(v), 'f', 4) : QStringLiteral("");
-    };
     // Helper: return empty string instead of null for any QString field.
     auto str = [](const QString &s) -> QString {
         return s.isNull() ? QStringLiteral("") : s;
@@ -206,14 +203,16 @@ void QualxDbPopulator::insertInfo(const Pdf2Card &card)
     m_infoQuery.addBindValue(str(card.pageStart));                    // VARCHAR NOT NULL
     m_infoQuery.addBindValue(QStringLiteral(""));                     // page_end – not in PDF-2
     m_infoQuery.addBindValue(str(card.color));                        // VARCHAR NOT NULL
-    m_infoQuery.addBindValue(floatStr(card.calcDensity));             // crystal_density VARCHAR NOT NULL
+    m_infoQuery.addBindValue(card.calcDensity > 0.0f ? double(card.calcDensity) : 0.0); // crystal_density REAL NOT NULL
     m_infoQuery.addBindValue(card.z > 0 ? QString::number(card.z) : QStringLiteral("")); // z VARCHAR NOT NULL
     m_infoQuery.addBindValue(str(card.spaceGroup));                   // VARCHAR NOT NULL
     m_infoQuery.addBindValue(qual);                                   // type VARCHAR NOT NULL
-    m_infoQuery.addBindValue(floatStr(card.volume));                  // volume VARCHAR NOT NULL
-    m_infoQuery.addBindValue(floatStr(card.density));                 // density VARCHAR NOT NULL
+    m_infoQuery.addBindValue(card.volume  > 0.0f ? double(card.volume)  : 0.0); // volume REAL NOT NULL
+    m_infoQuery.addBindValue(card.density > 0.0f ? double(card.density) : 0.0); // density REAL NOT NULL
     m_infoQuery.addBindValue(card.muCuKa >= 0.0f                     // mu(CuKa) VARCHAR NOT NULL
                              ? QString::number(double(card.muCuKa), 'f', 4) : QStringLiteral(""));
+    m_infoQuery.addBindValue(0);  // natoms INTEGER NOT NULL – not available in PDF-2
+    m_infoQuery.addBindValue(0);  // nreflections INTEGER NOT NULL – not available in PDF-2
     m_infoQuery.addBindValue(card.a > 0.0 ? card.a : 0.0);  // REAL NOT NULL
     m_infoQuery.addBindValue(card.b > 0.0 ? card.b : 0.0);
     m_infoQuery.addBindValue(card.c > 0.0 ? card.c : 0.0);
@@ -427,6 +426,7 @@ QStringList QualxDbPopulator::extractElements(const QString &formula)
 void QualxDbPopulator::beginTransaction()
 {
     m_db->mainDb().transaction();
+    m_db->infoDb().transaction();
     m_db->searchDb().transaction();
     m_inTransaction = true;
 }
@@ -434,6 +434,7 @@ void QualxDbPopulator::beginTransaction()
 void QualxDbPopulator::commitTransaction()
 {
     m_db->mainDb().commit();
+    m_db->infoDb().commit();
     m_db->searchDb().commit();
     m_inTransaction = false;
 }

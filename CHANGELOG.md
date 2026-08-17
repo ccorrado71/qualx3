@@ -2,6 +2,14 @@
 
 All notable changes to qualx are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Cell parameters (a, b, c, alpha, beta, gamma) and h/k/l reflections never shown in the card browser for CifFiles/COD-type databases: `QualxDbManager::queryCard` always queried the `info` table in the main `.sq` database, but for COD-type databases that table lives in `.sq.info`.
+
+### Changed
+- Unified the `info` table schema and location across database types: it now always lives in `.sq.info`, with the same columns (including `natoms`/`nreflections`) for both Pdf2 and CifFiles/COD databases. Pdf2 databases built with a previous version must be regenerated (`qualx --createdb --pdf2 ...` or Search > Manage Databases).
+
 ## [1.0.4] - 2026-07-29
 
 ### Added

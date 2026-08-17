@@ -17,7 +17,7 @@ struct CardInfo {
     double  a = 0.0, b = 0.0, c = 0.0;
     double  alpha = 0.0, beta = 0.0, gamma = 0.0;
     double  muCuKa = 0.0;
-    QVector<int> h, k, l;
+    QVector<int> h, k, l, mul;
     bool    valid = false;
 };
 

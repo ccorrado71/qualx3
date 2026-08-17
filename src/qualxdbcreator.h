@@ -31,13 +31,11 @@
 //  .sq / infodb.id type:
 //    Pdf2: INTEGER   CifFiles: VARCHAR(100)
 //
-//  info table location:
-//    Pdf2: inside .sq (main database)
-//    CifFiles:  inside .sq.info
-//
-//  .sq.info contents:
-//    Pdf2: spgrstat only
-//    CifFiles:  info (full) + spgrstat
+//  info table (bibliographic/crystallographic details, including cell
+//  parameters a/b/c/alpha/beta/gamma and h/k/l/mul reflections):
+//    Always inside .sq.info, identical schema for both types. Fields the
+//    source data doesn't provide are populated with empty-string/zero
+//    placeholders (see QualxDbPopulator::insertInfo / CifDbPopulator::insertInfo).
 //
 // .sq.infostat and .sq.search are identical for both types.
 //

@@ -88,7 +88,6 @@ QSqlDatabase QualxDbCreator::searchDb()   const { return QSqlDatabase::database(
 // Differences between Pdf2 and CifFiles:
 //   id table:  Pdf2 has bestdval; CifFiles has natoms + nreflections instead.
 //   infodb.id: Pdf2 is INTEGER; CifFiles is VARCHAR(100).
-//   info table: Pdf2 places it here (in .sq); CifFiles places it in .sq.info.
 //   warn / warningcif: CifFiles only.
 // -----------------------------------------------------------------------
 
@@ -155,42 +154,6 @@ bool QualxDbCreator::createMainSchema()
         R"(CREATE INDEX IF NOT EXISTS "subfiles_id" ON "subfiles" ("id", "subfile"))",
     };
 
-    // Pdf2: info table lives here (in .sq), not in .sq.info
-    if (isPdf2) {
-        stmts += {
-            R"sql(CREATE TABLE IF NOT EXISTS "info" (
-                "id"              VARCHAR(15)  NOT NULL UNIQUE,
-                "authors"         VARCHAR(200) NOT NULL,
-                "journal"         VARCHAR(200) NOT NULL,
-                "journal_year"    VARCHAR(5)   NOT NULL,
-                "journal_volume"  VARCHAR(5)   NOT NULL,
-                "journal_issue"   VARCHAR(5)   NOT NULL,
-                "page_start"      VARCHAR(10)  NOT NULL,
-                "page_end"        VARCHAR(10)  NOT NULL,
-                "color"           VARCHAR(20)  NOT NULL,
-                "crystal_density" VARCHAR(20)  NOT NULL,
-                "z"               VARCHAR(20)  NOT NULL,
-                "spacegroup"      VARCHAR(30)  NOT NULL,
-                "type"            VARCHAR(30)  NOT NULL,
-                "volume"          VARCHAR(20)  NOT NULL,
-                "density"         VARCHAR(20)  NOT NULL,
-                "mu(CuKa)"        VARCHAR(20)  NOT NULL,
-                "a"               REAL         NOT NULL,
-                "b"               REAL         NOT NULL,
-                "c"               REAL         NOT NULL,
-                "alpha"           REAL         NOT NULL,
-                "beta"            REAL         NOT NULL,
-                "gamma"           REAL         NOT NULL,
-                "rir"             VARCHAR(10)  NOT NULL,
-                "h"               BLOB         NOT NULL,
-                "k"               BLOB         NOT NULL,
-                "l"               BLOB         NOT NULL,
-                "mul"             BLOB         NOT NULL
-            ))sql",
-            R"(CREATE INDEX IF NOT EXISTS "info_id_" ON "info" ("id"))",
-        };
-    }
-
     // CifFiles only: warning tables
     if (!isPdf2) {
         stmts += {
@@ -223,45 +186,46 @@ bool QualxDbCreator::createInfoSchema()
 {
     QStringList stmts;
 
-    if (m_type == DbType::CifFiles) {
-        // Full bibliographic and crystallographic record (COD variant).
-        // Uses R"sql(...)sql" delimiter because the column name "mu(CuKa)"
-        // contains )" which would terminate a plain R"(...)".
-        stmts += {
-            R"sql(CREATE TABLE IF NOT EXISTS "info" (
-                "id"              VARCHAR(15)  NOT NULL,
-                "authors"         VARCHAR(200) NOT NULL,
-                "journal"         VARCHAR(200) NOT NULL,
-                "journal_year"    VARCHAR(5)   NOT NULL,
-                "journal_volume"  VARCHAR(5)   NOT NULL,
-                "journal_issue"   VARCHAR(5)   NOT NULL,
-                "page_start"      VARCHAR(10)  NOT NULL,
-                "page_end"        VARCHAR(10)  NOT NULL,
-                "color"           VARCHAR(40)  NOT NULL,
-                "crystal_density" REAL         NOT NULL,
-                "z"               VARCHAR(20)  NOT NULL,
-                "spacegroup"      VARCHAR(30)  NOT NULL,
-                "type"            VARCHAR(30)  NOT NULL,
-                "volume"          REAL         NOT NULL,
-                "density"         REAL         NOT NULL,
-                "mu(CuKa)"        VARCHAR(20)  NOT NULL,
-                "natoms"          INTEGER      NOT NULL,
-                "nreflections"    INTEGER      NOT NULL,
-                "a"               REAL         NOT NULL,
-                "b"               REAL         NOT NULL,
-                "c"               REAL         NOT NULL,
-                "alpha"           REAL         NOT NULL,
-                "beta"            REAL         NOT NULL,
-                "gamma"           REAL         NOT NULL,
-                "rir"             VARCHAR(10)  NOT NULL,
-                "h"               BLOB         NOT NULL,
-                "k"               BLOB         NOT NULL,
-                "l"               BLOB         NOT NULL,
-                "mul"             BLOB         NOT NULL
-            ))sql",
-            R"(CREATE INDEX IF NOT EXISTS "info_id_" ON "info" ("id"))",
-        };
-    }
+    // Full bibliographic and crystallographic record. Identical schema for
+    // both Pdf2 and CifFiles; fields the source data doesn't provide are
+    // populated with empty-string/zero placeholders by the respective
+    // populator (see QualxDbPopulator / CifDbPopulator).
+    // Uses R"sql(...)sql" delimiter because the column name "mu(CuKa)"
+    // contains )" which would terminate a plain R"(...)".
+    stmts += {
+        R"sql(CREATE TABLE IF NOT EXISTS "info" (
+            "id"              VARCHAR(15)  NOT NULL,
+            "authors"         VARCHAR(200) NOT NULL,
+            "journal"         VARCHAR(200) NOT NULL,
+            "journal_year"    VARCHAR(5)   NOT NULL,
+            "journal_volume"  VARCHAR(5)   NOT NULL,
+            "journal_issue"   VARCHAR(5)   NOT NULL,
+            "page_start"      VARCHAR(10)  NOT NULL,
+            "page_end"        VARCHAR(10)  NOT NULL,
+            "color"           VARCHAR(40)  NOT NULL,
+            "crystal_density" REAL         NOT NULL,
+            "z"               VARCHAR(20)  NOT NULL,
+            "spacegroup"      VARCHAR(30)  NOT NULL,
+            "type"            VARCHAR(30)  NOT NULL,
+            "volume"          REAL         NOT NULL,
+            "density"         REAL         NOT NULL,
+            "mu(CuKa)"        VARCHAR(20)  NOT NULL,
+            "natoms"          INTEGER      NOT NULL,
+            "nreflections"    INTEGER      NOT NULL,
+            "a"               REAL         NOT NULL,
+            "b"               REAL         NOT NULL,
+            "c"               REAL         NOT NULL,
+            "alpha"           REAL         NOT NULL,
+            "beta"            REAL         NOT NULL,
+            "gamma"           REAL         NOT NULL,
+            "rir"             VARCHAR(10)  NOT NULL,
+            "h"               BLOB         NOT NULL,
+            "k"               BLOB         NOT NULL,
+            "l"               BLOB         NOT NULL,
+            "mul"             BLOB         NOT NULL
+        ))sql",
+        R"(CREATE INDEX IF NOT EXISTS "info_id_" ON "info" ("id"))",
+    };
 
     // spgrstat is present in both variants
     stmts += R"(CREATE TABLE IF NOT EXISTS "spgrstat" (
