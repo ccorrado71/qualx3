@@ -14,28 +14,28 @@ QualX performs a multi-step search:
 ## Figure of Merit
 
 At the end of the search–match step a list of plausible database crystalline
-phases are ranked according to the decreasing values of a FoM. The FoM
+phases are ranked according to the decreasing values of a FOM. The FOM
 includes four contributions, three of them suitably weighted, according to
 the following formula:
 
 $$
-\mathrm{FoM}=\sqrt{\frac{\mathrm{FoM}_{db}\cdot\left(w_{\theta}\,\mathrm{FoM}_{\theta}
-+w_{I}\,\mathrm{FoM}_{I}+w_{ph}\,\mathrm{FoM}_{ph}\right)}{w_{\theta}+w_{I}+w_{ph}}}
+\mathrm{FOM}=\sqrt{\frac{\mathrm{FOM}_{db}\cdot\left(w_{\theta}\,\mathrm{FOM}_{\theta}
++w_{I}\,\mathrm{FOM}_{I}+w_{ph}\,\mathrm{FOM}_{ph}\right)}{w_{\theta}+w_{I}+w_{ph}}}
 $$
 
-where FoM<sub>θ</sub> takes into account the average difference between the
-2θ values of the observed and matched database peaks; FoM<sub>I</sub> is
+where FOM<sub>θ</sub> takes into account the average difference between the
+2θ values of the observed and matched database peaks; FOM<sub>I</sub> is
 related to the average difference between the intensity values of the
-observed and matched database peaks; FoM<sub>ph</sub> depends on the
+observed and matched database peaks; FOM<sub>ph</sub> depends on the
 percentage of the matched experimental peaks and on their intensity; and
-FoM<sub>db</sub> depends on the percentage of the matched database peaks and
+FOM<sub>db</sub> depends on the percentage of the matched database peaks and
 on their intensity.
 
-FoM<sub>θ</sub> is the contribution coming from the 2θ differences between
+FOM<sub>θ</sub> is the contribution coming from the 2θ differences between
 the experimental and the associated database peaks:
 
 $$
-\mathrm{FoM}_{\theta} = 1 - \dfrac{\displaystyle\sum_{i}^{N_{db}^{ass}}
+\mathrm{FOM}_{\theta} = 1 - \dfrac{\displaystyle\sum_{i}^{N_{db}^{ass}}
 \left|2\theta_i^{\mathrm{exp}} - 2\theta_i^{db}\right|}{N_{db}^{ass}\cdot\Delta}
 $$
 
@@ -44,11 +44,11 @@ is considered associated if its 2θ distance from the experimental peak is
 less than Δ), 2θ<sup>exp</sup> and 2θ<sup>db</sup> are the positions of the
 experimental and database peaks, respectively.
 
-FoM<sub>I</sub> is the contribution due to the differences between the
+FOM<sub>I</sub> is the contribution due to the differences between the
 intensities of the experimental and the associated database peaks:
 
 $$
-\mathrm{FoM}_{I} = 1 - \dfrac{\displaystyle\sum_{i}^{N_{\mathrm{exp}}^{ass}}
+\mathrm{FOM}_{I} = 1 - \dfrac{\displaystyle\sum_{i}^{N_{\mathrm{exp}}^{ass}}
 \left|I_i^{\mathrm{exp}} - I_i^{db}\right|}{N_{\mathrm{exp}}^{ass}}
 $$
 
@@ -56,22 +56,22 @@ where I<sup>exp</sup> and I<sup>db</sup> are the experimental and database
 intensity respectively, the summation is over the associated experimental
 peaks.
 
-FoM<sub>ph</sub> is the contribution due to the intensities of the
+FOM<sub>ph</sub> is the contribution due to the intensities of the
 associated experimental peaks and their percentage:
 
 $$
-\mathrm{FoM}_{ph} = \sqrt{\dfrac{\displaystyle\sum_{i=1}^{N_{\mathrm{exp}}^{ass}}
+\mathrm{FOM}_{ph} = \sqrt{\dfrac{\displaystyle\sum_{i=1}^{N_{\mathrm{exp}}^{ass}}
 I_i^{\mathrm{exp}}}{\displaystyle\sum_{i=1}^{N_{\mathrm{exp}}} I_i^{\mathrm{exp}}}
 \cdot\dfrac{N_{\mathrm{exp}}^{ass}}{N_{\mathrm{exp}}}}
 $$
 
 where N<sub>exp</sub> is the total number of experimental peaks.
 
-FoM<sub>db</sub> is the contribution due to the intensities of the
+FOM<sub>db</sub> is the contribution due to the intensities of the
 associated database peaks and their percentage:
 
 $$
-\mathrm{FoM}_{db} = \sqrt{\dfrac{\displaystyle\sum_{i=1}^{N_{db}^{ass}}
+\mathrm{FOM}_{db} = \sqrt{\dfrac{\displaystyle\sum_{i=1}^{N_{db}^{ass}}
 I_i^{db}}{\displaystyle\sum_{i=1}^{N_{db}} I_i^{db}}
 \cdot\dfrac{N_{db}^{ass}}{N_{db}}}
 $$
