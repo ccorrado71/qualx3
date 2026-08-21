@@ -41,7 +41,8 @@ bool DbManager::openDb(const QString &path)
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", m_connName);
         db.setDatabaseName(path);
         if (!db.open()) {
-            QMessageBox::critical(nullptr, "Database Error", db.lastError().text());
+            QMessageBox::critical(nullptr, "Database Error",
+                                   QString("%1\nFile: %2").arg(db.lastError().text(), path));
             QSqlDatabase::removeDatabase(m_connName);
             m_connName.clear();
             return false;
