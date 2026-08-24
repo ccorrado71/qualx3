@@ -2247,24 +2247,7 @@ void MainWindow::onActionLoadAddTriggered()
 
 void MainWindow::onActionDocumentationHtmlTriggered()
 {
-    const QDir appDir(QCoreApplication::applicationDirPath());
-    // Try development build layout: exe directly in build_*/ (single-config generators)
-    // or nested in build_*/<config>/ (multi-config generators), then installed layout.
-    const QStringList candidates = {
-        appDir.filePath("../docs/site/index.html"),
-        appDir.filePath("../../docs/site/index.html"),
-        appDir.filePath("../share/qualx/docs/index.html"),
-        appDir.filePath("docs/index.html"),
-    };
-    for (const QString &path : candidates) {
-        if (QFile::exists(path)) {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()));
-            return;
-        }
-    }
-    QMessageBox::information(this, tr("Documentation"),
-        tr("HTML documentation not found.\n"
-           "Run 'mkdocs build' inside the docs/ folder to generate it."));
+    QDesktopServices::openUrl(QUrl("https://ccorrado71.github.io/qualx3/"));
 }
 
 void MainWindow::onActionDocumentationPdfTriggered()

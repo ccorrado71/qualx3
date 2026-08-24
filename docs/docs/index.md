@@ -4,6 +4,11 @@
 It allows phase identification of crystalline materials by comparing experimental
 diffraction patterns against reference databases.
 
+## Download
+
+- **Software** — see [Software Installation](installation.md) for download links (Windows, macOS, Linux)
+- **Databases** — see [Database Installation](database-installation.md) for download links (required to run QualX)
+
 ## Features
 
 - Import and visualize powder diffraction patterns
