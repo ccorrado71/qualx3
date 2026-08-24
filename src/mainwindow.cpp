@@ -66,6 +66,7 @@ extern "C" void set_diffraction_data(float x[], float y[], int ndata, float yb[]
                                      int radtype,
                                      const char *filename, int filename_len);
 extern "C" void delete_all_peaks();
+extern "C" void set_experimental_peaks(double tth[], double d[], double intensity[], double fwhm[], int npeaks);
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -816,7 +817,8 @@ void MainWindow::loadProject(QString fileName)
         ep.fwhm          = toVec(pk["fwhm"].toArray());
         ep.valid         = !ep.tth.isEmpty();
         wave             = ep.wave;
-        updatePeakListTable();
+        set_experimental_peaks(ep.tth.data(), ep.d.data(), ep.intensity.data(), ep.fwhm.data(), ep.tth.size());
+        //updatePeakListTable();
         ui->peakCompareWidget->setExperimentalPeaks(ep);
     }
 

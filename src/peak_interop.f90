@@ -24,8 +24,9 @@
    end type c_peak_type
 
    integer :: MAXNPSMOOTH = 50, MINSENS = 0, MAXSENS = 100
- 
+
    integer :: peak_pos_message = 2
+
   contains
 
    subroutine peak_search_action(iAction, pSettings) bind(C,name="peak_search_action")
@@ -444,4 +445,25 @@
 !
    end function delta2thetaPeaks
 
- end module peak_search_interop 
+!-----------------------------------------------------------------------
+
+! Receives experimental peaks from C++ after loading a project.
+   subroutine set_experimental_peaks(tth, d, intensity, fwhm, npeaks) bind(C,name="set_experimental_peaks")
+   use peak_mod
+   integer(c_int), value, intent(in)        :: npeaks
+   real(c_double), dimension(*), intent(in) :: tth, d, intensity, fwhm
+   integer                                  :: i
+
+   call new_peaks(pkind,npeaks)
+   do i = 1, npeaks
+      call pkind(i)%setx(real(tth(i)))
+      call pkind(i)%setd(real(d(i)))
+      call pkind(i)%sety(real(intensity(i)))
+   end do
+   pkind(:npeaks)%fwhm = real(fwhm(:npeaks))
+
+   call update_peak_graph()
+
+   end subroutine set_experimental_peaks
+
+ end module peak_search_interop
