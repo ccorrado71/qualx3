@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 get_filename_component(ProjectId ${CMAKE_CURRENT_LIST_DIR} NAME)
 string(REPLACE " " "_" ProjectId ${ProjectId})
-project(${ProjectId} VERSION 1.0.4 LANGUAGES CXX Fortran)
+project(${ProjectId} VERSION 1.0.5 LANGUAGES CXX Fortran)
 set(EXECUTABLE_NAME "qualx")
 
 # Defines CMAKE_INSTALL_BINDIR/LIBDIR/etc. Needed explicitly (rather than
