@@ -97,11 +97,9 @@ install(TARGETS ${EXECUTABLE_NAME}
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/share/qualx DESTINATION share COMPONENT ${COMPONENT_NAME_MAIN})
 # install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION . COMPONENT ${COMPONENT_NAME_MAIN})
 
-# Documentation (generated files — build with 'mkdocs build' and 'bash docs/make_pdf.sh' first)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/site/
-        DESTINATION share/qualx/docs
-        COMPONENT ${COMPONENT_NAME_MAIN}
-        OPTIONAL)
+# PDF manual (generated file — build with 'bash docs/make_pdf.sh' first).
+# The HTML documentation is no longer bundled: Help > Documentation (HTML)
+# opens the version published on GitHub Pages instead.
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/qualx_manual.pdf
         DESTINATION share/qualx/docs
         COMPONENT ${COMPONENT_NAME_MAIN}

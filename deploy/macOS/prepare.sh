@@ -7,16 +7,12 @@ rm -rf "$CURDIR/qualx.app"
 rm -f "$CURDIR"/*.dmg
 cp -r "$CURDIR/../../build_gfor_r/src/qualx.app" "$CURDIR/"
 
-# Bundle the documentation (docs/site + docs/qualx_manual.pdf), mirroring the
-# 'install(DIRECTORY docs/site ...)' / 'install(FILES docs/qualx_manual.pdf ...)'
-# rules in CMakeLists.txt, which cmake --install would do but this script skips.
+# Bundle the PDF manual, mirroring the 'install(FILES docs/qualx_manual.pdf ...)'
+# rule in CMakeLists.txt, which cmake --install would do but this script skips.
+# The HTML docs are no longer bundled: Help > Documentation (HTML) opens the
+# version published on GitHub Pages instead.
 DOCS_DEST="$CURDIR/qualx.app/Contents/share/qualx/docs"
 mkdir -p "$DOCS_DEST"
-if [ -d "$CURDIR/../../docs/site" ]; then
-    cp -r "$CURDIR/../../docs/site/." "$DOCS_DEST/"
-else
-    echo "WARNING: docs/site not found - run 'mkdocs build' inside docs/ first"
-fi
 if [ -f "$CURDIR/../../docs/qualx_manual.pdf" ]; then
     cp "$CURDIR/../../docs/qualx_manual.pdf" "$DOCS_DEST/"
 else
