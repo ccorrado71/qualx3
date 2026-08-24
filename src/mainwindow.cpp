@@ -35,6 +35,7 @@
 #include <QJsonObject>
 #include <QMenu>
 #include <QMessageBox>
+#include <QStandardPaths>
 
 #include <algorithm>
 
@@ -2261,7 +2262,20 @@ void MainWindow::onActionDocumentationPdfTriggered()
     };
     for (const QString &path : candidates) {
         if (QFile::exists(path)) {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()));
+            QString openPath = QFileInfo(path).absoluteFilePath();
+            // Running from an AppImage: "path" lives under its own FUSE mount
+            // (e.g. /tmp/.mount_qualx-XXXXXX/...), which a sandboxed external
+            // viewer (e.g. a snap-packaged browser) can't see. Copy the PDF to
+            // a plain, universally accessible location first.
+            if (qEnvironmentVariableIsSet("APPIMAGE")) {
+                const QString downloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+                QDir().mkpath(downloadDir);
+                const QString copyPath = downloadDir + "/qualx_manual.pdf";
+                QFile::remove(copyPath);
+                if (QFile::copy(openPath, copyPath))
+                    openPath = copyPath;
+            }
+            QDesktopServices::openUrl(QUrl::fromLocalFile(openPath));
             return;
         }
     }
