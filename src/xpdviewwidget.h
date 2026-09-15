@@ -4,20 +4,9 @@
 #include "customplotzoom.h"
 #include "graphitem.h"
 #include "plotsettings.h"
+#include "reflectionbar.h"
 
 class CardType;
-
-typedef struct {
-    int hkl[3];
-    double x;
-} refInfo;
-
-typedef struct {
-    QVector<refInfo> ref;
-    int visible;
-    float wave;
-    QString id;
-} reflectionSet;
 
 struct CardPeakData {
     QString id;
@@ -97,8 +86,7 @@ public:
     graphItem diff;
     graphItem cdiff;
     graphItem peaks;
-    QVector<graphItem> refl;
-    QVector<reflectionSet> refSet;
+    QVector<ReflectionBar> refSet;
     QVector<double> plotWave;
 
 signals:
@@ -144,7 +132,7 @@ private:
     void drawReflections(const QVector<double>& x, double y, double length, QPen pen, int &itemStart, int &itemEnd);
     void drawReflections(const QVector<refInfo> &ref, double y, double length, QPen pen, int &itemStart, int &itemEnd);
     void drawIntervals();
-    void reDrawReflections(const QVector<refInfo> &refSet, const graphItem &ref, double y, double length);
+    void reDrawReflections(const QVector<refInfo> &positions, const ReflectionBar &ref, double y, double length);
     void drawGraphicItem_old(graphItem &item);
     bool rescalePlotEnabled() const;
     void makeReflections(const QVector<double> &xvet);

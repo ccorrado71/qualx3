@@ -172,7 +172,7 @@ void PlotStyleDialog::setOptions(const XpdViewWidget *plot)
     for (int i = 0; i< plot->obs.count(); i++) {
         obsPen.push_back(plot->obs.at(i).getPen());
         obsScatter.push_back(plot->obs.at(i).getScatter());
-        obsVisible.push_back(plot->obs.at(i).isVisible());
+        obsVisible.push_back(plot->obs.at(i).visible);
     }
     obsVisible0 = obsVisible;
     obsPen0 = obsPen;
@@ -185,46 +185,46 @@ void PlotStyleDialog::setOptions(const XpdViewWidget *plot)
 
     //Background    
     backPen0 = plot->back.getPen();
-    backVisible0 = plot->back.isVisible();
+    backVisible0 = plot->back.visible;
 
     //Background Points    
     backScatter0 = plot->bpoints.getScatter();
-    backpVisible0 = plot->bpoints.isVisible();
+    backpVisible0 = plot->bpoints.visible;
 
     //Calculated    
     calcPen0 = plot->calc.getPen();
-    calcVisible0 = plot->calc.isVisible();
+    calcVisible0 = plot->calc.visible;
 
     //Difference    
     diffPen0 = plot->diff.getPen();
-    diffVisible0 = plot->diff.isVisible();
+    diffVisible0 = plot->diff.visible;
 
     //Cumulative difference    
     cDiffPen0 = plot->cdiff.getPen();
-    cDiffVisible0 = plot->cdiff.isVisible();
+    cDiffVisible0 = plot->cdiff.visible;
 
     //Peaks    
     peaksPen0 = plot->peaks.getPen();
-    peaksVisible0 = plot->peaks.isVisible();
+    peaksVisible0 = plot->peaks.visible;
 
     //Reflections
     reflPen.clear();
-    if (plot->refl.count() == 0)  {
+    if (plot->refSet.count() == 0)  {
         ui->reflComboBox->setDisabled(true);
         ui->reflCheckBox->setDisabled(true);
         ui->reflectionsLineWidget->setDisabled(true);
     } else {
-        reflPen.reserve(plot->refl.count());
-        reflVisible.resize(plot->refl.count());
-        for (int i = 0; i< plot->refl.count(); i++) {
-            reflPen.push_back(plot->refl[i].getPen());
-            reflVisible[i] = plot->refl[i].isVisible();
+        reflPen.reserve(plot->refSet.count());
+        reflVisible.resize(plot->refSet.count());
+        for (int i = 0; i< plot->refSet.count(); i++) {
+            reflPen.push_back(plot->refSet[i].pen);
+            reflVisible[i] = plot->refSet[i].visible;
         }
         reflVisible0 = reflVisible;
 
         ui->reflComboBox->clear();
-        for (int i = 0; i < plot->refl.count(); i++) {
-            ui->reflComboBox->addItem(plot->refl[i].getName());
+        for (int i = 0; i < plot->refSet.count(); i++) {
+            ui->reflComboBox->addItem(plot->refSet[i].name);
         }
     }
     reflPen0 = reflPen;
@@ -325,7 +325,7 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
         QPen pen = plot->obs[i].getPen();
         if (pen != obsPen[i]) {
             if (update) plot->obs[i].setPen(obsPen[i]);
-            int index = plot->obs[i].getGraphIndex();
+            int index = plot->obs[i].graphIndex;
             plot->graph(index)->setPen(plot->obs[i].getPen());
             plotChanged = true;
         }
@@ -333,16 +333,16 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
         QCPScatterStyle scatter = plot->obs[i].getScatter();
         if (scatter.shape() != obsScatter[i].shape() || scatter.size() != obsScatter[i].size() || scatter.pen() != obsScatter[i].pen()) {
             if (update) plot->obs[i].setScatter(obsScatter[i]);
-            int index = plot->obs[i].getGraphIndex();
+            int index = plot->obs[i].graphIndex;
             plot->graph(index)->setScatterStyle(plot->obs[i].getScatter());
             plotChanged = true;
         }
 
-        if (obsVisible.at(i) != plot->obs.at(i).isVisible()) {
-            if (update) plot->obs[i].setVisible(obsVisible.at(i));
-            int index = plot->obs[i].getGraphIndex();
-            plot->graph(index)->setVisible(plot->obs.at(i).isVisible());
-            if (plot->obs.at(i).isVisible())
+        if (obsVisible.at(i) != plot->obs.at(i).visible) {
+            if (update) plot->obs[i].visible = obsVisible.at(i);
+            int index = plot->obs[i].graphIndex;
+            plot->graph(index)->setVisible(plot->obs.at(i).visible);
+            if (plot->obs.at(i).visible)
                 plot->graph(index)->addToLegend();
             else
                 plot->graph(index)->removeFromLegend();
@@ -350,12 +350,12 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
         }
     }
 
-    if (ui->backCheckBox->isChecked() != plot->back.isVisible()) {
-        if (update) plot->back.setVisible(ui->backCheckBox->isChecked());
-        int indexB = plot->back.getGraphIndex();
+    if (ui->backCheckBox->isChecked() != plot->back.visible) {
+        if (update) plot->back.visible = ui->backCheckBox->isChecked();
+        int indexB = plot->back.graphIndex;
         if (indexB != -1) {
-            plot->graph(indexB)->setVisible(plot->back.isVisible());
-            if (plot->back.isVisible())
+            plot->graph(indexB)->setVisible(plot->back.visible);
+            if (plot->back.visible)
                 plot->graph(indexB)->addToLegend();
             else
                 plot->graph(indexB)->removeFromLegend();
@@ -369,19 +369,19 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->back.setLineColor(ui->backgroundLineWidget->getColor());
             plot->back.setLineWidth(ui->backgroundLineWidget->getWidth());
         }
-        int indexB = plot->back.getGraphIndex();
+        int indexB = plot->back.graphIndex;
         if (indexB != -1) {
             plot->graph(indexB)->setPen(plot->back.getPen());
             plotChanged = true;
         }
     }    
 
-    if (ui->backpCheckBox->isChecked() != plot->bpoints.isVisible()) {
-        if (update) plot->bpoints.setVisible(ui->backpCheckBox->isChecked());
-        int indexBP = plot->bpoints.getGraphIndex();
+    if (ui->backpCheckBox->isChecked() != plot->bpoints.visible) {
+        if (update) plot->bpoints.visible = ui->backpCheckBox->isChecked();
+        int indexBP = plot->bpoints.graphIndex;
         if (indexBP != -1) {
-            plot->graph(indexBP)->setVisible(plot->bpoints.isVisible());
-            if (plot->bpoints.isVisible())
+            plot->graph(indexBP)->setVisible(plot->bpoints.visible);
+            if (plot->bpoints.visible)
                 plot->graph(indexBP)->addToLegend();
             else
                 plot->graph(indexBP)->removeFromLegend();
@@ -399,19 +399,19 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             scatter.setSize(ui->backgroundPointWidget->getSize());
             plot->bpoints.setScatter(scatter);
         }
-        int indexBP = plot->bpoints.getGraphIndex();
+        int indexBP = plot->bpoints.graphIndex;
         if (indexBP != -1) {
             plot->graph(indexBP)->setScatterStyle(plot->bpoints.getScatter());
             plotChanged = true;
         }
     }    
 
-    if (ui->calcCheckBox->isChecked() != plot->calc.isVisible()) {
-        if (update) plot->calc.setVisible(ui->calcCheckBox->isChecked());
-        int indexC = plot->calc.getGraphIndex();
+    if (ui->calcCheckBox->isChecked() != plot->calc.visible) {
+        if (update) plot->calc.visible = ui->calcCheckBox->isChecked();
+        int indexC = plot->calc.graphIndex;
         if (indexC != -1) {
-            plot->graph(indexC)->setVisible(plot->calc.isVisible());
-            if (plot->calc.isVisible())
+            plot->graph(indexC)->setVisible(plot->calc.visible);
+            if (plot->calc.visible)
                 plot->graph(indexC)->addToLegend();
             else
                 plot->graph(indexC)->removeFromLegend();
@@ -425,19 +425,19 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->calc.setLineColor(ui->calculatedLineWidget->getColor());
             plot->calc.setLineWidth(ui->calculatedLineWidget->getWidth());
         }
-        int indexC = plot->calc.getGraphIndex();
+        int indexC = plot->calc.graphIndex;
         if (indexC != -1) {
             plot->graph(indexC)->setPen(plot->calc.getPen());
             plotChanged = true;
         }
     }
 
-    if (ui->diffCheckBox->isChecked() != plot->diff.isVisible()) {
-        if (update) plot->diff.setVisible(ui->diffCheckBox->isChecked());
-        int indexD = plot->diff.getGraphIndex();
+    if (ui->diffCheckBox->isChecked() != plot->diff.visible) {
+        if (update) plot->diff.visible = ui->diffCheckBox->isChecked();
+        int indexD = plot->diff.graphIndex;
         if (indexD != -1) {
-            plot->graph(indexD)->setVisible(plot->diff.isVisible());
-            if (plot->diff.isVisible())
+            plot->graph(indexD)->setVisible(plot->diff.visible);
+            if (plot->diff.visible)
                 plot->graph(indexD)->addToLegend();
             else
                 plot->graph(indexD)->removeFromLegend();
@@ -451,19 +451,19 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->diff.setLineColor(ui->differenceLineWidget->getColor());
             plot->diff.setLineWidth(ui->differenceLineWidget->getWidth());
         }
-        int indexD = plot->diff.getGraphIndex();
+        int indexD = plot->diff.graphIndex;
         if (indexD != -1) {
             plot->graph(indexD)->setPen(plot->diff.getPen());
             plotChanged = true;
         }
     }
 
-    if (ui->cDiffCheckBox->isChecked() != plot->cdiff.isVisible()) {
-        if (update) plot->cdiff.setVisible(ui->cDiffCheckBox->isChecked());
-        int indexCD = plot->cdiff.getGraphIndex();
+    if (ui->cDiffCheckBox->isChecked() != plot->cdiff.visible) {
+        if (update) plot->cdiff.visible = ui->cDiffCheckBox->isChecked();
+        int indexCD = plot->cdiff.graphIndex;
         if (indexCD != -1) {
-            plot->graph(indexCD)->setVisible(plot->cdiff.isVisible());
-            if (plot->diff.isVisible())
+            plot->graph(indexCD)->setVisible(plot->cdiff.visible);
+            if (plot->diff.visible)
                 plot->graph(indexCD)->addToLegend();
             else
                 plot->graph(indexCD)->removeFromLegend();
@@ -477,41 +477,25 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->cdiff.setLineColor(ui->cumulativeLineWidget->getColor());
             plot->cdiff.setLineWidth(ui->cumulativeLineWidget->getWidth());
         }
-        int indexCD = plot->diff.getGraphIndex();
+        int indexCD = plot->diff.graphIndex;
         if (indexCD != -1) {
             plot->graph(indexCD)->setPen(plot->cdiff.getPen());
             plotChanged = true;
         }
     }
 
-    for (int i = 0; i < plot->refl.count(); i++) {
-        if (reflVisible.at(i) != plot->refl.at(i).isVisible()) {
-            if (update) plot->refl[i].setVisible(reflVisible.at(i));
-            if (plot->refl[i].xSize() > 0) {
-                for (int ind = plot->refl[i].itemIndexStart; ind <= plot->refl[i].itemIndexEnd; ind++) {
-                    QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
-                    line->setVisible(plot->refl.at(i).isVisible());
-                }
-                int index = plot->refl[i].getGraphIndex();
-                plot->graph(index)->setVisible(plot->refl.at(i).isVisible());
-                if (plot->refl.at(i).isVisible()) {
-                    plot->graph(index)->setVisible(true);
-                    plot->graph(index)->addToLegend();
-                } else {
-                    plot->graph(index)->setVisible(false);
-                    plot->graph(index)->removeFromLegend();
-                }
-                redrawRequired = true;
-            }
+    for (int i = 0; i < plot->refSet.count(); i++) {
+        if (reflVisible.at(i) != plot->refSet.at(i).visible) {
+            if (update) plot->refSet[i].visible = reflVisible.at(i);
         }
     }
 
-    for (int i = 0; i < plot->refl.count(); i++) {
-        QPen pen = plot->refl[i].getPen();
+    for (int i = 0; i < plot->refSet.count(); i++) {
+        QPen pen = plot->refSet[i].pen;
         if (pen != reflPen[i]) {
-            if (update) plot->refl[i].setPen(reflPen[i]);
-            int index = plot->refl[i].getGraphIndex();
-            QPen penref = plot->refl[i].getPen();
+            if (update) plot->refSet[i].pen = reflPen[i];
+            int index = plot->refSet[i].graphIndex;
+            QPen penref = plot->refSet[i].pen;
             plot->graph(index)->setPen(penref);
 
             //Update scatter for legend
@@ -520,7 +504,7 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->graph(index)->setScatterStyle(QCPScatterStyle(customScatterPath, penref));
 
             if (plot->refSet[i].ref.size() > 0) {
-                for (int ind = plot->refl[i].itemIndexStart; ind <= plot->refl[i].itemIndexEnd; ind++) {
+                for (int ind = plot->refSet[i].itemIndexStart; ind <= plot->refSet[i].itemIndexEnd; ind++) {
                     QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
                     line->setPen(penref);
                 }
@@ -529,12 +513,12 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
         }
     }
 
-    if (ui->peaksCheckBox->isChecked() != plot->peaks.isVisible()) {
-        if (update) plot->peaks.setVisible(ui->peaksCheckBox->isChecked());
-        int indexP = plot->peaks.getGraphIndex();
+    if (ui->peaksCheckBox->isChecked() != plot->peaks.visible) {
+        if (update) plot->peaks.visible = ui->peaksCheckBox->isChecked();
+        int indexP = plot->peaks.graphIndex;
         if (indexP != -1) {
-            plot->graph(indexP)->setVisible(plot->peaks.isVisible());
-            if (plot->peaks.isVisible())
+            plot->graph(indexP)->setVisible(plot->peaks.visible);
+            if (plot->peaks.visible)
                 plot->graph(indexP)->addToLegend();
             else
                 plot->graph(indexP)->removeFromLegend();
@@ -548,7 +532,7 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
             plot->peaks.setLineColor(ui->peaksLineWidget->getColor());
             plot->peaks.setLineWidth(ui->peaksLineWidget->getWidth());
         }
-        int indexP = plot->peaks.getGraphIndex();
+        int indexP = plot->peaks.graphIndex;
         if (indexP != -1) {
             plot->graph(indexP)->setPen(plot->peaks.getPen());
             plotChanged = true;
@@ -653,11 +637,11 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
 
     if (getAbscissaState() != plot->pSettings().getAbscissa()) {
         if (update) {
-            xpdutils::convertAbscissa(plot,plot->plotWave,plot->refl,plot->pSettings().getAbscissa(),getAbscissaState());
+            xpdutils::convertAbscissa(plot,plot->plotWave,plot->pSettings().getAbscissa(),getAbscissaState());
             //plot->pSettings().setAbscissa(getAbscissaState());
             pSettings.setAbscissa(getAbscissaState());
         } else {
-            xpdutils::convertAbscissa(plot,plot->plotWave,plot->refl,getAbscissaState(),plot->pSettings().getAbscissa());
+            xpdutils::convertAbscissa(plot,plot->plotWave,getAbscissaState(),plot->pSettings().getAbscissa());
         }
         //plot->xAxis->setRangeReversed(plot->pSettings().getAbscissa() == DVALUE);
         plot->xAxis->setRangeReversed(pSettings.getAbscissa() == DVALUE);
@@ -728,25 +712,25 @@ void PlotStyleDialog::cancel(XpdViewWidget *plot)
         for (int i = 0; i < plot->obs.count(); i++) {
             plot->obs[i].setPen(obsPen0[i]);
             plot->obs[i].setScatter(obsScatter0[i]);
-            plot->obs[i].setVisible(obsVisible0.at(i));
+            plot->obs[i].visible = obsVisible0.at(i);
         }
         //psettings = settings0;
         plot->setPlotSettings(settings0);
         plot->back.setPen(backPen0);
-        plot->back.setVisible(backVisible0);
+        plot->back.visible = backVisible0;
         plot->bpoints.setScatter(backScatter0);
-        plot->bpoints.setVisible(backpVisible0);
+        plot->bpoints.visible = backpVisible0;
         plot->calc.setPen(calcPen0);
-        plot->calc.setVisible(calcVisible0);
+        plot->calc.visible = calcVisible0;
         plot->diff.setPen(diffPen0);
-        plot->diff.setVisible(diffVisible0);
+        plot->diff.visible = diffVisible0;
         plot->cdiff.setPen(cDiffPen0);
-        plot->cdiff.setVisible(cDiffVisible0);
+        plot->cdiff.visible = cDiffVisible0;
         plot->peaks.setPen(peaksPen0);
-        plot->peaks.setVisible(peaksVisible0);
-        for (int i = 0; i < plot->refl.count(); i++) {
-            plot->refl[i].setPen(reflPen0.at(i));
-            plot->refl[i].setVisible(reflVisible0.at(i));
+        plot->peaks.visible = peaksVisible0;
+        for (int i = 0; i < plot->refSet.count(); i++) {
+            plot->refSet[i].pen = reflPen0.at(i);
+            plot->refSet[i].visible = reflVisible0.at(i);
         }
         apply(plot,false);
 //, obs, back, bpoints, calc, diff, cdiff, peaks, refl, waves, false);

@@ -1,5 +1,4 @@
 #include "customplotzoom.h"
-#include "graphitem.h"
 #include "xpdutils.h"
 #include <QVector>
 #include <cmath>
@@ -73,7 +72,7 @@ void tthetaToD(QVector<double> &xvet, QVector<double> &yvet, double wave) {
     }
 }
 
-void convertTtheta2D(CustomPlotZoom *plot, const QVector<double>& wave, const QVector<graphItem>& refl, xAbscissaType dType) {
+void convertTtheta2D(CustomPlotZoom *plot, const QVector<double>& wave, xAbscissaType dType) {
     //Covert all plots
     for (int i = 0; i < plot->graphCount(); i++) {
         for (auto it = plot->graph(i)->data()->begin(); it != plot->graph(i)->data()->end(); it++) {
@@ -89,29 +88,10 @@ void convertTtheta2D(CustomPlotZoom *plot, const QVector<double>& wave, const QV
         }
     }
 
-    //Convert all reflection sets
-    for (int i = 0; i < refl.count(); i++) {
-        if (refl[i].xSize() > 0) {
-            qInfo() << "Refl to convert with wave: " << wave.at(refl[i].getGraphIndex());
-            double wavel = wave.at(refl[i].getGraphIndex());
-            for (int ind = refl[i].itemIndexStart; ind <= refl[i].itemIndexEnd; ind++) {
-                QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));                
-                double newkey = xpdutils::dvalue(line->start->key(),wavel);
-                if (dType == xpdutils::ONE_OVER_DVALUE) {
-                    newkey = 1/newkey;
-                } else if (dType == xpdutils::ONE_OVER_DVALUE2) {
-                    newkey = 1/(newkey * newkey);
-                }
-                line->start->setCoords(newkey,line->start->value());
-                line->end->setCoords(newkey,line->end->value());
-            }
-        }
-    }
-
     plot->xAxis->setLabel(abscissaString(dType));
 }
 
-void convertD2Ttheta(CustomPlotZoom *plot, const QVector<double>& wave, const QVector<graphItem>& refl, xAbscissaType dType) {
+void convertD2Ttheta(CustomPlotZoom *plot, const QVector<double>& wave, xAbscissaType dType) {
     //Convert all plots
     for (int i = 0; i < plot->graphCount(); i++) {
         for (auto it = plot->graph(i)->data()->begin(); it != plot->graph(i)->data()->end(); it++) {
@@ -125,41 +105,20 @@ void convertD2Ttheta(CustomPlotZoom *plot, const QVector<double>& wave, const QV
         if (dType == DVALUE) std::reverse(plot->graph(i)->data()->begin(),plot->graph(i)->data()->end());
     }
 
-    //Convert all reflection sets
-    for (int i = 0; i < refl.count(); i++) {
-        if (refl[i].xSize() > 0) {
-            qInfo() << "Refl to convert with wave: " << wave.at(refl[i].getGraphIndex());
-            double wavel = wave.at(refl[i].getGraphIndex());
-            for (int ind = refl[i].itemIndexStart; ind <= refl[i].itemIndexEnd; ind++) {
-                QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
-                double newkey;
-                if (dType == ONE_OVER_DVALUE) {
-                    newkey = xpdutils::tthvalue(1/line->start->key(),wavel);
-                } else if (dType == ONE_OVER_DVALUE2) {
-                    newkey = xpdutils::tthvalue(sqrt(1/line->start->key()),wavel);
-                } else {
-                    newkey = xpdutils::tthvalue(line->start->key(),wavel);
-                }
-                line->start->setCoords(newkey,line->start->value());
-                line->end->setCoords(newkey,line->end->value());
-            }
-        }
-    }
-
     plot->xAxis->setLabel(abscissaString(xpdutils::TTHETA));
 }
 
-void convertAbscissa(CustomPlotZoom *plot, const QVector<double> &wave, const QVector<graphItem> &refl, xpdutils::xAbscissaType from, xpdutils::xAbscissaType to)
+void convertAbscissa(CustomPlotZoom *plot, const QVector<double> &wave, xpdutils::xAbscissaType from, xpdutils::xAbscissaType to)
 {
     if (from == xpdutils::TTHETA) {
-        convertTtheta2D(plot, wave, refl, to);
+        convertTtheta2D(plot, wave, to);
     } else {
         if (to == xpdutils::TTHETA) {
-            convertD2Ttheta(plot, wave, refl, from);
+            convertD2Ttheta(plot, wave, from);
         } else {
-            convertD(plot, refl, from, to);
+            convertD(plot, from, to);
         }
-    }    
+    }
 }
 
 QString abscissaString(xAbscissaType aType)
@@ -173,7 +132,7 @@ QString abscissaString(xAbscissaType aType)
     }
 }
 
-void convertD(CustomPlotZoom *plot, const QVector<graphItem> &refl, xAbscissaType from, xAbscissaType to)
+void convertD(CustomPlotZoom *plot, xAbscissaType from, xAbscissaType to)
 {
     if (from == DVALUE) {
         for (int i = 0; i < plot->graphCount(); i++) {
@@ -184,20 +143,6 @@ void convertD(CustomPlotZoom *plot, const QVector<graphItem> &refl, xAbscissaTyp
                 }
             }
             std::reverse(plot->graph(i)->data()->begin(),plot->graph(i)->data()->end());
-        }
-
-        for (int i = 0; i < refl.count(); i++) {
-            if (refl[i].xSize() > 0) {
-                for (int ind = refl[i].itemIndexStart; ind <= refl[i].itemIndexEnd; ind++) {
-                    QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
-                    double newkey = 1/line->start->key();
-                    if (to == ONE_OVER_DVALUE2) {
-                        newkey *= newkey;
-                    }
-                    line->start->setCoords(newkey,line->start->value());
-                    line->end->setCoords(newkey,line->end->value());
-                }
-            }
         }
     } else if (from == ONE_OVER_DVALUE) {
         for (int i = 0; i < plot->graphCount(); i++) {
@@ -210,22 +155,6 @@ void convertD(CustomPlotZoom *plot, const QVector<graphItem> &refl, xAbscissaTyp
             }
             if (to == DVALUE) std::reverse(plot->graph(i)->data()->begin(),plot->graph(i)->data()->end());
         }
-
-        for (int i = 0; i < refl.count(); i++) {
-            if (refl[i].xSize() > 0) {
-                for (int ind = refl[i].itemIndexStart; ind <= refl[i].itemIndexEnd; ind++) {
-                    QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
-                    double newkey = line->start->key();
-                    if (to == DVALUE) {
-                        newkey = 1/newkey;
-                    } else if (to == ONE_OVER_DVALUE2) {
-                        newkey *= newkey;
-                    }
-                    line->start->setCoords(newkey,line->start->value());
-                    line->end->setCoords(newkey,line->end->value());
-                }
-            }
-        }
     } else if (from == ONE_OVER_DVALUE2) {
         for (int i = 0; i < plot->graphCount(); i++) {
             for (auto it = plot->graph(i)->data()->begin(); it != plot->graph(i)->data()->end(); it++) {
@@ -236,22 +165,6 @@ void convertD(CustomPlotZoom *plot, const QVector<graphItem> &refl, xAbscissaTyp
                 }
             }
             if (to == DVALUE) std::reverse(plot->graph(i)->data()->begin(),plot->graph(i)->data()->end());
-        }
-
-        for (int i = 0; i < refl.count(); i++) {
-            if (refl[i].xSize() > 0) {
-                for (int ind = refl[i].itemIndexStart; ind <= refl[i].itemIndexEnd; ind++) {
-                    QCPItemLine *line = dynamic_cast<QCPItemLine *> (plot->item(ind));
-                    double newkey = line->start->key();
-                    if (to == DVALUE) {
-                        newkey = sqrt(1/newkey);
-                    } else if (to == ONE_OVER_DVALUE) {
-                        newkey = sqrt(newkey);
-                    }
-                    line->start->setCoords(newkey,line->start->value());
-                    line->end->setCoords(newkey,line->end->value());
-                }
-            }
         }
     }
     plot->xAxis->setLabel(abscissaString(to));

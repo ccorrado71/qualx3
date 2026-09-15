@@ -1595,14 +1595,14 @@ void MainWindow::plotStyleClosed(QDialogButtonBox::StandardButton button)
         QPen cDiffPen = xpdViewer()->cdiff.getDefaultPen();
         QPen peaksPen = xpdViewer()->peaks.getDefaultPen();
         for (int i = 0; i < plotStyleDialog->reflPen.count(); i++) {
-            plotStyleDialog->reflPen[i] = xpdViewer()->refl.at(i).getDefaultPen(i);
+            plotStyleDialog->reflPen[i] = xpdViewer()->refSet.at(i).getDefaultPen(i);
             plotStyleDialog->reflVisible[i] = true;
         }
         PlotSettings defaults;
         defaults.restoreDefaults();
         plotStyleDialog->setWidgets(false, backPen, backScatter, calcPen, diffPen, cDiffPen, peaksPen, defaults,
-                                    xpdViewer()->back.isVisible(), xpdViewer()->bpoints.isVisible(), xpdViewer()->calc.isVisible(),
-                                    xpdViewer()->diff.isVisible(), xpdViewer()->cdiff.isVisible(), xpdViewer()->peaks.isVisible());
+                                    xpdViewer()->back.visible, xpdViewer()->bpoints.visible, xpdViewer()->calc.visible,
+                                    xpdViewer()->diff.visible, xpdViewer()->cdiff.visible, xpdViewer()->peaks.visible);
     }
 }
 
@@ -1626,7 +1626,7 @@ void MainWindow::plotStyleConfig()
     settings.setValue(xpdViewer()->peaks.getKeyString("pen", -1),xpdViewer()->peaks.getPen());
 
     for (int i = 0; i < plotStyleDialog->reflPen.count(); i++) {
-        settings.setValue(xpdViewer()->refl[i].getKeyString("pen", i),xpdViewer()->refl.at(i).getPen());
+        settings.setValue(xpdViewer()->refSet[i].getKeyString("pen", i),xpdViewer()->refSet.at(i).pen);
     }
     xpdViewer()->pSettings().write();
 }

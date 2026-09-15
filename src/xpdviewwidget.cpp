@@ -25,56 +25,56 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     // remove parameter idcolor from setColorLine
     // fix default idcolor in setColor (ex. 3 for back and bpoints)
     // setDefaultLine and scatter with no par, default idcolor shoud be written in graphItem.cpp
-    calc.setGtype(graphItem::Calculated);
-    calc.setDefaultIDColor(2);
+    calc.gtype = graphItem::Calculated;
+    calc.defaultIDColor = 2;
     calc.setColorLine();
     calc.setName();
-    back.setGtype(graphItem::Background);
-    back.setDefaultIDColor(3);
+    back.gtype = graphItem::Background;
+    back.defaultIDColor = 3;
     back.setColorLine();
     back.setName();
-    bpoints.setGtype(graphItem::Background_Points);
-    bpoints.setDefaultIDColor(3);
+    bpoints.gtype = graphItem::Background_Points;
+    bpoints.defaultIDColor = 3;
     bpoints.setColorLine();
     bpoints.setName();
     bpoints.setLineStyle(Qt::NoPen);
     bpoints.setLineConnectionType(QCPGraph::lsNone);
-    diff.setGtype(graphItem::Difference);
-    diff.setDefaultIDColor(4);
+    diff.gtype = graphItem::Difference;
+    diff.defaultIDColor = 4;
     diff.setColorLine();
     diff.setName();
-    cdiff.setGtype(graphItem::Cumulative);
-    cdiff.setDefaultIDColor(5);
+    cdiff.gtype = graphItem::Cumulative;
+    cdiff.defaultIDColor = 5;
     cdiff.setColorLine();
     cdiff.setName();
-    peaks.setGtype(graphItem::Peaks);
-    peaks.setDefaultIDColor(6);
+    peaks.gtype = graphItem::Peaks;
+    peaks.defaultIDColor = 6;
     peaks.setColorLine();
     peaks.setName();
     peaks.setLineConnectionType(QCPGraph::lsImpulse);
-    smooth.setGtype(graphItem::Smoothing);
+    smooth.gtype = graphItem::Smoothing;
     smooth.setName();
     smooth.setPen(QPen(Qt::green,1,Qt::DashLine));
-    undpeaks.setGtype(graphItem::Unindexed_Peaks);
+    undpeaks.gtype = graphItem::Unindexed_Peaks;
     undpeaks.setName();
     QColor colorUndPeaks = peaks.getPen().color();
     QCPScatterStyle scatter(QCPScatterStyle::ssTriangleInverted,colorUndPeaks,colorUndPeaks,10);
     undpeaks.setScatter(scatter);
     undpeaks.setLineStyle(Qt::NoPen);
     undpeaks.setLineConnectionType(QCPGraph::lsNone);
-    sysAbs.setGtype(graphItem::Systematic_Absences);
+    sysAbs.gtype = graphItem::Systematic_Absences;
     sysAbs.setName();
     sysAbs.setLineStyle(Qt::NoPen);
     sysAbs.setLineConnectionType(QCPGraph::lsNone);
-    selectedRef.setGtype(graphItem::Selected_Reflections);
+    selectedRef.gtype = graphItem::Selected_Reflections;
     selectedRef.setName();
     selectedRef.setLineStyle(Qt::NoPen);
     selectedRef.setLineConnectionType(QCPGraph::lsNone);
-    selectedPeak.setGtype(graphItem::Selected_Peaks);
+    selectedPeak.gtype = graphItem::Selected_Peaks;
     selectedPeak.setName();
     selectedPeak.setLineStyle(Qt::NoPen);
     selectedPeak.setLineConnectionType(QCPGraph::lsNone);
-    intervalLimit.setGtype(graphItem::Intervals);
+    intervalLimit.gtype = graphItem::Intervals;
     intervalLimit.setName();
 
     setAcceptDrops(true);
@@ -112,42 +112,39 @@ void XpdViewWidget::setGraphicArea()
     nObserved = 0;
     // Save accepted-card entries (id != "") before clearing; clearItems() above
     // already destroyed their QCPItemLine objects, so reset their item indices.
-    QVector<graphItem>     savedRefl;
-    QVector<reflectionSet> savedRefSet;
+    QVector<ReflectionBar> savedRefSet;
     for (int i = 0; i < refSet.size(); i++) {
         if (!refSet[i].id.isEmpty()) {
-            graphItem gr = refl[i];
-            gr.itemIndexStart = -1;
-            gr.itemIndexEnd   = -1;
-            gr.setGraphIndex(-1); // clearGraphs() destroyed the QCPGraph objects
-            savedRefl.push_back(gr);
-            savedRefSet.push_back(refSet[i]);
+            ReflectionBar rb = refSet[i];
+            rb.itemIndexStart = -1;
+            rb.itemIndexEnd   = -1;
+            rb.graphIndex = -1; // clearGraphs() destroyed the QCPGraph objects
+            savedRefSet.push_back(rb);
         }
     }
 
     nReflections = 0;
-    refl    = savedRefl;
     refSet  = savedRefSet;
     nProfCurves = 0;
     yLowerRange = DBL_MAX;
     yUpperRange = -DBL_MIN;
-    for (int i = 0; i < obs.count(); i++) obs[i].setGraphIndex(-1);
-    for (int i = 0; i < profCurves.count(); i++) profCurves[i].setGraphIndex(-1);
-    back.setGraphIndex(-1);
-    bpoints.setGraphIndex(-1);
-    calc.setGraphIndex(-1);
-    diff.setGraphIndex(-1);
-    cdiff.setGraphIndex(-1);
-    //for (int i = 0; i < refl.count(); i++) refl[i].setGraphIndex(-1);
-    peaks.setGraphIndex(-1);
-    smooth.setGraphIndex(-1);
-    undpeaks.setGraphIndex(-1);
-    sysAbs.setGraphIndex(-1);
-    sysAbs.setVisible(false);
-    selectedRef.setGraphIndex(-1);
-    selectedPeak.setGraphIndex(-1);
-    intervalLimit.setGraphIndex(-1);
-    intervalLimit.setVisible(false);
+    for (int i = 0; i < obs.count(); i++) obs[i].graphIndex = -1;
+    for (int i = 0; i < profCurves.count(); i++) profCurves[i].graphIndex = -1;
+    back.graphIndex = -1;
+    bpoints.graphIndex = -1;
+    calc.graphIndex = -1;
+    diff.graphIndex = -1;
+    cdiff.graphIndex = -1;
+    //for (int i = 0; i < refl.count(); i++) refl[i].graphIndex = -1;
+    peaks.graphIndex = -1;
+    smooth.graphIndex = -1;
+    undpeaks.graphIndex = -1;
+    sysAbs.graphIndex = -1;
+    sysAbs.visible = false;
+    selectedRef.graphIndex = -1;
+    selectedPeak.graphIndex = -1;
+    intervalLimit.graphIndex = -1;
+    intervalLimit.visible = false;
     plotWave.clear();
 }
 
@@ -155,9 +152,9 @@ void XpdViewWidget::makePlot(const QVector<double> &xvet, const QVector<double> 
 {
     double ymin = Minimo(yvet);
     double ymax = Massimo(yvet);
-    item.setMin(ymin);
-    item.setMax(ymax);
-    item.setGraphIndex(graphCount());
+    item.min = ymin;
+    item.max = ymax;
+    item.graphIndex = graphCount();
     plotWave.append(item.wave);
     addGraph();
     graph()->setName(item.getName());
@@ -183,49 +180,49 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
         addObserved(xvet,yvet,visible,wave,name);
         break;
     case graphItem::Calculated:
-        calc.setVisible(visible);
+        calc.visible = visible;
         calc.wave = wave;
         makePlot(xvet,yvet,calc);
         break;
 
     case graphItem::Background:
-        back.setVisible(visible);
+        back.visible = visible;
         back.wave = wave;
         makePlot(xvet,yvet,back);
         break;
 
     case graphItem::Background_Points:
-        bpoints.setVisible(visible);
+        bpoints.visible = visible;
         bpoints.wave = wave;
         makePlot(xvet,yvet,bpoints);
         break;
 
     case graphItem::Difference:
-        diff.setVisible(visible);
+        diff.visible = visible;
         diff.wave = wave;
         makePlot(xvet,yvet,diff);
         break;
 
     case graphItem::Cumulative:
-        cdiff.setVisible(visible);
+        cdiff.visible = visible;
         cdiff.wave = wave;
         makePlot(xvet,yvet,cdiff);
         break;
 
     case graphItem::Peaks:
-        peaks.setVisible(visible);
+        peaks.visible = visible;
         peaks.wave = wave;
         makePlot(xvet,yvet,peaks);
         break;
 
     case graphItem::Smoothing:
-        smooth.setVisible(visible);
+        smooth.visible = visible;
         smooth.wave = wave;
         makePlot(xvet,yvet,smooth);
         break;
 
     case graphItem::Unindexed_Peaks:
-        undpeaks.setVisible(visible);
+        undpeaks.visible = visible;
         undpeaks.wave = wave;
         makePlot(xvet,yvet,undpeaks);
         graph()->setScatterStyle(undpeaks.getScatter());
@@ -241,7 +238,7 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
             profCurves.push_back(item);
         }
         profCurves[nProfCurves].setData(xvet,yvet);
-        profCurves[nProfCurves].setVisible(visible);
+        profCurves[nProfCurves].visible = visible;
         makePlot(xvet,yvet,profCurves[nProfCurves]);
         graph()->setScatterStyle(profCurves[nProfCurves].getScatter());
         graph()->removeFromLegend();
@@ -259,7 +256,7 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, graphItem::ItemType ty
     // if (type == graphItem::Reflections) {
     //     if (refl.size() <= nReflections) { //new graphic element required
     //         graphItem item;
-    //         item.setGtype(graphItem::Reflections);
+    //         item.gtype = graphItem::Reflections;
     //         item.setColorLine(nReflections);
     //         item.setVisible(visible);
     //         item.wave = wave;
@@ -284,7 +281,7 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, graphItem::ItemType ty
         if (plotSettings.getAbscissa() == xpdutils::DVALUE) {
             xvet = xpdutils::dvalue(xvet,wave);
         }
-        intervalLimit.setVisible(visible);
+        intervalLimit.visible = visible;
         intervalLimit.wave = wave;
         intervalLimit.setX(xvet);
     }
@@ -320,8 +317,7 @@ void XpdViewWidget::addReflections(float xvet[], int h[], int k[], int l[], int 
     // }
 
     //Fill refSet
-    reflectionSet reflS;
-    reflS.visible = visible;
+    ReflectionBar reflS;
     reflS.wave = wave;
     for (int i = 0; i < num; i++) {
         refInfo r;
@@ -337,34 +333,23 @@ void XpdViewWidget::addReflections(float xvet[], int h[], int k[], int l[], int 
         }
     }
 
-    if (refl.size() <= nReflections) { //new graphic element required
-        graphItem item;
-        item.setGtype(graphItem::Reflections);
-        item.setColorLine(nReflections);
-        item.setVisible(visible);
-        item.wave = wave;
-        refl.push_back(item);
+    if (refSet.size() <= nReflections) { //new graphic element required
+        reflS.setColorLine(nReflections);
+        reflS.visible = visible;
         refSet.push_back(reflS);
     } else {
-        refSet[nReflections] = reflS;
+        refSet[nReflections].ref = reflS.ref;
     }
-
-    // QVector<double> xv(num);
-    // for (int i = 0; i < num; i++) {
-    //     xv[i] = xvet[i];
-    // }
-    // refl[nReflections].setX(xv);
 
     //Default Name: for more phases use Phase 1, Phase 2, ...
     if (nReflections == 0) {
-        refl[0].setName();
+        refSet[0].setName();
     } else if (nReflections == 1) {
-        refl[0].setName("Phase "+QString::number(1));
-        refl[1].setName("Phase "+QString::number(2));
+        refSet[0].setName("Phase "+QString::number(1));
+        refSet[1].setName("Phase "+QString::number(2));
     } else {
-        refl[nReflections].setName("Phase "+QString::number(nReflections+1));
+        refSet[nReflections].setName("Phase "+QString::number(nReflections+1));
     }
-    //makeReflections(xvet);
     nReflections++;
 }
 
@@ -376,24 +361,23 @@ void XpdViewWidget::drawPlot()
     double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04; //space for single set of reflections
     double lengthRef = spaceRef * 0.75; // length of the bar
     int nVisibleRef = 0;
-    for (int i = 0; i < refl.size(); ++i) {
-        if (refl.at(i).isVisible()) nVisibleRef++;
+    for (int i = 0; i < refSet.size(); ++i) {
+        if (refSet.at(i).visible) nVisibleRef++;
     }
     yLowerRange = yLowerRangeNoRef - nVisibleRef*spaceRef; // make space for bars
 
     //Draw Reflections
-    for (int i = 0; i < refl.size(); i++) {
-        QPen mPen(refl[i].getPen());
-        refl[i].setGraphIndex(graphCount());
-        plotWave.append(refl[i].wave);
+    for (int i = 0; i < refSet.size(); i++) {
+        QPen mPen(refSet[i].pen);
+        refSet[i].graphIndex = graphCount();
+        plotWave.append(refSet[i].wave);
         addGraph();
         graph()->setPen(mPen);
-        graph()->setName(refl[i].getName());
-        double ypos = yLowerRange + (refl.size()-i-1)*spaceRef;
-        //drawReflections(refl[i].getX(),ypos,lengthRef,mPen, refl[i].itemIndexStart, refl[i].itemIndexEnd);
-        drawReflections(refSet[i].ref,ypos,lengthRef,mPen, refl[i].itemIndexStart, refl[i].itemIndexEnd);
-        refl[i].setYPos(ypos);
-        refl[i].setLengthRef(lengthRef);
+        graph()->setName(refSet[i].name);
+        double ypos = yLowerRange + (refSet.size()-i-1)*spaceRef;
+        drawReflections(refSet[i].ref,ypos,lengthRef,mPen, refSet[i].itemIndexStart, refSet[i].itemIndexEnd);
+        refSet[i].yPos = ypos;
+        refSet[i].lengthRef = lengthRef;
 
         //Create custom scatter for legend
         QPainterPath customScatterPath(QPointF(0,-10));
@@ -410,7 +394,7 @@ void XpdViewWidget::drawPlot()
         updateMinMax();
         xAxis->rescale();
     } else {
-        if (refl.size() > 0) yAxis->setRange(yLowerRange,yUpperRange);
+        if (refSet.size() > 0) yAxis->setRange(yLowerRange,yUpperRange);
     }
 
     drawCardPeaks();
@@ -431,8 +415,8 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
     //    spaceRef = spaceRef/100;
     double lengthRef = spaceRef * 0.75; // length of the bar
     int nVisibleRef = 0;
-    for (int i = 0; i < refl.size(); ++i) {
-        if (refl.at(i).isVisible()) nVisibleRef++;
+    for (int i = 0; i < refSet.size(); ++i) {
+        if (refSet.at(i).visible) nVisibleRef++;
     }
     //yLowerRange -= nVisibleRef*spaceRef; // make space for bars
     yLowerRange = yLowerRangeNoRef - nVisibleRef*spaceRef; // make space for bars
@@ -440,13 +424,13 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
 
     //Redraw reflections
     int iVis = -1;
-    for (int i = 0; i < refl.size(); i++) {
-        if (refl.at(i).isVisible()) {
+    for (int i = 0; i < refSet.size(); i++) {
+        if (refSet.at(i).visible) {
             ++iVis;
             double ypos = yLowerRange + (nVisibleRef-iVis-1)*spaceRef;
-            reDrawReflections(refSet[i].ref,refl[i],ypos,lengthRef);
-            refl[i].setYPos(ypos);
-            refl[i].setLengthRef(lengthRef);
+            reDrawReflections(refSet[i].ref,refSet[i],ypos,lengthRef);
+            refSet[i].yPos = ypos;
+            refSet[i].lengthRef = lengthRef;
         }
     }
 
@@ -520,18 +504,18 @@ void XpdViewWidget::setAction(const MouseAction &action)
 void XpdViewWidget::drawSelectedPeaks(const QVector<int> &selected)
 {
     if (selected.size() == 0) {
-        int id = selectedPeak.getGraphIndex();
+        int id = selectedPeak.graphIndex;
         if (id >= 0) {
             graph(id)->setData({}, {});
             replot();
         }
         return;
     }
-    int idPeak = peaks.getGraphIndex();
+    int idPeak = peaks.graphIndex;
     if (idPeak < 0) return;
 
-    if (selectedPeak.getGraphIndex() < 0) {
-        selectedPeak.setGraphIndex(graphCount());
+    if (selectedPeak.graphIndex < 0) {
+        selectedPeak.graphIndex = graphCount();
         plotWave.append(-1);
         addGraph();
         graph()->setName(selectedPeak.getName());
@@ -549,7 +533,7 @@ void XpdViewWidget::drawSelectedPeaks(const QVector<int> &selected)
         y[i] = graph(idPeak)->data()->at(selected.at(i))->value;
     }
 
-    int id = selectedPeak.getGraphIndex();
+    int id = selectedPeak.graphIndex;
     graph(id)->setData(x,y);
 
     //force resize of legend
@@ -564,7 +548,7 @@ void XpdViewWidget::deleteSelectedPeaks()
 
     emit deleteSelectedPeaksSignal(selectedPeak.getIx());
 
-    int idPeak = peaks.getGraphIndex();
+    int idPeak = peaks.graphIndex;
 
     //Delete peaks from graph
     QVector<double> keys;
@@ -593,19 +577,19 @@ void XpdViewWidget::drawSelectedRef()
 {
     //TOFIX: combine with setSelectedRef in one function
     if (selectedRef.xSize() > 0) {
-        if (selectedRef.getGraphIndex() < 0) {
-            selectedRef.setGraphIndex(graphCount());
+        if (selectedRef.graphIndex < 0) {
+            selectedRef.graphIndex = graphCount();
             plotWave.append(-1);
             addGraph();
             graph()->setName(selectedRef.getName());
             graph()->setPen(selectedRef.getPen());
-            QColor refColor = refl.at(0).getPen().color();
+            QColor refColor = refSet.at(0).pen.color();
             QCPScatterStyle scatter = QCPScatterStyle(QCPScatterStyle::ssTriangleInverted,refColor,refColor,8);
             selectedRef.setScatter(scatter);
             graph()->setScatterStyle(selectedRef.getScatter());
         }
-        int id = selectedRef.getGraphIndex();
-        double ypos = refl.at(0).getYPos() + refl.at(0).getLengthRef();
+        int id = selectedRef.graphIndex;
+        double ypos = refSet.at(0).yPos + refSet.at(0).lengthRef;
         graph(id)->setData(selectedRef.getX(),QVector<double>(selectedRef.xSize(),ypos));
 
         replot();
@@ -683,7 +667,7 @@ void XpdViewWidget::drawSelectedComparePoints(const QVector<double> &tth,
 
 void XpdViewWidget::setSystematicAbsences(const QVector<int> &refIndex)
 {
-    if (refl.size() == 0) return;
+    if (refSet.size() == 0) return;
 
     QVector<double> x(refIndex.size());
     for (int i = 0; i < refIndex.size(); i++) {
@@ -695,22 +679,22 @@ void XpdViewWidget::setSystematicAbsences(const QVector<int> &refIndex)
 
 void XpdViewWidget::drawSystematicAbsences()
 {
-    if (refl.size() == 0) return;
+    if (refSet.size() == 0) return;
 
-    if (sysAbs.getGraphIndex() < 0) {
-        sysAbs.setGraphIndex(graphCount());
+    if (sysAbs.graphIndex < 0) {
+        sysAbs.graphIndex = graphCount();
         plotWave.append(-1);
         addGraph();
         graph()->setName("Systematic Absences");
         graph()->setPen(sysAbs.getPen());
-        QColor refColor = refl.at(0).getPen().color();
+        QColor refColor = refSet.at(0).pen.color();
         QCPScatterStyle scatter = QCPScatterStyle(QCPScatterStyle::ssDiamond,refColor,refColor,8);
         sysAbs.setScatter(scatter);
         graph()->setScatterStyle(sysAbs.getScatter());
         legend->setMaximumSize(legend->minimumOuterSizeHint()); //force resize of legend
     }
-    int id = sysAbs.getGraphIndex();
-    double ypos = refl.at(0).getYPos() + refl.at(0).getLengthRef()/2.0;
+    int id = sysAbs.graphIndex;
+    double ypos = refSet.at(0).yPos + refSet.at(0).lengthRef/2.0;
     graph(id)->setData(sysAbs.getX(),QVector<double>(sysAbs.xSize(),ypos));
 
     replot();
@@ -718,12 +702,12 @@ void XpdViewWidget::drawSystematicAbsences()
 
 void XpdViewWidget::clearSystematicAbsences()
 {
-    int id = sysAbs.getGraphIndex();
+    int id = sysAbs.graphIndex;
     if (id < 0) return;
 
     removeGraph(id);
     replot();
-    sysAbs.setGraphIndex(-1);
+    sysAbs.graphIndex = -1;
 }
 
 void XpdViewWidget::connectLabels(QLabel *newLabel1, QLabel *newLabel2, QLabel *newLabel3)
@@ -821,9 +805,9 @@ void XpdViewWidget::myMoveEvent(QMouseEvent *event)
     //Find the closest reflection and the corrisponding phase
     int refIndex = -1;
     int phaseIndex = -1;
-    if (refl.count() > 0) {
-        QVector<double> yPos(refl.count());
-        for (int i = 0; i < refl.count(); i++) yPos[i] = refl[i].getYPos();
+    if (refSet.count() > 0) {
+        QVector<double> yPos(refSet.count());
+        for (int i = 0; i < refSet.count(); i++) yPos[i] = refSet[i].yPos;
 
         phaseIndex = NR::locateClosest(yPos, y_val);
 
@@ -965,7 +949,7 @@ void XpdViewWidget::addDeletePoint(QPoint mousePos)
         }
 
     } else if (mAction == DeleteBackgroundPoint) {
-        int id = bpoints.getGraphIndex();
+        int id = bpoints.graphIndex;
         //double radius = qMax(5.0,bpoints.getScatter().size());
         QPointF closePoint = closestDataPoint(mousePos,id);
         if (closePoint.isNull()) return;
@@ -980,7 +964,7 @@ void XpdViewWidget::addDeletePoint(QPoint mousePos)
         //}
 
     } else if (mAction == DeletePeak) {
-        int id = peaks.getGraphIndex();
+        int id = peaks.graphIndex;
         if (id >= 0) {
             double xMouseCoord = xAxis->pixelToCoord(mousePos.x());
             double closePoint = closestDataPointX(xMouseCoord,id);
@@ -1060,7 +1044,7 @@ void XpdViewWidget::addObserved(const QVector<double> &xvet, const QVector<doubl
         obs.push_back(item);
     }
     obs[nObserved].setData(xvet,yvet);
-    obs[nObserved].setVisible(visible);
+    obs[nObserved].visible = visible;
     obs[nObserved].setName(name);
     makePlot(xvet,yvet,obs[nObserved]);
     graph()->setScatterStyle(obs[nObserved].getScatter());
@@ -1074,40 +1058,40 @@ void XpdViewWidget::getYLimits(double &yMin, double &yMax)
 
     QVector<graphItem>::const_iterator i;
     for (i = obs.constBegin(); i != obs.constEnd(); ++i) {
-        if (i->getGraphIndex() >= 0 && i->isVisible()) {
-            if (i->getMin() < yMin) yMin = i->getMin();
-            if (i->getMax() > yMax) yMax = i->getMax();
+        if (i->graphIndex >= 0 && i->visible) {
+            if (i->min < yMin) yMin = i->min;
+            if (i->max > yMax) yMax = i->max;
         }
     }
 
-    if (back.getGraphIndex() >= 0 && back.isVisible()) {
-        if (back.getMin() < yMin) yMin = back.getMin();
-        if (back.getMax() > yMax) yMax = back.getMax();
+    if (back.graphIndex >= 0 && back.visible) {
+        if (back.min < yMin) yMin = back.min;
+        if (back.max > yMax) yMax = back.max;
     }
 
-    if (peaks.getGraphIndex() >= 0 && peaks.isVisible()) {
-        if (peaks.getMin() < yMin) yMin = peaks.getMin();
-        if (peaks.getMax() > yMax) yMax = peaks.getMax();
+    if (peaks.graphIndex >= 0 && peaks.visible) {
+        if (peaks.min < yMin) yMin = peaks.min;
+        if (peaks.max > yMax) yMax = peaks.max;
     }
 
-    if (calc.getGraphIndex() >= 0 && calc.isVisible()) {
-        if (calc.getMin() < yMin) yMin = calc.getMin();
-        if (calc.getMax() > yMax) yMax = calc.getMax();
+    if (calc.graphIndex >= 0 && calc.visible) {
+        if (calc.min < yMin) yMin = calc.min;
+        if (calc.max > yMax) yMax = calc.max;
     }
 
-    if (diff.getGraphIndex() >= 0 && diff.isVisible()) {
-        if (diff.getMin() < yMin) yMin = diff.getMin();
-        if (diff.getMax() > yMax) yMax = diff.getMax();
+    if (diff.graphIndex >= 0 && diff.visible) {
+        if (diff.min < yMin) yMin = diff.min;
+        if (diff.max > yMax) yMax = diff.max;
     }
 
-    if (cdiff.getGraphIndex() >= 0 && cdiff.isVisible()) {
-        if (cdiff.getMin() < yMin) yMin = cdiff.getMin();
-        if (cdiff.getMax() > yMax) yMax = cdiff.getMax();
+    if (cdiff.graphIndex >= 0 && cdiff.visible) {
+        if (cdiff.min < yMin) yMin = cdiff.min;
+        if (cdiff.max > yMax) yMax = cdiff.max;
     }
 
-    if (smooth.getGraphIndex() >= 0 && smooth.isVisible()) {
-        if (smooth.getMin() < yMin) yMin = smooth.getMin();
-        if (smooth.getMax() > yMax) yMax = smooth.getMax();
+    if (smooth.graphIndex >= 0 && smooth.visible) {
+        if (smooth.min < yMin) yMin = smooth.min;
+        if (smooth.max > yMax) yMax = smooth.max;
     }
 }
 
@@ -1139,7 +1123,7 @@ void XpdViewWidget::drawReflections(const QVector<refInfo> &ref, double y, doubl
 
 void XpdViewWidget::drawIntervals()
 {
-    if (!intervalLimit.isVisible()) return;
+    if (!intervalLimit.visible) return;
 
     QPen pen1(Qt::gray);
     QPen pen2(Qt::black);
@@ -1164,14 +1148,13 @@ void XpdViewWidget::drawIntervals()
     }
 }
 
-void XpdViewWidget::reDrawReflections(const QVector<refInfo> &refSet, const graphItem &ref, double y, double length)
+void XpdViewWidget::reDrawReflections(const QVector<refInfo> &positions, const ReflectionBar &ref, double y, double length)
 {
     for (int ind = ref.itemIndexStart; ind <= ref.itemIndexEnd; ind++) {
         QCPItemLine *line = dynamic_cast<QCPItemLine *> (this->item(ind));
         int posRef = ref.itemIndexEnd - ind;
-        //qInfo() << "Line: " << posRef << ref.getX().at(posRef) << y << y + length;
-        line->start->setCoords(refSet[posRef].x, y);
-        line->end->setCoords(refSet[posRef].x, y+length);
+        line->start->setCoords(positions[posRef].x, y);
+        line->end->setCoords(positions[posRef].x, y+length);
     }
 }
 
@@ -1188,24 +1171,24 @@ void XpdViewWidget::reDrawReflections(const QVector<refInfo> &refSet, const grap
 
 void XpdViewWidget::clearGraphSelection(graphItem &item)
 {
-    int id = item.getGraphIndex();
+    int id = item.graphIndex;
     if (id < 0) return;
 
     removeGraph(id);
     legend->setMaximumSize(legend->minimumOuterSizeHint());
     replot();
-    item.setGraphIndex(-1);
+    item.graphIndex = -1;
 }
 
 // void XpdViewWidget::drawGraphicItem_old(graphItem &item)
 // {
-//     int npoints = get_plot_size(item.getGtype());
+//     int npoints = get_plot_size(item.gtype);
 
 //     if (npoints > 0) {
 //         float *xv = new float[npoints];
 //         float *yv = new float[npoints];
 //         float wave;
-//         get_plot_xy(xv, yv, &wave, item.getGtype());
+//         get_plot_xy(xv, yv, &wave, item.gtype);
 
 //         QVector<double> xvet(npoints), yvet(npoints);
 //         for (int i = 0; i < npoints; i++) {
@@ -1214,7 +1197,7 @@ void XpdViewWidget::clearGraphSelection(graphItem &item)
 //         }
 //         delete [] xv;
 //         delete [] yv;
-//         int id = item.getGraphIndex();
+//         int id = item.graphIndex;
 //         if (id < 0) {
 //             item.wave = wave;
 //             makePlot(xvet,yvet,item);
@@ -1232,7 +1215,7 @@ void XpdViewWidget::clearGraphSelection(graphItem &item)
 void XpdViewWidget::drawGraphicItem(graphItem &item, const QVector<double> &xvet, const QVector<double> &yvet, double wave)
 {
     if (xvet.size() > 0) {
-        int id = item.getGraphIndex();
+        int id = item.graphIndex;
         if (id < 0) {
             item.wave = wave;
             makePlot(xvet,yvet,item);
@@ -1249,11 +1232,10 @@ void XpdViewWidget::drawGraphicItem(graphItem &item, const QVector<double> &xvet
 
 void XpdViewWidget::setSelectedRef(const QVector<int> &selected)
 {
-    if (refl.size() == 0) return;
+    if (refSet.size() == 0) return;
 
     QVector<double> x(selected.size());
     for (int i = 0; i < selected.size(); i++) {
-        //x[i] = refl[0].getX(selected.at(i));
         x[i] = refSet[0].ref[selected.at(i)].x;
     }
     selectedRef.setX(x);
@@ -1318,7 +1300,7 @@ int XpdViewWidget::findRefLocation(const QVector<refInfo> &ref, double xval)
 //     int ind = 0;
 //     //refl[ind].setLineStyle(Qt::NoPen);
 //     refl[ind].setLineConnectionType(QCPGraph::lsNone);
-//     refl[ind].setGraphIndex(graphCount());
+//     refl[ind].graphIndex = graphCount();
 //     //refl[ind].setScatter(QCPScatterStyle(QCPScatterStyle::ssDisc));
 //     plotWave.append(refl[ind].wave);
 //     addGraph();
@@ -1371,7 +1353,7 @@ void XpdViewWidget::applyOffset(double yOffset)
 
     //Apply offset to the y uppper range
     yUpperRange += totOffset;
-    if (refl.size() > 0) {
+    if (refSet.size() > 0) {
         redrawPlot(false);
     } else {
         yAxis->setRange(yLowerRange,yUpperRange);
@@ -1513,15 +1495,14 @@ void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &colo
     // Remove existing entry for this card if already present (idempotent)
     for (int k = refSet.size() - 1; k >= 0; k--) {
         if (refSet[k].id == id) {
-            refl.removeAt(k);
             refSet.removeAt(k);
         }
     }
 
-    reflectionSet rs;
-    rs.id      = id;
-    rs.visible = 1;
-    rs.wave    = plotWave.isEmpty() ? 1.54056f : static_cast<float>(plotWave.first());
+    ReflectionBar rb;
+    rb.id      = id;
+    rb.visible = true;
+    rb.wave    = plotWave.isEmpty() ? 1.54056 : plotWave.first();
 
     const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
     const QVector<double> &tth = card.getTth();
@@ -1530,24 +1511,18 @@ void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &colo
         refInfo r;
         r.hkl[0] = r.hkl[1] = r.hkl[2] = 0;
         r.x = (useDValue && i < d.size()) ? d[i] : tth[i];
-        rs.ref.push_back(r);
+        rb.ref.push_back(r);
     }
 
-    graphItem item;
-    item.setGtype(graphItem::Reflections);
-    QPen pen(color, 1);
-    item.setPen(pen);
-    item.setVisible(true);
-    item.wave = rs.wave;
+    rb.pen = QPen(color, 1);
     QString name = card.getChemicalName();
     if (!card.getMineralName().isEmpty())
         name += " [" + card.getMineralName() + "]";
-    item.setName(name);
-    item.itemIndexStart = -1;
-    item.itemIndexEnd   = -1;
+    rb.setName(name);
+    rb.itemIndexStart = -1;
+    rb.itemIndexEnd   = -1;
 
-    refl.push_back(item);
-    refSet.push_back(rs);
+    refSet.push_back(rb);
 
     refreshAcceptedPhaseBars();
 }
@@ -1557,17 +1532,16 @@ void XpdViewWidget::removePhaseReflections(const QString &id)
     for (int k = refSet.size() - 1; k >= 0; k--) {
         if (refSet[k].id == id) {
             // Remove the dummy legend graph and keep plotWave in sync
-            const int gIdx = refl[k].getGraphIndex();
+            const int gIdx = refSet[k].graphIndex;
             if (gIdx >= 0 && gIdx < graphCount()) {
                 removeGraph(graph(gIdx));
                 if (gIdx < plotWave.size())
                     plotWave.remove(gIdx);
                 // Shift stored graph indices for all entries above gIdx
-                for (auto &gr : refl)
-                    if (gr.getGraphIndex() > gIdx)
-                        gr.setGraphIndex(gr.getGraphIndex() - 1);
+                for (auto &gr : refSet)
+                    if (gr.graphIndex > gIdx)
+                        gr.graphIndex = gr.graphIndex - 1;
             }
-            refl.removeAt(k);
             refSet.removeAt(k);
         }
     }
@@ -1584,7 +1558,7 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
     // Remove all existing reflection QCPItemLine objects (collect by pointer to
     // avoid index-shift issues during removal)
     QList<QCPAbstractItem *> toRemove;
-    for (const auto &gr : refl) {
+    for (const auto &gr : refSet) {
         if (gr.itemIndexStart < 0) continue;
         for (int ind = gr.itemIndexStart; ind <= gr.itemIndexEnd; ++ind) {
             if (ind < itemCount())
@@ -1593,38 +1567,38 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
     }
     for (QCPAbstractItem *it : toRemove)
         removeItem(it);
-    for (auto &gr : refl)
+    for (auto &gr : refSet)
         gr.itemIndexStart = gr.itemIndexEnd = -1;
 
     // Recompute y range
     int nVisibleRef = 0;
-    for (const auto &r : refl) if (r.isVisible()) nVisibleRef++;
+    for (const auto &r : refSet) if (r.visible) nVisibleRef++;
     yLowerRange = yLowerRangeNoRef - nVisibleRef * spaceRef;
 
     // Re-draw all reflection bars at updated positions
     int iVis = -1;
-    for (int i = 0; i < refl.size(); i++) {
-        if (!refl.at(i).isVisible()) continue;
+    for (int i = 0; i < refSet.size(); i++) {
+        if (!refSet.at(i).visible) continue;
         ++iVis;
         double ypos = yLowerRange + (nVisibleRef - iVis - 1) * spaceRef;
-        QPen mPen(refl[i].getPen());
+        QPen mPen(refSet[i].pen);
         drawReflections(refSet[i].ref, ypos, lengthRef, mPen,
-                        refl[i].itemIndexStart, refl[i].itemIndexEnd);
-        refl[i].setYPos(ypos);
-        refl[i].setLengthRef(lengthRef);
+                        refSet[i].itemIndexStart, refSet[i].itemIndexEnd);
+        refSet[i].yPos = ypos;
+        refSet[i].lengthRef = lengthRef;
     }
 
     // Add dummy legend graph for phases that don't have one yet (graphIndex == -1).
     // This happens when a phase is accepted while a pattern is already displayed
     // (drawPlot() was already called and won't run again until the next pattern load).
-    for (int i = 0; i < refl.size(); i++) {
-        if (refl[i].getGraphIndex() >= 0) continue;
-        QPen mPen(refl[i].getPen());
-        refl[i].setGraphIndex(graphCount());
-        plotWave.append(refl[i].wave);
+    for (int i = 0; i < refSet.size(); i++) {
+        if (refSet[i].graphIndex >= 0) continue;
+        QPen mPen(refSet[i].pen);
+        refSet[i].graphIndex = graphCount();
+        plotWave.append(refSet[i].wave);
         addGraph();
         graph()->setPen(mPen);
-        graph()->setName(refl[i].getName());
+        graph()->setName(refSet[i].name);
         QPainterPath customScatterPath(QPointF(0,-10));
         customScatterPath.lineTo(0,10);
         graph()->setScatterStyle(QCPScatterStyle(customScatterPath, mPen));

@@ -126,6 +126,8 @@ set(PROJECT_SOURCES
     rangedialog.cpp
     rangedialog.h
     rangedialog.ui
+    reflectionbar.cpp
+    reflectionbar.h
     reportwidget.cpp
     reportwidget.h
     reportwidget.ui

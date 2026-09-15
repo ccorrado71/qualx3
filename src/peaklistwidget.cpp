@@ -89,13 +89,13 @@ void PeakListWidget::drawPeaks()
 
     //Get peaks
     auto pk = mw->xpdViewer()->peaks;
-    int npk = get_plot_size(pk.getGtype());
+    int npk = get_plot_size(pk.gtype);
 
     if (npk > 0) {
         float *xv = new float[npk];
         float *yv = new float[npk];
         float wave;
-        get_plot_xy(xv, yv, &wave, pk.getGtype());
+        get_plot_xy(xv, yv, &wave, pk.gtype);
 
         QVector<double> xvet(npk), yvet(npk);
         for (int i = 0; i < npk; i++) {

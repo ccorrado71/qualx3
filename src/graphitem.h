@@ -17,24 +17,24 @@ public:
     };
     static const QStringList ItemTypeString;
     double wave;
+    int itemIndexStart, itemIndexEnd;
+
+    ItemType gtype;
+    double min, max;
+    double yPos;
+    double lengthRef;
+    int graphIndex;
+    int defaultIDColor;
+    bool visible;
 
     graphItem();
-    void setGraphIndex(int value);
     void setColorLine(int idColor = -1);
-    void setMin(double value);
-    void setMax(double value);
-    void setGtype(const ItemType &value);
     QPen getDefaultPen(int idColor = -1) const;
     QCPScatterStyle getDefaultScatter(int idColor = -1) const;
     static QColor getPaletteColor(int id);
 
-    ItemType getGtype() const;
-    double getMin() const;
-    double getMax() const;
-
     void setX(const QVector<double> &value);
     void setX(const QVector<int> &value);
-    void setY(const QVector<double> &value);
     QVector<double> getX() const;
     QVector<int> getIx() const;
     double getX(int pos);
@@ -45,9 +45,6 @@ public:
     QString getName() const;
 
     int findLocation(double x);
-
-    double getYPos() const;
-    void setYPos(double value);
 
     QPen getPen() const;
     void setLineStyle(const Qt::PenStyle &style);
@@ -61,36 +58,17 @@ public:
     void setScatter(const QCPScatterStyle &value);
     QString getKeyString(QString item, int id) const;
 
-    int getGraphIndex() const;
-    int itemIndexStart, itemIndexEnd;
-
-    double getLengthRef() const;
-    void setLengthRef(double value);
-
-    void setDefaultIDColor(int value);
-    int getDefaultIDColor() const;
-
-    bool isVisible() const;
-    void setVisible(bool value);
     void setData(const QVector<double> &xvet, const QVector<double> &yvet);
 
     QCPGraph::LineStyle getLineConnectionType() const;
     void setLineConnectionType(const QCPGraph::LineStyle &value);
 
 private:
-    ItemType gtype;
     QString name;
     QPen pen;
-    int graphIndex;
-    double min; //forse non serve
-    double max; //forse non serve
-    bool visible;
-    QVector<double> x,y;
+    QVector<double> x;
     QVector<int> ix;
-    double yPos;
-    double lengthRef;
     QCPScatterStyle scatter;
-    int defaultIDColor;
     QCPGraph::LineStyle lineConnectionType;
     void setDefaultLine(int id);
     void setDefaultScatter(int id);

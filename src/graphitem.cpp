@@ -20,18 +20,14 @@ graphItem::graphItem() :
     itemIndexStart(0),
     itemIndexEnd(0),
     gtype(ItemType::Observed),
-    graphIndex(-1),
     min(DBL_MAX), max(-DBL_MAX),
-    visible(false),
+    yPos(0), lengthRef(0),
+    graphIndex(-1),
     defaultIDColor(0),
+    visible(false),
     lineConnectionType(QCPGraph::lsLine)
 {
 
-}
-
-void graphItem::setGraphIndex(int value)
-{
-    graphIndex = value;
 }
 
 void graphItem::setColorLine(int idColor)
@@ -127,61 +123,16 @@ void graphItem::setDefaultScatter(int id)
     scatter = getDefaultScatter(id);
 }
 
-void graphItem::setGtype(const ItemType &value)
-{
-    gtype = value;
-}
-
-graphItem::ItemType graphItem::getGtype() const
-{
-    return gtype;
-}
-
-double graphItem::getMin() const
-{
-    return min;
-}
-
-void graphItem::setMin(double value)
-{
-    min = value;
-}
-
-void graphItem::setMax(double value)
-{
-    max = value;
-}
-
-double graphItem::getMax() const
-{
-    return max;
-}
-
 QColor graphItem::getPaletteColor(int id)
 {
     int index = id%(listColors.size());
     return QColor(listColors[index]);
 }
 
-int graphItem::getDefaultIDColor() const
-{
-    return defaultIDColor;
-}
-
-bool graphItem::isVisible() const
-{
-    return visible;
-}
-
-void graphItem::setVisible(bool value)
-{
-    visible = value;
-}
-
 void graphItem::setData(const QVector<double> &xvet, const QVector<double> &yvet)
 {
+    Q_UNUSED(yvet);
     x = xvet;
-    y = yvet;
 }
 
 QCPGraph::LineStyle graphItem::getLineConnectionType() const
@@ -194,29 +145,9 @@ void graphItem::setLineConnectionType(const QCPGraph::LineStyle &value)
     lineConnectionType = value;
 }
 
-void graphItem::setDefaultIDColor(int value)
-{
-    defaultIDColor = value;
-}
-
-double graphItem::getLengthRef() const
-{
-    return lengthRef;
-}
-
-void graphItem::setLengthRef(double value)
-{
-    lengthRef = value;
-}
-
 void graphItem::setScatter(const QCPScatterStyle &value)
 {
     scatter = value;
-}
-
-int graphItem::getGraphIndex() const
-{
-    return graphIndex;
 }
 
 QCPScatterStyle graphItem::getScatter() const
@@ -227,16 +158,6 @@ QCPScatterStyle graphItem::getScatter() const
 void graphItem::setPen(const QPen &value)
 {
     pen = value;
-}
-
-double graphItem::getYPos() const
-{
-    return yPos;
-}
-
-void graphItem::setYPos(double value)
-{
-    yPos = value;
 }
 
 QPen graphItem::getPen() const
@@ -311,9 +232,4 @@ void graphItem::setX(const QVector<double> &value)
 void graphItem::setX(const QVector<int> &value)
 {
     ix = value;
-}
-
-void graphItem::setY(const QVector<double> &value)
-{
-    y = value;
 }
