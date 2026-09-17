@@ -77,6 +77,19 @@ void ReportWidget::clearQuantitative()
     generateHtml();
 }
 
+void ReportWidget::clear()
+{
+    m_ep       = ExperimentalPeaks();
+    m_cards.clear();
+    m_maxCards = 100;
+    m_phases.clear();
+    m_quant.clear();
+    m_pkSettings = {};
+    m_hasRestraints = false;
+    m_activeRestraints.clear();
+    generateHtml();
+}
+
 // ── Off-screen pie chart rendering ───────────────────────────────────────────
 
 QPixmap ReportWidget::renderPieChart(const QVector<QPair<QColor, double>> &slices, int size)

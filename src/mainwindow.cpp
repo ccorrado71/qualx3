@@ -67,6 +67,7 @@ extern "C" void set_diffraction_data(float x[], float y[], int ndata, float yb[]
                                      int radtype,
                                      const char *filename, int filename_len);
 extern "C" void delete_all_peaks();
+extern "C" void clear_diffraction_data();
 extern "C" void set_experimental_peaks(double tth[], double d[], double intensity[], double fwhm[], int npeaks);
 
 
@@ -588,12 +589,13 @@ void MainWindow::onActionNewTriggered()
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(ExperimentalPeaks());
     ui->quantWidget->clearPhases();
-    ui->reportWidget->clearQuantitative();
-    ui->reportWidget->updateReport(ExperimentalPeaks(), {});
+    ui->reportWidget->clear();
     ui->cardBrowser->clear();
+    ui->dockWidgetCard->setWindowTitle(tr("Card"));
 
     AppState::peaks().clear();
     delete_all_peaks();
+    clear_diffraction_data();
 
     clearProjectFile();
     currentFile.clear();

@@ -30,6 +30,7 @@ public:
     void updateQuantitative(const QVector<CardType> &phases,
                             const QVector<double> &percentages);
     void clearQuantitative();
+    void clear();
     void print(QPrinter *printer);
 
     void setPeakSearchSettings(const peakSearchSettings &s);

@@ -92,6 +92,17 @@ contains
 
 ! ---------------------------------------------------------------------------
 
+! Discards the current dataset (used e.g. when starting a new project).
+   subroutine clear_diffraction_data() bind(C, name='clear_diffraction_data')
+   USE datasetmod, only: clear_dataset
+   USE variables, only: dataset
+
+   call clear_dataset(dataset)
+
+   end subroutine clear_diffraction_data
+
+! ---------------------------------------------------------------------------
+
 ! Returns lightweight metadata about the current dataset for the report.
 ! wave and ratio arrays must be pre-allocated by the caller (max 4 elements).
    subroutine get_dataset_info(filename, filename_len, npoints, &
