@@ -1548,6 +1548,12 @@ void XpdViewWidget::removePhaseReflections(const QString &id)
     refreshAcceptedPhaseBars();
 }
 
+void XpdViewWidget::clearPhaseReflections()
+{
+    while (!refSet.isEmpty())
+        removePhaseReflections(refSet.first().id);
+}
+
 void XpdViewWidget::refreshAcceptedPhaseBars()
 {
     if (graphCount() == 0) return; // no pattern displayed; bars drawn on next drawPlot()

@@ -576,6 +576,7 @@ void MainWindow::onActionNewTriggered()
     }
 
     xpdViewer()->setGraphicArea();
+    xpdViewer()->clearPhaseReflections();
     xpdViewer()->hideGraphicArea();
     xpdViewer()->replot();
 
@@ -589,13 +590,13 @@ void MainWindow::onActionNewTriggered()
     ui->peakCompareWidget->clearCard();
     ui->peakCompareWidget->setExperimentalPeaks(ExperimentalPeaks());
     ui->quantWidget->clearPhases();
-    ui->reportWidget->clear();
     ui->cardBrowser->clear();
     ui->dockWidgetCard->setWindowTitle(tr("Card"));
 
     AppState::peaks().clear();
     delete_all_peaks();
     clear_diffraction_data();
+    ui->reportWidget->clear();
 
     clearProjectFile();
     currentFile.clear();
@@ -847,6 +848,7 @@ void MainWindow::loadProject(QString fileName)
             const CardType card = cardFromJson(val.toObject(), wave);
             ui->quantWidget->addPhase(card);
             ui->peakCompareWidget->addAcceptedPhase(card);
+            xpdViewer()->addPhaseReflections(card, cardColor(card.getId()));
         }
         ui->reportWidget->updateQuantitative(
             ui->quantWidget->phases(), ui->quantWidget->quantPercentages());

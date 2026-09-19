@@ -100,6 +100,7 @@ void QuantWidget::clearPhases()
     m_phases.clear();
     m_quant.clear();
     m_model->setRowCount(0);
+    ui->pieChart->setSlices({});
 }
 
 void QuantWidget::removeSelectedPhase()

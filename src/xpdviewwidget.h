@@ -67,6 +67,7 @@ public:
     void setCardPeaks(const QVector<CardPeakData> &peaks);
     void addPhaseReflections(const CardType &card, const QColor &color);
     void removePhaseReflections(const QString &id);
+    void clearPhaseReflections();
     void applyOffset(double yOffset = 0);
     void applyAutoScale();
     void enableRescalePlot(bool value);
