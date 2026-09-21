@@ -153,8 +153,8 @@ void MainWindow::createDialogs()
     rangeDialog        = new RangeDialog(this);
     plotStyleDialog    = new PlotStyleDialog(this);
     aboutDialog = new AboutDialog(this);
-    aboutDialog->setWebsiteUrl("https://www.ba.ic.cnr.it/softwareic/qualx/");
-    aboutDialog->setContactsUrl("https://www.ba.ic.cnr.it/softwareic/expo/contact-us/");
+    aboutDialog->setWebsiteUrl("https://ccorrado71.github.io/qualx3/index.html");
+    aboutDialog->setContactsUrl("https://ccorrado71.github.io/qualx3/index.html#contact");
     aboutDialog->setCitationUrl("https://doi.org/10.1017/S0885715617000240");
 
     connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
@@ -856,6 +856,7 @@ void MainWindow::loadProject(QString fileName)
         ui->dockWidgetQuant->raise();
     }
 
+    currentProjectFile = fileName;
     setCurrentFile(fileName, QVariant::fromValue(RecentFileType::Project).toString());
     setStatusMessage(tr("Project loaded: %1").arg(QFileInfo(fileName).fileName()));
 
