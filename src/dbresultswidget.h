@@ -36,6 +36,7 @@ public:
     bool hasResults() const;
     bool hasSelection() const;
     QVector<CardType> allCards() const;
+    CardType currentCard() const;
     void selectFirstCard();
     void selectCard(const QString &id);
     void deleteSelectedCards();

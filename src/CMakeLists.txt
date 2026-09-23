@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
     cifreader.h
     cifdbpopulator.cpp
     cifdbpopulator.h
+    cifexport.cpp
+    cifexport.h
     commandline.cpp
     commandline.h
     createdatabasedialog.h
@@ -114,6 +116,8 @@ set(PROJECT_SOURCES
     qcustomplot.cpp
     qt_utils.h
     qt_utils.cpp
+    qtdownload.h
+    qtdownload.cpp
     qualxdbcreator.h
     qualxdbcreator.cpp
     qualxdbmanager.h

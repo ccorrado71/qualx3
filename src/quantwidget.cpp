@@ -2,6 +2,8 @@
 #include "ui_quantwidget.h"
 #include "piechartwidget.h"
 #include "floatdelegate.h"
+#include "appstate.h"
+#include "cifexport.h"
 
 #include <QStandardItemModel>
 #include <QHeaderView>
@@ -71,13 +73,23 @@ QuantWidget::QuantWidget(QWidget *parent)
     m_removePhaseAction = new QAction(tr("Remove Phase"), this);
     connect(m_removePhaseAction, &QAction::triggered, this, &QuantWidget::removeSelectedPhase);
 
+    m_exportCifAction = new QAction(tr("Export as CIF..."), this);
+    connect(m_exportCifAction, &QAction::triggered, this, [this]() {
+        const QModelIndex current = ui->tableView->currentIndex();
+        if (!current.isValid() || current.row() >= m_phases.size()) return;
+        cifexport::exportCardAsCif(this, m_phases.at(current.row()).getId());
+    });
+
     ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableView, &QWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
         const bool hasSel = ui->tableView->selectionModel()->hasSelection();
         m_clearSelAction->setEnabled(hasSel);
         m_removePhaseAction->setEnabled(hasSel);
+        m_exportCifAction->setEnabled(hasSel && AppState::isActiveDatabaseCod());
         QMenu menu(this);
         menu.addAction(m_removePhaseAction);
+        menu.addSeparator();
+        menu.addAction(m_exportCifAction);
         menu.addSeparator();
         menu.addAction(m_clearSelAction);
         menu.exec(ui->tableView->viewport()->mapToGlobal(pos));

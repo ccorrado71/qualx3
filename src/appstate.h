@@ -45,6 +45,10 @@ public:
     // The manager is opened automatically when the active database changes.
     static QualxDbManager &db();
 
+    // Returns true if the currently active database is a COD database
+    // (i.e. can be used to download CIF files from crystallography.net).
+    static bool isActiveDatabaseCod();
+
     // Returns the experimental peaks loaded from the last get_d_delta_values call.
     static ExperimentalPeaks &peaks();
 

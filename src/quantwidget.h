@@ -45,6 +45,7 @@ private:
     QVector<double>       m_quant;   // computed percentages (empty if RIR unavailable)
     QAction              *m_clearSelAction    = nullptr;
     QAction              *m_removePhaseAction = nullptr;
+    QAction              *m_exportCifAction   = nullptr;
 };
 
 #endif // QUANTWIDGET_H

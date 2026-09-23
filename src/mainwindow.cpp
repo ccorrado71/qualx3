@@ -14,6 +14,7 @@
 #include "fileutils.h"
 #include "xpdutils.h"
 #include "dbresultswidget.h"
+#include "cifexport.h"
 
 #include <QApplication>
 #include <QDateTime>
@@ -86,7 +87,9 @@ MainWindow::MainWindow(QWidget *parent)
         nullptr,  // separator
         ui->actionAccept_Selected_Entries,
         ui->actionDelete,
-        ui->actionChange_Color
+        ui->actionChange_Color,
+        nullptr,  // separator
+        ui->actionExport_As_CIF
     });
 
     tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCompare);
@@ -284,17 +287,23 @@ void MainWindow::actionsSetup()
     ui->actionAccept_Selected_Entries->setEnabled(false);
     ui->actionDelete->setEnabled(false);
     ui->actionChange_Color->setEnabled(false);
+    ui->actionExport_As_CIF->setEnabled(false);
 
     auto updateEntryActions = [this]() {
         const bool on = ui->resultsWidget->hasResults() && ui->resultsWidget->hasSelection();
         ui->actionAccept_Selected_Entries->setEnabled(on);
         ui->actionDelete->setEnabled(on);
         ui->actionChange_Color->setEnabled(on);
+        ui->actionExport_As_CIF->setEnabled(on && AppState::isActiveDatabaseCod());
     };
     connect(ui->resultsWidget, &DbResultsWidget::hasResultsChanged,
             this, [updateEntryActions](bool) { updateEntryActions(); });
     connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
             this, [updateEntryActions](bool) { updateEntryActions(); });
+
+    connect(ui->actionExport_As_CIF, &QAction::triggered, this, [this]() {
+        cifexport::exportCardAsCif(this, ui->resultsWidget->currentCard().getId());
+    });
 
     connect(ui->actionAccept_Selected_Entries, &QAction::triggered, this, [this]() {
         ui->resultsWidget->acceptSelectedCards();

@@ -182,6 +182,8 @@
     <addaction name="actionChange_Color"/>
     <addaction name="separator"/>
     <addaction name="actionLoad_Add"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_As_CIF"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -457,6 +459,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionExport_As_CIF">
+   <property name="text">
+    <string>Export as CIF...</string>
+   </property>
+   <property name="toolTip">
+    <string>Download the CIF file of the selected COD entry</string>
    </property>
   </action>
   <action name="actionAccept_Selected_Entries">

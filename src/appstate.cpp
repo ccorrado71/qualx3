@@ -58,6 +58,14 @@ QualxDbManager &AppState::db()
     return s_db;
 }
 
+bool AppState::isActiveDatabaseCod()
+{
+    int ncard;
+    QString type;
+    s_db.getInfo(ncard, type);
+    return type == QLatin1String("COD");
+}
+
 ExperimentalPeaks &AppState::peaks()
 {
     return s_peaks;

@@ -284,6 +284,15 @@ void DbResultsWidget::addCard(const CardType &card)
     selectCard(card.getId());
 }
 
+CardType DbResultsWidget::currentCard() const
+{
+    const QModelIndex current = ui->table->selectionModel()->currentIndex();
+    if (!current.isValid())
+        return CardType();
+    const QVariant v = ui->table->model()->index(current.row(), 0).data(Qt::UserRole);
+    return v.value<CardType>();
+}
+
 QVector<CardType> DbResultsWidget::selectedCards() const
 {
     const auto selected = ui->table->selectionModel()->selectedRows();
