@@ -159,16 +159,13 @@ void QuantWidget::updateQuant()
 
     // Rebuild table and pie slices
     m_model->setRowCount(n);
-    QVector<QPair<QColor, double>> slices;
+    QVector<PieSlice> slices;
     slices.reserve(n);
 
     for (int i = 0; i < n; ++i) {
         const CardType &card = m_phases[i];
         const QColor color = phaseColor(card.getId());
-
-        QString name = card.getChemicalName();
-        if (!card.getMineralName().isEmpty())
-            name += " [" + card.getMineralName() + "]";
+        const QString name = card.displayName();
 
         auto *colorItem = new QStandardItem();
         colorItem->setBackground(QBrush(color));
@@ -185,7 +182,7 @@ void QuantWidget::updateQuant()
         m_model->setItem(i, 2, new QStandardItem(name));
         m_model->setItem(i, 3, quantItem);
 
-        slices.append({color, (valid && sum > 0.0) ? quant[i] : (100.0 / n)});
+        slices.append({color, (valid && sum > 0.0) ? quant[i] : (100.0 / n), name});
     }
 
     ui->pieChart->setSlices(slices);

@@ -35,6 +35,7 @@ signals:
     void selectedComparePointsChanged(const QVector<double> &tth,
                                       const QVector<double> &intensity,
                                       const QVector<QColor> &colors);
+    void experimentalPeaksChanged(const ExperimentalPeaks &ep);
 
 private:
     void rebuild();

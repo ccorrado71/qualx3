@@ -1,5 +1,6 @@
 #include "xpdviewwidget.h"
 #include "cardtype.h"
+#include "experimentalpeaks.h"
 #include "libcomune.h"
 #include "xpdutils.h"
 #include "nr.h"
@@ -93,6 +94,7 @@ void XpdViewWidget::setGraphicArea()
     clearGraphs();
     m_cardPeakGraphs.clear(); // pointers invalidated by clearGraphs()
     m_selectedCompareGraphs.clear(); // pointers invalidated by clearGraphs()
+    m_peaksLegendGraph = nullptr; // pointer invalidated by clearGraphs()
     clearPlottables();
     clearItems();
 
@@ -125,6 +127,10 @@ void XpdViewWidget::setGraphicArea()
 
     nReflections = 0;
     refSet  = savedRefSet;
+    m_expPeaksBar.itemIndexStart = m_expPeaksBar.itemIndexEnd = -1;
+    m_expPeaksBar.graphIndex = -1;
+    m_selectedCardBar.itemIndexStart = m_selectedCardBar.itemIndexEnd = -1;
+    m_selectedCardBar.graphIndex = -1;
     nProfCurves = 0;
     yLowerRange = DBL_MAX;
     yUpperRange = -DBL_MIN;
@@ -212,7 +218,26 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
     case graphItem::Peaks:
         peaks.visible = visible;
         peaks.wave = wave;
+        if (m_peaksLegendGraph) {
+            removeGraph(m_peaksLegendGraph);
+            m_peaksLegendGraph = nullptr;
+        }
         makePlot(xvet,yvet,peaks);
+        graph()->removeFromLegend();
+        {
+            // Legend-only companion graph: a vertical tick icon represents the
+            // impulse bars better than the line style's default horizontal sample.
+            QPen mPen(peaks.getPen());
+            plotWave.append(peaks.wave);
+            m_peaksLegendGraph = addGraph();
+            m_peaksLegendGraph->setName(peaks.getName());
+            m_peaksLegendGraph->setPen(mPen);
+            QPainterPath customScatterPath(QPointF(0,-10));
+            customScatterPath.lineTo(0,10);
+            m_peaksLegendGraph->setScatterStyle(QCPScatterStyle(customScatterPath, mPen));
+            m_peaksLegendGraph->setLineStyle(QCPGraph::lsNone);
+            m_peaksLegendGraph->setSelectable(QCP::stNone);
+        }
         break;
 
     case graphItem::Smoothing:
@@ -360,11 +385,25 @@ void XpdViewWidget::drawPlot()
     //Compute space for reflections
     double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04; //space for single set of reflections
     double lengthRef = spaceRef * 0.75; // length of the bar
-    int nVisibleRef = 0;
+    int nVisibleRef = (m_expPeaksBar.visible ? 1 : 0) + (m_selectedCardBar.visible ? 1 : 0);
     for (int i = 0; i < refSet.size(); ++i) {
         if (refSet.at(i).visible) nVisibleRef++;
     }
     yLowerRange = yLowerRangeNoRef - nVisibleRef*spaceRef; // make space for bars
+
+    //Draw experimental-peaks and selected-card preview bars, above the phase bars.
+    //No legend entry here: both already have one in the upper plot area
+    //(the "Peaks" graph and, for the selected card, drawCardPeaks()).
+    ReflectionBar *extraBars[2] = { &m_expPeaksBar, &m_selectedCardBar };
+    int extraShown = 0;
+    for (ReflectionBar *bar : extraBars) {
+        if (!bar->visible) continue;
+        double ypos = yLowerRange + (nVisibleRef-extraShown-1)*spaceRef;
+        drawReflections(bar->ref,ypos,lengthRef,bar->pen, bar->itemIndexStart, bar->itemIndexEnd);
+        bar->yPos = ypos;
+        bar->lengthRef = lengthRef;
+        extraShown++;
+    }
 
     //Draw Reflections
     for (int i = 0; i < refSet.size(); i++) {
@@ -389,12 +428,17 @@ void XpdViewWidget::drawPlot()
     //Draw Intervals
     drawIntervals();
 
+    // Leave a margin below the lowest bar row too, matching the gap already
+    // left above each row (spaceRef - lengthRef), so the bars don't sit flush
+    // against the bottom edge of the plot.
+    const double axisLower = (nVisibleRef > 0) ? (yLowerRange - (spaceRef - lengthRef)) : yLowerRange;
+
     if (rescalePlotEnabled()) {
-        yAxis->setRange(yLowerRange,yUpperRange);
+        yAxis->setRange(axisLower,yUpperRange);
         updateMinMax();
         xAxis->rescale();
     } else {
-        if (refSet.size() > 0) yAxis->setRange(yLowerRange,yUpperRange);
+        if (refSet.size() > 0 || nVisibleRef > 0) yAxis->setRange(axisLower,yUpperRange);
     }
 
     drawCardPeaks();
@@ -414,7 +458,7 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
     //FIX: problem with log scale for negative value e long bar
     //    spaceRef = spaceRef/100;
     double lengthRef = spaceRef * 0.75; // length of the bar
-    int nVisibleRef = 0;
+    int nVisibleRef = (m_expPeaksBar.visible ? 1 : 0) + (m_selectedCardBar.visible ? 1 : 0);
     for (int i = 0; i < refSet.size(); ++i) {
         if (refSet.at(i).visible) nVisibleRef++;
     }
@@ -422,8 +466,20 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
     yLowerRange = yLowerRangeNoRef - nVisibleRef*spaceRef; // make space for bars
     //qInfo() << "LOW: " << yLowerRange << yLowerRangeNoRef << spaceRef;
 
-    //Redraw reflections
+    //Redraw experimental-peaks and selected-card preview bars
     int iVis = -1;
+    ReflectionBar *extraBars[2] = { &m_expPeaksBar, &m_selectedCardBar };
+    for (ReflectionBar *bar : extraBars) {
+        if (!bar->visible) continue;
+        ++iVis;
+        if (bar->itemIndexStart < 0) continue; // items not created yet; drawn on next full redraw
+        double ypos = yLowerRange + (nVisibleRef-iVis-1)*spaceRef;
+        reDrawReflections(bar->ref,*bar,ypos,lengthRef);
+        bar->yPos = ypos;
+        bar->lengthRef = lengthRef;
+    }
+
+    //Redraw reflections
     for (int i = 0; i < refSet.size(); i++) {
         if (refSet.at(i).visible) {
             ++iVis;
@@ -434,7 +490,10 @@ void XpdViewWidget::redrawPlot(bool computeLimits)
         }
     }
 
-    yAxis->setRange(yLowerRange,yUpperRange);
+    // Leave a margin below the lowest bar row too, matching the gap already
+    // left above each row (spaceRef - lengthRef).
+    const double axisLower = (nVisibleRef > 0) ? (yLowerRange - (spaceRef - lengthRef)) : yLowerRange;
+    yAxis->setRange(axisLower,yUpperRange);
     updateMinMax();
 
     replot();
@@ -1485,7 +1544,22 @@ void XpdViewWidget::drawCardPeaks()
         g->setLineStyle(QCPGraph::lsImpulse);
         g->setData(xData, cpd.intensity);
         g->setSelectable(QCP::stNone);
+        g->removeFromLegend();
         m_cardPeakGraphs.append(g);
+
+        // Legend-only companion graph: a vertical tick icon represents the
+        // impulse bars better than the line style's default horizontal sample.
+        QPen mPen(cpd.color, 1.5);
+        plotWave.append(cpd.wave);
+        QCPGraph *legendGraph = addGraph();
+        legendGraph->setName(cpd.label.isEmpty() ? cpd.id : cpd.label);
+        legendGraph->setPen(mPen);
+        QPainterPath customScatterPath(QPointF(0,-10));
+        customScatterPath.lineTo(0,10);
+        legendGraph->setScatterStyle(QCPScatterStyle(customScatterPath, mPen));
+        legendGraph->setLineStyle(QCPGraph::lsNone);
+        legendGraph->setSelectable(QCP::stNone);
+        m_cardPeakGraphs.append(legendGraph);
     }
 }
 
@@ -1515,10 +1589,7 @@ void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &colo
     }
 
     rb.pen = QPen(color, 1);
-    QString name = card.getChemicalName();
-    if (!card.getMineralName().isEmpty())
-        name += " [" + card.getMineralName() + "]";
-    rb.setName(name);
+    rb.setName(card.displayName());
     rb.itemIndexStart = -1;
     rb.itemIndexEnd   = -1;
 
@@ -1531,17 +1602,7 @@ void XpdViewWidget::removePhaseReflections(const QString &id)
 {
     for (int k = refSet.size() - 1; k >= 0; k--) {
         if (refSet[k].id == id) {
-            // Remove the dummy legend graph and keep plotWave in sync
-            const int gIdx = refSet[k].graphIndex;
-            if (gIdx >= 0 && gIdx < graphCount()) {
-                removeGraph(graph(gIdx));
-                if (gIdx < plotWave.size())
-                    plotWave.remove(gIdx);
-                // Shift stored graph indices for all entries above gIdx
-                for (auto &gr : refSet)
-                    if (gr.graphIndex > gIdx)
-                        gr.graphIndex = gr.graphIndex - 1;
-            }
+            removeBarGraph(refSet[k]);
             refSet.removeAt(k);
         }
     }
@@ -1554,6 +1615,90 @@ void XpdViewWidget::clearPhaseReflections()
         removePhaseReflections(refSet.first().id);
 }
 
+// Removes the dummy legend QCPGraph associated with a reflection bar (if any),
+// keeping plotWave and every other bar's stored graphIndex in sync.
+void XpdViewWidget::removeBarGraph(ReflectionBar &bar)
+{
+    const int gIdx = bar.graphIndex;
+    if (gIdx < 0 || gIdx >= graphCount())
+        return;
+    removeGraph(graph(gIdx));
+    if (gIdx < plotWave.size())
+        plotWave.remove(gIdx);
+    for (auto &gr : refSet)
+        if (gr.graphIndex > gIdx) gr.graphIndex--;
+    bar.graphIndex = -1;
+}
+
+void XpdViewWidget::setExperimentalPeaksBar(const ExperimentalPeaks &ep)
+{
+    // Keep the existing item range so refreshAcceptedPhaseBars() can find and
+    // remove the old QCPItemLine objects before (re)drawing the new ones.
+    const int oldItemStart = m_expPeaksBar.itemIndexStart;
+    const int oldItemEnd   = m_expPeaksBar.itemIndexEnd;
+    m_expPeaksBar = ReflectionBar();
+    m_expPeaksBar.itemIndexStart = oldItemStart;
+    m_expPeaksBar.itemIndexEnd   = oldItemEnd;
+
+    const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
+    const QVector<double> &x = useDValue ? ep.d : ep.tth;
+    if (ep.valid && !x.isEmpty()) {
+        m_expPeaksBar.visible = true;
+        m_expPeaksBar.wave = (ep.wave > 0.0) ? ep.wave : (plotWave.isEmpty() ? 1.54056 : plotWave.first());
+        m_expPeaksBar.pen  = QPen(peaks.getPen().color(), 1);
+        m_expPeaksBar.setName(tr("Experimental"));
+        for (double v : x) {
+            refInfo r;
+            r.hkl[0] = r.hkl[1] = r.hkl[2] = 0;
+            r.x = v;
+            m_expPeaksBar.ref.push_back(r);
+        }
+    }
+
+    refreshAcceptedPhaseBars();
+}
+
+void XpdViewWidget::setPreviewCardReflections(const CardType &card, const QColor &color)
+{
+    // Keep the existing item range so refreshAcceptedPhaseBars() can find and
+    // remove the previously selected card's QCPItemLine objects before (re)drawing.
+    const int oldItemStart = m_selectedCardBar.itemIndexStart;
+    const int oldItemEnd   = m_selectedCardBar.itemIndexEnd;
+    m_selectedCardBar = ReflectionBar();
+    m_selectedCardBar.itemIndexStart = oldItemStart;
+    m_selectedCardBar.itemIndexEnd   = oldItemEnd;
+    m_selectedCardBar.id      = card.getId();
+    m_selectedCardBar.visible = true;
+    m_selectedCardBar.wave    = plotWave.isEmpty() ? 1.54056 : plotWave.first();
+
+    const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
+    const QVector<double> &tth = card.getTth();
+    const QVector<double> &d   = card.getD();
+    for (int i = 0; i < tth.size(); i++) {
+        refInfo r;
+        r.hkl[0] = r.hkl[1] = r.hkl[2] = 0;
+        r.x = (useDValue && i < d.size()) ? d[i] : tth[i];
+        m_selectedCardBar.ref.push_back(r);
+    }
+    m_selectedCardBar.pen = QPen(color, 1);
+    m_selectedCardBar.setName(card.displayName());
+
+    refreshAcceptedPhaseBars();
+}
+
+void XpdViewWidget::clearPreviewCardReflections()
+{
+    if (!m_selectedCardBar.visible)
+        return;
+    const int oldItemStart = m_selectedCardBar.itemIndexStart;
+    const int oldItemEnd   = m_selectedCardBar.itemIndexEnd;
+    m_selectedCardBar = ReflectionBar();
+    m_selectedCardBar.itemIndexStart = oldItemStart;
+    m_selectedCardBar.itemIndexEnd   = oldItemEnd;
+
+    refreshAcceptedPhaseBars();
+}
+
 void XpdViewWidget::refreshAcceptedPhaseBars()
 {
     if (graphCount() == 0) return; // no pattern displayed; bars drawn on next drawPlot()
@@ -1561,9 +1706,18 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
     double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04;
     double lengthRef = spaceRef * 0.75;
 
+    ReflectionBar *extraBars[2] = { &m_expPeaksBar, &m_selectedCardBar };
+
     // Remove all existing reflection QCPItemLine objects (collect by pointer to
     // avoid index-shift issues during removal)
     QList<QCPAbstractItem *> toRemove;
+    for (ReflectionBar *bar : extraBars) {
+        if (bar->itemIndexStart < 0) continue;
+        for (int ind = bar->itemIndexStart; ind <= bar->itemIndexEnd; ++ind) {
+            if (ind < itemCount())
+                toRemove.append(item(ind));
+        }
+    }
     for (const auto &gr : refSet) {
         if (gr.itemIndexStart < 0) continue;
         for (int ind = gr.itemIndexStart; ind <= gr.itemIndexEnd; ++ind) {
@@ -1573,16 +1727,31 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
     }
     for (QCPAbstractItem *it : toRemove)
         removeItem(it);
+    for (ReflectionBar *bar : extraBars)
+        bar->itemIndexStart = bar->itemIndexEnd = -1;
     for (auto &gr : refSet)
         gr.itemIndexStart = gr.itemIndexEnd = -1;
 
     // Recompute y range
     int nVisibleRef = 0;
+    for (ReflectionBar *bar : extraBars) if (bar->visible) nVisibleRef++;
     for (const auto &r : refSet) if (r.visible) nVisibleRef++;
     yLowerRange = yLowerRangeNoRef - nVisibleRef * spaceRef;
 
-    // Re-draw all reflection bars at updated positions
+    // Re-draw all reflection bars at updated positions: experimental peaks and
+    // the previewed (not yet accepted) card come first, closest to the pattern;
+    // accepted phases follow, always last/lowest.
     int iVis = -1;
+    for (ReflectionBar *bar : extraBars) {
+        if (!bar->visible) continue;
+        ++iVis;
+        double ypos = yLowerRange + (nVisibleRef - iVis - 1) * spaceRef;
+        QPen mPen(bar->pen);
+        drawReflections(bar->ref, ypos, lengthRef, mPen,
+                        bar->itemIndexStart, bar->itemIndexEnd);
+        bar->yPos = ypos;
+        bar->lengthRef = lengthRef;
+    }
     for (int i = 0; i < refSet.size(); i++) {
         if (!refSet.at(i).visible) continue;
         ++iVis;
@@ -1593,6 +1762,9 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
         refSet[i].yPos = ypos;
         refSet[i].lengthRef = lengthRef;
     }
+
+    // No legend entry for the extra bars: both already have one in the upper
+    // plot area (the "Peaks" graph and, for the selected card, drawCardPeaks()).
 
     // Add dummy legend graph for phases that don't have one yet (graphIndex == -1).
     // This happens when a phase is accepted while a pattern is already displayed
@@ -1612,7 +1784,10 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
     }
     legend->setMaximumSize(legend->minimumOuterSizeHint());
 
-    yAxis->setRange(yLowerRange, yUpperRange);
+    // Leave a margin below the lowest bar row too, matching the gap already
+    // left above each row (spaceRef - lengthRef).
+    const double axisLower = (nVisibleRef > 0) ? (yLowerRange - (spaceRef - lengthRef)) : yLowerRange;
+    yAxis->setRange(axisLower, yUpperRange);
     updateMinMax();
     replot();
 }

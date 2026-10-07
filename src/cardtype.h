@@ -21,6 +21,9 @@ public:
     void setChemicalFormula(const QString &newChemicalFormula);
     QString getMineralName() const;
     void setMineralName(const QString &newMineralName);
+    // Best available label for this card: Chemical Name, else Chemical
+    // Formula, else the card Id (used for legends, charts, ...).
+    QString displayName() const;
     QString getQuality() const;
     void setQuality(const QString &newQuality);
     QString getRIR() const;

@@ -71,6 +71,15 @@ QString CardType::getMineralName() const
     return mineralName;
 }
 
+QString CardType::displayName() const
+{
+    if (!chemicalName.isEmpty())
+        return chemicalName;
+    if (!chemicalFormula.isEmpty())
+        return chemicalFormula;
+    return id;
+}
+
 void CardType::setMineralName(const QString &newMineralName)
 {
     mineralName = newMineralName;

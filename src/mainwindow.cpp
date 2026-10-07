@@ -180,12 +180,20 @@ void MainWindow::createDialogs()
             this, [this](const CardType &card) {
                 ui->peakCompareWidget->setSelectedCard(
                     card, card.getId(), SearchOptionsDialog::savedDelta2theta());
+                xpdViewer()->setPreviewCardReflections(card, cardColor(card.getId()));
             });
 
     connect(ui->resultsWidget, &DbResultsWidget::entrySelectionChanged,
             this, [this](bool hasSelection) {
-                if (!hasSelection)
+                if (!hasSelection) {
                     ui->peakCompareWidget->clearCard();
+                    xpdViewer()->clearPreviewCardReflections();
+                }
+            });
+
+    connect(ui->peakCompareWidget, &PeakCompareWidget::experimentalPeaksChanged,
+            this, [this](const ExperimentalPeaks &ep) {
+                xpdViewer()->setExperimentalPeaksBar(ep);
             });
 
     connect(ui->resultsWidget, &DbResultsWidget::phaseAccepted,
@@ -330,6 +338,7 @@ void MainWindow::actionsSetup()
             CardPeakData cpd;
             const QVector<double> &pw = xpdViewer()->plotWave;
             cpd.id        = card.getId();
+            cpd.label     = card.displayName();
             cpd.color     = cardColor(card.getId());
             cpd.tth       = card.getTth();
             cpd.d         = card.getD();
@@ -1407,6 +1416,13 @@ void MainWindow::onActionPeakSearchTriggered()
     ui->peakDockWidget->show();
     ui->peakDockWidget->raise();
     run_peaksearchwin();
+    // Recompute the Y range (getYLimits) now that the experimental peaks graph
+    // carries real data, otherwise the reflection-bar row height below the
+    // pattern is still based on the pre-peak-search range (update_peak_graph()
+    // on the Fortran side redraws with rescale=0, so it never does this itself).
+    xpdViewer()->redrawPlot(true);
+    loadExperimentalPeaks();
+    ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
     updateReport();
 }
 

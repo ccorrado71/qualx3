@@ -7,9 +7,11 @@
 #include "reflectionbar.h"
 
 class CardType;
+struct ExperimentalPeaks;
 
 struct CardPeakData {
     QString id;
+    QString label;  // best available display name (see CardType::displayName())
     QColor  color;
     QVector<double> tth;
     QVector<double> d;
@@ -68,6 +70,9 @@ public:
     void addPhaseReflections(const CardType &card, const QColor &color);
     void removePhaseReflections(const QString &id);
     void clearPhaseReflections();
+    void setExperimentalPeaksBar(const ExperimentalPeaks &ep);
+    void setPreviewCardReflections(const CardType &card, const QColor &color);
+    void clearPreviewCardReflections();
     void applyOffset(double yOffset = 0);
     void applyAutoScale();
     void enableRescalePlot(bool value);
@@ -88,6 +93,8 @@ public:
     graphItem cdiff;
     graphItem peaks;
     QVector<ReflectionBar> refSet;
+    ReflectionBar m_expPeaksBar;      // experimental peaks, drawn as the topmost bar row
+    ReflectionBar m_selectedCardBar;  // preview of the card selected in resultsWidget (not yet accepted)
     QVector<double> plotWave;
 
 signals:
@@ -144,9 +151,11 @@ private:
     QVector<CardPeakData> m_cardPeaks;
     QVector<QCPGraph *>   m_cardPeakGraphs;
     QVector<QCPGraph *>   m_selectedCompareGraphs;
+    QCPGraph             *m_peaksLegendGraph = nullptr; // legend-only vertical-tick icon for "Peaks"
     void drawCardPeaks();
     void clearSelectedComparePoints();
     void refreshAcceptedPhaseBars();
+    void removeBarGraph(ReflectionBar &bar);
 };
 
 #endif // XPDVIEWWIDGET_H

@@ -40,6 +40,7 @@ void PeakCompareWidget::setExperimentalPeaks(const ExperimentalPeaks &ep)
 {
     m_ep = ep;
     rebuild();
+    emit experimentalPeaksChanged(ep);
 }
 
 void PeakCompareWidget::setSelectedCard(const CardType &card, const QString &cardId, double delta)

@@ -3,21 +3,27 @@
 
 #include <QWidget>
 #include <QVector>
-#include <QPair>
 #include <QColor>
+#include <QString>
+
+struct PieSlice {
+    QColor  color;
+    double  percentage = 0.0;
+    QString label;
+};
 
 class PieChartWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit PieChartWidget(QWidget *parent = nullptr);
-    void setSlices(const QVector<QPair<QColor, double>> &slices);
+    void setSlices(const QVector<PieSlice> &slices);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    QVector<QPair<QColor, double>> m_slices; // (color, percentage)
+    QVector<PieSlice> m_slices;
 };
 
 #endif // PIECHARTWIDGET_H
