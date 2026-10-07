@@ -158,6 +158,13 @@ void XpdViewWidget::makePlot(const QVector<double> &xvet, const QVector<double> 
 {
     double ymin = Minimo(yvet);
     double ymax = Massimo(yvet);
+    if (item.getLineConnectionType() == QCPGraph::lsImpulse) {
+        // Impulse lines are always drawn down to the zero baseline, regardless
+        // of the data's own minimum, so the reserved space below must account
+        // for it too (otherwise it overlaps the reflection/peak bars below).
+        ymin = qMin(ymin, 0.0);
+        ymax = qMax(ymax, 0.0);
+    }
     item.min = ymin;
     item.max = ymax;
     item.graphIndex = graphCount();
