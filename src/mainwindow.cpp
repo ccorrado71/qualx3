@@ -94,8 +94,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     tabifyDockWidget(ui->peakDockWidget, ui->dockWidgetCompare);
     tabifyDockWidget(ui->dockWidgetCompare, ui->dockWidgetCard);
-    tabifyDockWidget(ui->dockWidgetCard, ui->dockWidgetQuant);
-    tabifyDockWidget(ui->dockWidgetQuant, ui->dockWidgetReport);
+    tabifyDockWidget(ui->dockWidgetCard, ui->dockWidgetReport);
+    splitDockWidget(ui->dockWidgetResults, ui->dockWidgetQuant, Qt::Horizontal);
     ui->peakDockWidget->raise();
 
     setWindowTitle(qApp->applicationDisplayName()+"-"+qApp->applicationVersion());
