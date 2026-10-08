@@ -58,6 +58,25 @@ if(UNIX AND NOT APPLE)
         list(APPEND CMAKE_BUILD_RPATH "${_qt6_lib_dir}")
     endif()
 endif()
+
+# A Qt from the distribution's packages (libs under /usr) is already
+# installed system-wide, so a plain /opt install just links against it.
+# Copying it into the install tree is only needed for a standalone Qt
+# (e.g. ~/Qt/6.x/gcc_64) or an AppImage. It would also fail with Qt >= 6.5:
+# qt_generate_deploy_app_script() rewrites the RPATH of every deployed
+# plugin, and distro plugins have none ("No valid ELF RPATH or RUNPATH
+# entry exists in the file").
+set(QUALX_SYSTEM_QT OFF)
+if(UNIX AND NOT APPLE AND _qt6_lib_dir MATCHES "^/usr/")
+    set(QUALX_SYSTEM_QT ON)
+endif()
+if(BUILD_DEB_PACKAGE OR (QUALX_SYSTEM_QT AND NOT BUILD_APPIMAGE))
+    set(QUALX_BUNDLE_QT OFF)
+else()
+    set(QUALX_BUNDLE_QT ON)
+endif()
+message(STATUS "Qt libs: ${_qt6_lib_dir} (system Qt: ${QUALX_SYSTEM_QT}, bundled into install: ${QUALX_BUNDLE_QT})")
+
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.3)
    qt_standard_project_setup()
 else()
@@ -145,8 +164,8 @@ if(UNIX AND NOT APPLE)
     endif()
 endif()
 
-# Linux: Install Qt libraries and plugins manually (skip for Debian package)
-if(UNIX AND NOT APPLE AND NOT BUILD_DEB_PACKAGE)
+# Linux: Install Qt libraries and plugins manually (only when bundling Qt)
+if(UNIX AND NOT APPLE AND QUALX_BUNDLE_QT)
    if(Qt6_FOUND)
    get_target_property(_qt6_qmake_location Qt6::qmake IMPORTED_LOCATION)
    execute_process(
@@ -181,8 +200,17 @@ if (WIN32)
     endif()
 endif()
 
+# Qt's deploy script only works with a standalone Qt: with a system Qt it
+# fails on the plugins' missing RPATH (see QUALX_SYSTEM_QT above), so a
+# system Qt that must be bundled (AppImage) goes through the manual path.
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5 AND QUALX_BUNDLE_QT AND NOT QUALX_SYSTEM_QT)
+    set(QUALX_QT_DEPLOY_SCRIPT ON)
+else()
+    set(QUALX_QT_DEPLOY_SCRIPT OFF)
+endif()
+
 # Qt deployment script (must be before install commands to allow overriding)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
+if(QUALX_QT_DEPLOY_SCRIPT)
     # Generate the deployment script for the target
     qt_generate_deploy_app_script(
         TARGET ${EXECUTABLE_NAME}
@@ -192,11 +220,12 @@ if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
 endif()
 
 # Execute Qt deployment script (called after custom installations)
-# Skip for Debian package as dependencies are managed by apt
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5 AND NOT BUILD_DEB_PACKAGE)
+# Skipped when Qt is not bundled (Debian package, /opt install with a
+# system Qt): dependencies are then managed by apt
+if(QUALX_QT_DEPLOY_SCRIPT)
     install(SCRIPT ${deploy_script})
-elseif(NOT BUILD_DEB_PACKAGE)
-    # Manual plugin installation for Qt < 6.5 (Linux only)
+elseif(QUALX_BUNDLE_QT)
+    # Manual plugin installation for Qt < 6.5 or a system Qt (Linux only)
     if(UNIX AND NOT APPLE)
         # Get Qt6 plugin directory using qmake query (most reliable method)
         if(Qt6_FOUND)
@@ -207,7 +236,7 @@ elseif(NOT BUILD_DEB_PACKAGE)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         
-        message(STATUS "Qt ${Qt6_VERSION} < 6.5: Installing plugins manually from ${QT6_PLUGINS_DIR}")
+        message(STATUS "Qt ${Qt6_VERSION}: Installing plugins manually from ${QT6_PLUGINS_DIR}")
         endif()
         
         # Install essential platforms plugin (required to run the application)
@@ -315,9 +344,9 @@ elseif(NOT BUILD_DEB_PACKAGE)
     endif()
 endif()
 
-# Install Qt plugins for proper integration (Linux only) - Additional plugins for Qt >= 6.5
-# Skip for Debian package
-if(UNIX AND NOT APPLE AND Qt6_VERSION VERSION_GREATER_EQUAL 6.5 AND NOT BUILD_DEB_PACKAGE)
+# Install Qt plugins for proper integration (Linux only) - Additional plugins
+# when deploying with Qt's deploy script (the manual path already has them)
+if(UNIX AND NOT APPLE AND QUALX_QT_DEPLOY_SCRIPT)
     get_target_property(_qt6_qmake_location Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(_qt6_install_prefix "${_qt6_qmake_location}" DIRECTORY)
     get_filename_component(_qt6_install_prefix "${_qt6_install_prefix}" DIRECTORY)
@@ -337,8 +366,9 @@ endif()
 # Needed for every Qt6 version, not just >= 6.5: qt_generate_deploy_app_script()
 # (which writes its own qt.conf) only exists from Qt 6.5 onward. Without this,
 # Qt falls back to its compile-time plugin path, which does not exist outside
-# of the machine (or container) the app was built on.
-if(UNIX AND NOT APPLE AND NOT BUILD_DEB_PACKAGE)
+# of the machine (or container) the app was built on. Not written when Qt
+# is not bundled: Qt must then find its own system plugins.
+if(UNIX AND NOT APPLE AND QUALX_BUNDLE_QT)
     file(WRITE ${CMAKE_BINARY_DIR}/install_qtconf.cmake
 "# Determine relative paths based on installation structure
 file(WRITE \"\${CMAKE_INSTALL_PREFIX}/bin/qt.conf\"
