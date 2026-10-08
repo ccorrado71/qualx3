@@ -66,23 +66,28 @@ IF(WIN32)
                    )
 ENDIF()
 
-# There is some bug where -march=native doesn't work on Mac
-IF(APPLE)
-    SET(GNUNATIVE "-mtune=native")
-ELSEIF(BUILD_DEB_PACKAGE)
+IF(BUILD_DEB_PACKAGE OR BUILD_APPIMAGE)
     # For distributable packages, use generic x86-64 to avoid Illegal Instruction
-    # on CPUs that don't support the build host's advanced instruction sets (AVX2, etc.)
-    SET(GNUNATIVE "-march=x86-64")
+    # on CPUs that don't support the build host's advanced instruction sets (AVX2, etc.).
+    # -xHost / -ta=host are skipped on purpose: they also target the build host.
+    SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
+                     Fortran "-march=x86-64" # GNU
+                    )
 ELSE()
-    SET(GNUNATIVE "-march=native")
+    # There is some bug where -march=native doesn't work on Mac
+    IF(APPLE)
+        SET(GNUNATIVE "-mtune=native")
+    ELSE()
+        SET(GNUNATIVE "-march=native")
+    ENDIF()
+    # Optimize for the host's architecture
+    SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
+                     Fortran "-xHost"        # Intel
+                             "/QxHost"       # Intel Windows
+                             ${GNUNATIVE}    # GNU
+                             "-ta=host"      # Portland Group
+                    )
 ENDIF()
-# Optimize for the host's architecture
-SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"
-                 Fortran "-xHost"        # Intel
-                         "/QxHost"       # Intel Windows
-                         ${GNUNATIVE}    # GNU
-                         "-ta=host"      # Portland Group
-                )
 
 # Add preprocessor
 #SET_COMPILE_FLAG(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}"

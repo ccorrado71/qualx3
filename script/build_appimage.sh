@@ -79,6 +79,9 @@ install -Dm644 "$SRC_DIR/deploy/linux/qualx.appimage.desktop" \
     "$APPDIR/usr/share/applications/qualx.desktop"
 install -Dm644 "$SRC_DIR/deploy/linux/icons/256x256/qualx.png" \
     "$APPDIR/usr/share/icons/hicolor/256x256/apps/qualx.png"
+# Sourced by AppRun: keeps the bundled glib from loading host gio modules
+install -Dm644 "$SRC_DIR/deploy/linux/apprun-hooks/qualx-gio.sh" \
+    "$APPDIR/apprun-hooks/qualx-gio.sh"
 echo -e "${GREEN}✓ Metadata assembled${NC}"
 echo ""
 

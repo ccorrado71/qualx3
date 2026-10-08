@@ -71,7 +71,9 @@ RUN cmake -B build_appimage -S . \
 RUN install -Dm644 deploy/linux/qualx.appimage.desktop \
         /src/AppDir/usr/share/applications/qualx.desktop \
     && install -Dm644 deploy/linux/icons/256x256/qualx.png \
-        /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png
+        /src/AppDir/usr/share/icons/hicolor/256x256/apps/qualx.png \
+    && install -Dm644 deploy/linux/apprun-hooks/qualx-gio.sh \
+        /src/AppDir/apprun-hooks/qualx-gio.sh
 
 # linuxdeploy pulls in non-Qt runtime deps not already bundled by the
 # CMake install (libgfortran, libquadmath, ...), writes AppRun, and
