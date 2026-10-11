@@ -338,7 +338,7 @@ void MainWindow::actionsSetup()
             CardPeakData cpd;
             const QVector<double> &pw = xpdViewer()->plotWave;
             cpd.id        = card.getId();
-            cpd.label     = card.displayName();
+            cpd.label     = card.legendName();
             cpd.color     = cardColor(card.getId());
             cpd.tth       = card.getTth();
             cpd.d         = card.getD();

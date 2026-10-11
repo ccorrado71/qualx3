@@ -11,7 +11,7 @@ struct ExperimentalPeaks;
 
 struct CardPeakData {
     QString id;
-    QString label;  // best available display name (see CardType::displayName())
+    QString label;  // legend label (see CardType::legendName())
     QColor  color;
     QVector<double> tth;
     QVector<double> d;
