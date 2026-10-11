@@ -72,11 +72,11 @@ You can also build your own database from PDF-2 data or a folder of CIF files �
 >
 > QualX requires a crystallographic reference database to perform search & match analysis. Without a database installed, the software will not be able to identify phases.
 >
-> Two COD-based databases are available for download:
+> Two COD-based databases are available for download from Zenodo:
 > - one dedicated to inorganic phases
 > - one general-purpose database
 >
-> 📥 Download them here: <https://www.ba.ic.cnr.it/content/old/qualx3/Databases/>
+> 📥 Download them here: <https://doi.org/10.5281/zenodo.23297506>
 
 QualX looks for databases in a dedicated `QualXDB` folder inside your home directory (`~/QualXDB` on Linux/macOS, `C:\Users\<username>\QualXDB` on Windows). At every launch, QualX scans this folder recursively for `.sq` files and registers any database it finds automatically.
 

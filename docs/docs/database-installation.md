@@ -6,8 +6,8 @@ installation and must be downloaded separately.
 
 ## Available databases
 
-Pre-built databases are available for download from the
-[QualX Databases page](https://www.ba.ic.cnr.it/content/old/qualx3/Databases/).
+Pre-built databases are available for download from
+[Zenodo](https://doi.org/10.5281/zenodo.23297506).
 
 | File | Contents | Size |
 |------|----------|------|
