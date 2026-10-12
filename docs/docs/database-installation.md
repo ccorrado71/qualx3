@@ -25,7 +25,8 @@ home directory:
 
 | Platform | Default path |
 |----------|-------------|
-| Linux / macOS | `~/QualXDB` |
+| Linux | `/home/<username>/QualXDB` |
+| macOS | `/Users/<username>/QualXDB` |
 | Windows | `C:\Users\<username>\QualXDB` |
 
 **At every launch** QualX scans this folder recursively for `.sq` files and
@@ -36,9 +37,10 @@ You can organise the folder freely: subfolders are fully supported.
 
 1. Create the `QualXDB` folder in your home directory.
 2. Download one of the zip archives from the link above and extract it
-   directly into `QualXDB`. After extraction the folder should look like:
+   directly into `QualXDB`. After extraction the folder should look like
+   (on Linux; see the table above for the macOS and Windows paths):
    ```
-   ~/QualXDB/
+   /home/<username>/QualXDB/
    └── cod_inorg/          (or cod/)
        ├── cod_inorg.sq
        ├── cod_inorg.sq.info
