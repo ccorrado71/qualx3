@@ -1596,7 +1596,7 @@ void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &colo
     }
 
     rb.pen = QPen(color, 1);
-    rb.setName(card.displayName());
+    rb.setName(card.legendName());
     rb.itemIndexStart = -1;
     rb.itemIndexEnd   = -1;
 
@@ -1688,7 +1688,7 @@ void XpdViewWidget::setPreviewCardReflections(const CardType &card, const QColor
         m_selectedCardBar.ref.push_back(r);
     }
     m_selectedCardBar.pen = QPen(color, 1);
-    m_selectedCardBar.setName(card.displayName());
+    m_selectedCardBar.setName(card.legendName());
 
     refreshAcceptedPhaseBars();
 }

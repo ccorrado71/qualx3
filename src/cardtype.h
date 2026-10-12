@@ -24,6 +24,9 @@ public:
     // Best available label for this card: Chemical Name, else Chemical
     // Formula, else the card Id (used for legends, charts, ...).
     QString displayName() const;
+    // Label for the plot legend: Id followed by Chemical Name, else Chemical
+    // Formula (the Id is always shown to identify the card unambiguously).
+    QString legendName() const;
     QString getQuality() const;
     void setQuality(const QString &newQuality);
     QString getRIR() const;
