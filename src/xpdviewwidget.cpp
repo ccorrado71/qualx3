@@ -5,6 +5,7 @@
 #include "xpdutils.h"
 #include "nr.h"
 
+#include <algorithm>
 #include <cfloat>
 #include <QLabel>
 #include <QHash>
@@ -93,6 +94,7 @@ void XpdViewWidget::setGraphicArea()
     disableTracer();
     clearGraphs();
     m_cardPeakGraphs.clear(); // pointers invalidated by clearGraphs()
+    m_cardPeakLegendGraphs.clear(); // pointers invalidated by clearGraphs()
     m_selectedCompareGraphs.clear(); // pointers invalidated by clearGraphs()
     m_peaksLegendGraph = nullptr; // pointer invalidated by clearGraphs()
     clearPlottables();
@@ -1528,6 +1530,7 @@ void XpdViewWidget::setCardPeaks(const QVector<CardPeakData> &peaks)
     for (QCPGraph *g : m_cardPeakGraphs)
         removeGraph(g);
     m_cardPeakGraphs.clear();
+    m_cardPeakLegendGraphs.clear();
 
     m_cardPeaks = peaks;
     drawCardPeaks();
@@ -1567,7 +1570,26 @@ void XpdViewWidget::drawCardPeaks()
         legendGraph->setLineStyle(QCPGraph::lsNone);
         legendGraph->setSelectable(QCP::stNone);
         m_cardPeakGraphs.append(legendGraph);
+        m_cardPeakLegendGraphs.append({cpd.id, legendGraph});
     }
+    updateCardPeaksLegend();
+}
+
+// A card that is also an accepted phase is already in the legend through its
+// phase bar (same label and color, see refreshAcceptedPhaseBars()): hide its
+// card-peaks entry so the legend doesn't list it twice. Called again whenever
+// a phase is accepted or removed.
+void XpdViewWidget::updateCardPeaksLegend()
+{
+    for (const auto &[id, legendGraph] : m_cardPeakLegendGraphs) {
+        const bool accepted = std::any_of(refSet.cbegin(), refSet.cend(),
+                                          [&id](const ReflectionBar &rb) { return rb.id == id; });
+        if (accepted)
+            legendGraph->removeFromLegend();
+        else
+            legendGraph->addToLegend();
+    }
+    legend->setMaximumSize(legend->minimumOuterSizeHint());
 }
 
 void XpdViewWidget::addPhaseReflections(const CardType &card, const QColor &color)
@@ -1789,7 +1811,7 @@ void XpdViewWidget::refreshAcceptedPhaseBars()
         graph()->setScatterStyle(QCPScatterStyle(customScatterPath, mPen));
         graph()->setLineStyle(QCPGraph::lsNone);
     }
-    legend->setMaximumSize(legend->minimumOuterSizeHint());
+    updateCardPeaksLegend();
 
     // Leave a margin below the lowest bar row too, matching the gap already
     // left above each row (spaceRef - lengthRef).

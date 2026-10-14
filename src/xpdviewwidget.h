@@ -150,9 +150,11 @@ private:
 
     QVector<CardPeakData> m_cardPeaks;
     QVector<QCPGraph *>   m_cardPeakGraphs;
+    QVector<QPair<QString, QCPGraph *>> m_cardPeakLegendGraphs; // card id -> its legend-only graph
     QVector<QCPGraph *>   m_selectedCompareGraphs;
     QCPGraph             *m_peaksLegendGraph = nullptr; // legend-only vertical-tick icon for "Peaks"
     void drawCardPeaks();
+    void updateCardPeaksLegend();
     void clearSelectedComparePoints();
     void refreshAcceptedPhaseBars();
     void removeBarGraph(ReflectionBar &bar);
