@@ -66,6 +66,14 @@ bool AppState::isActiveDatabaseCod()
     return type == QLatin1String("COD");
 }
 
+bool AppState::isActiveDatabasePdf()
+{
+    int ncard;
+    QString type;
+    s_db.getInfo(ncard, type);
+    return type == QLatin1String("PDF2");
+}
+
 ExperimentalPeaks &AppState::peaks()
 {
     return s_peaks;

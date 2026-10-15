@@ -49,6 +49,10 @@ public:
     // (i.e. can be used to download CIF files from crystallography.net).
     static bool isActiveDatabaseCod();
 
+    // Returns true if the currently active database was built from PDF-2
+    // (the only type whose cards carry the full set of subfile codes).
+    static bool isActiveDatabasePdf();
+
     // Returns the experimental peaks loaded from the last get_d_delta_values call.
     static ExperimentalPeaks &peaks();
 

@@ -528,7 +528,30 @@ void RestraintsDialog::onSubfilesClearAll()
 void RestraintsDialog::onSubfilesSelectAll()
 {
     for (QCheckBox *cb : m_subfileChecks)
-        cb->setChecked(true);
+        if (cb->isEnabled())
+            cb->setChecked(true);
+}
+
+// Only PDF-2 databases carry the full set of subfile codes: COD and user
+// (CIF-based) databases only distinguish Inorganic and Organic, so the other
+// subfiles are disabled (and unchecked, so no hidden restraint stays active).
+// Called on every show, since the active database may have changed meanwhile.
+void RestraintsDialog::updateSubfilesForDatabase()
+{
+    const bool isPdf = AppState::isActiveDatabasePdf();
+    for (int i = 0; i < m_subfileChecks.size(); ++i) {
+        const QString &code = m_subfileCodes[i];
+        const bool enabled = isPdf || code == QLatin1String("I") || code == QLatin1String("O");
+        m_subfileChecks[i]->setEnabled(enabled);
+        if (!enabled)
+            m_subfileChecks[i]->setChecked(false);
+    }
+}
+
+void RestraintsDialog::showEvent(QShowEvent *event)
+{
+    updateSubfilesForDatabase();
+    QDialog::showEvent(event);
 }
 
 // ---------------------------------------------------------------------------

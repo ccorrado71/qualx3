@@ -60,6 +60,9 @@ public:
     };
     CellQuery cellQuery() const;
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 signals:
     void loadCardsRequested();
     void loadAndMergeCardsRequested();
@@ -84,6 +87,7 @@ private slots:
 private:
     void setupCompositionTab();
     void setupSubfilesTab();
+    void updateSubfilesForDatabase();
     QString currentOperator() const;
 
     // Shows a two-column (Value / Count) picker dialog and appends selections
