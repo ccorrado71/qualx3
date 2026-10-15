@@ -4,6 +4,32 @@ All notable changes to qualx are documented in this file.
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-10-15
+
+### Added
+- "Export as CIF..." for COD entries.
+- Experimental peaks and the reflections of the selected card are now shown as bars below the pattern.
+- The main plot legend now shows the card ID.
+
+### Changed
+- The pie chart in the quantitative analysis now shows percentages as inline labels instead of a separate legend.
+- Restraints dialog: for COD and user databases only the Inorganic and Organic subfiles can be selected; the other subfiles, available only in PDF-2 databases, are disabled.
+- Database downloads now point to Zenodo (https://zenodo.org/records/23297507): `cod_inorg.zip` (inorganic phases) and `cod.zip` (whole COD).
+- The database installation page now spells out the default `QualXDB` folder for each platform.
+- Packages no longer bundle the HTML documentation (available online), only the PDF manual.
+
+### Fixed
+- Linux AppImage and source installation issues: the AppImage crashing with "Illegal instruction" on CPUs lacking the build machine's instruction sets (the Fortran code is now compiled for generic x86-64), failing with "undefined symbol" errors when `LD_LIBRARY_PATH` points to another Qt installation or when loading the host's GIO modules, and `cmake --install` failing with "No valid ELF RPATH or RUNPATH entry" when building with the distribution's Qt (a `/opt` install now uses the system Qt). Many thanks to Roberto de Avillez for testing and reporting these problems in detail.
+- PDF manual not opening from the AppImage with sandboxed (e.g. snap) viewers.
+- Duplicate legend entry when an accepted phase is also selected.
+- "Selected_Peaks" legend entry not removed when the peak selection is cleared.
+- Search > Restraints "Load & Merge" emptying the peak comparison table and the quantitative report.
+- Experimental peak bars overlapping the impulse-style peak lines.
+- File > New not fully clearing the report and the card browser title.
+- Reflection bars and pie chart not cleared or restored on New/Load project.
+- Save Project asking for a file name after Open Project.
+- Default toolbar order and Quantitative dock placement.
+
 ## [1.0.5] - 2026-08-24
 
 ### Added
