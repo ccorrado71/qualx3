@@ -1774,6 +1774,12 @@ void MainWindow::executeSearch(DbQueryBuilder &builder, bool merge)
 
     markProjectModified();
 
+    // A merge only appends new cards to the result list: accepted phases and
+    // the selected card are untouched, so keep the peak compare table and the
+    // quantitative report as they are.
+    if (merge)
+        return;
+
     // Refresh the peak compare widget with the current experimental peaks
     ui->peakCompareWidget->clearAcceptedPhases();
     ui->peakCompareWidget->clearCard();
