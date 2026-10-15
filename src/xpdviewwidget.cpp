@@ -572,9 +572,14 @@ void XpdViewWidget::setAction(const MouseAction &action)
 void XpdViewWidget::drawSelectedPeaks(const QVector<int> &selected)
 {
     if (selected.size() == 0) {
+        selectedPeak.setX(selected);
         int id = selectedPeak.graphIndex;
         if (id >= 0) {
             graph(id)->setData({}, {});
+            // Keep the (empty) graph so graph indices stay valid, but drop its
+            // "Selected_Peaks" legend entry until peaks are selected again
+            graph(id)->removeFromLegend();
+            legend->setMaximumSize(legend->minimumOuterSizeHint());
             replot();
         }
         return;
@@ -603,6 +608,7 @@ void XpdViewWidget::drawSelectedPeaks(const QVector<int> &selected)
 
     int id = selectedPeak.graphIndex;
     graph(id)->setData(x,y);
+    graph(id)->addToLegend(); // no-op if already listed
 
     //force resize of legend
     legend->setMaximumSize(legend->minimumOuterSizeHint());
