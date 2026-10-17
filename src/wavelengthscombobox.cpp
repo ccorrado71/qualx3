@@ -5,7 +5,11 @@ WavelengthsComboBox::WavelengthsComboBox(QWidget *parent) : QComboBox(parent)
     populateComboBox();    
     setEditable(true);
 
-    this->setValidator(new QDoubleValidator(0.0, 5.0, 8, this));
+    // Items look like "1.54059 (Cu-Ka1)": accept a leading number optionally followed
+    // by a label. A plain QDoubleValidator rejects the item text itself, which made the
+    // initial selection non-editable (QLineEdit undoes edits starting from valid input).
+    static const QRegularExpression rx("^\\s*[0-9]*\\.?[0-9]*(\\s.*)?$");
+    this->setValidator(new QRegularExpressionValidator(rx, this));
 
     connect(this, QOverload<int>::of(&QComboBox::activated),[=](int index){
         emit wavelComboBoxActivated(index);

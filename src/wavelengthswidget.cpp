@@ -13,10 +13,13 @@ WavelengthsWidget::WavelengthsWidget(QWidget *parent) :
 //    ui->formLayout->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 //#endif
 
-    QDoubleValidator *waveVal = new QDoubleValidator(0.0, 5.0, 8, ui->wave1LineEdit);
+    // No practical limit on decimals: a value with many digits (e.g. pasted from elsewhere)
+    // would otherwise be rejected as Invalid and the paste silently discarded
+    const int maxDecimals = 1000;
+    QDoubleValidator *waveVal = new QDoubleValidator(0.0, 5.0, maxDecimals, ui->wave1LineEdit);
     ui->wave1LineEdit->setValidator(waveVal);
     ui->wave2LineEdit->setValidator(waveVal);
-    ui->ratioLineEdit->setValidator(new QDoubleValidator(0.0, 1.0, 8, ui->ratioLineEdit));
+    ui->ratioLineEdit->setValidator(new QDoubleValidator(0.0, 1.0, maxDecimals, ui->ratioLineEdit));
 
     ui->wave2CheckBox->setChecked(false);
 
@@ -69,6 +72,13 @@ bool WavelengthsWidget::isValidInput(QString &errMessage) const
     bool isValid = true;
     if (ui->waveComboBox->isUserDefined(ui->waveComboBox->currentIndex())) {
         if (!ui->wave1LineEdit->hasAcceptableInput()) {
+            errMessage = "Wavelength is not a valid value.";
+            isValid = false;
+        }
+    } else {
+        bool ok;
+        double wave = ui->waveComboBox->wave1().toDouble(&ok);
+        if (!ok || wave <= 0.0 || wave > 5.0) {
             errMessage = "Wavelength is not a valid value.";
             isValid = false;
         }

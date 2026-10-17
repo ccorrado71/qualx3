@@ -2,6 +2,7 @@
 #define WAVELENGTHSCOMBOBOX_H
 
 #include <QComboBox>
+#include <QRegularExpressionValidator>
 
 class WavelengthsComboBox : public QComboBox
 {
