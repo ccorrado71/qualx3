@@ -19,6 +19,7 @@ All notable changes to qualx are documented in this file.
 - Packages no longer bundle the HTML documentation (available online), only the PDF manual.
 
 ### Fixed
+- Wavelength combo box not editable when the dialog opens, and pasted wavelengths with more than 8 decimals being discarded.
 - Linux AppImage and source installation issues: the AppImage crashing with "Illegal instruction" on CPUs lacking the build machine's instruction sets (the Fortran code is now compiled for generic x86-64), failing with "undefined symbol" errors when `LD_LIBRARY_PATH` points to another Qt installation or when loading the host's GIO modules, and `cmake --install` failing with "No valid ELF RPATH or RUNPATH entry" when building with the distribution's Qt (a `/opt` install now uses the system Qt). Many thanks to Roberto de Avillez for testing and reporting these problems in detail.
 - PDF manual not opening from the AppImage with sandboxed (e.g. snap) viewers.
 - Duplicate legend entry when an accepted phase is also selected.
