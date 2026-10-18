@@ -70,6 +70,9 @@ extern "C" void set_diffraction_data(float x[], float y[], int ndata, float yb[]
 extern "C" void delete_all_peaks();
 extern "C" void clear_diffraction_data();
 extern "C" void set_experimental_peaks(double tth[], double d[], double intensity[], double fwhm[], int npeaks);
+extern "C" void get_background_npoints(int *np);
+extern "C" void get_background_points(float px[], float py[], int np, BackgroundSettings *backc);
+extern "C" void set_background_points(float px[], float py[], int np, BackgroundSettings *backc);
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -824,6 +827,25 @@ void MainWindow::loadProject(QString fileName)
                                  nwave > 0 ? ratiov.data() : &dummy, nwave,
                                  radtype,
                                  fnBytes.constData(), fnBytes.size());
+
+            // Background points (saved only for a background that is not subtracted)
+            if (has_back && !back_subtracted && dd.contains("back_points")) {
+                const QJsonObject bp = dd["back_points"].toObject();
+                QVector<float> pxv = jsonToFloatVec(bp["x"].toArray());
+                QVector<float> pyv = jsonToFloatVec(bp["y"].toArray());
+                const int np = std::min(pxv.size(), pyv.size());
+                if (np > 0) {
+                    BackgroundSettings backc;
+                    backc.btype  = bp["btype"].toInt();
+                    backc.autob  = bp["auto"].toBool();
+                    backc.ncoef  = bp["ncoef"].toInt();
+                    backc.niterf = bp["niterf"].toInt();
+                    backc.nwinf  = bp["nwinf"].toInt();
+                    backc.minf   = bp["minf"].toDouble();
+                    backc.maxf   = bp["maxf"].toDouble();
+                    set_background_points(pxv.data(), pyv.data(), np, &backc);
+                }
+            }
         }
     }
 
@@ -939,6 +961,28 @@ void MainWindow::saveProject(const QString &fileName)
         if (nyb   > 0) dd["yb"]    = floatToJsonArray(ybv,   nyb);
         if (nwave > 0) dd["wave"]  = floatToJsonArray(wavev, nwave);
         if (nwave > 0) dd["ratio"] = floatToJsonArray(ratiov,nwave);
+
+        // Background points and conditions, needed to edit the background after loading
+        if (has_back && !back_subtracted) {
+            int np = 0;
+            get_background_npoints(&np);
+            if (np > 0) {
+                QVector<float> pxv(np), pyv(np);
+                BackgroundSettings backc;
+                get_background_points(pxv.data(), pyv.data(), np, &backc);
+                QJsonObject bp;
+                bp["x"]      = floatToJsonArray(pxv, np);
+                bp["y"]      = floatToJsonArray(pyv, np);
+                bp["btype"]  = backc.btype;
+                bp["auto"]   = backc.autob;
+                bp["ncoef"]  = backc.ncoef;
+                bp["niterf"] = backc.niterf;
+                bp["nwinf"]  = backc.nwinf;
+                bp["minf"]   = backc.minf;
+                bp["maxf"]   = backc.maxf;
+                dd["back_points"] = bp;
+            }
+        }
         root["diffraction_data"] = dd;
     }
 

@@ -307,16 +307,18 @@ END MODULE datamod
 !
    if (paction == 1) then     ! Add point
 !
-!      Set background is not available
-       if (.not.allocated(dataset(1)%yb)) then
+!      Set background is not available (or has no points, e.g. a project saved without them)
+       if (.not.allocated(dataset(1)%yb) .or. dataset(1)%npoints_back() == 0) then
            call back_for_peaksearch(.true.)
        endif
+       if (dataset(1)%npoints_back() == 0) return
        padd%x = xp
        padd%y = yp
        ipos = clocate(dataset(1)%points(:)%x,padd%x)
        if (padd%x > dataset(1)%points(ipos)%x) ipos = ipos + 1
        call add_point(dataset(1)%points,padd,ipos)
    elseif (paction == 2) then ! Delete point
+       if (dataset(1)%npoints_back() == 0) return
        padd%x = xp
        padd%y = yp
        ipos = clocate(dataset(1)%points(:)%x,padd%x)

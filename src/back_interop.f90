@@ -138,4 +138,62 @@ module background_interop
 !
    end subroutine apply_background_subtraction
 
+! -----------------------------------------------------------------------------------------------------
+
+! Number of background points, to pre-allocate C arrays before calling get_background_points.
+   subroutine get_background_npoints(np) bind(C,name="get_background_npoints")
+   USE variables, only: dataset
+   integer(c_int), intent(out) :: np
+!
+   np = 0
+   if (allocated(dataset)) then
+       if (size(dataset) > 0) np = int(dataset(1)%npoints_back(), c_int)
+   endif
+!
+   end subroutine get_background_npoints
+
+! -----------------------------------------------------------------------------------------------------
+
+! Returns background points and the conditions used to build the background (saving a project).
+   subroutine get_background_points(px, py, np, backc) bind(C,name="get_background_points")
+   USE variables, only: dataset
+   integer(c_int), value, intent(in)          :: np
+   real(c_float), dimension(*), intent(out)   :: px, py
+   type(c_back_condition_type), intent(out)   :: backc
+   integer                                    :: n
+!
+   n = min(int(np), dataset(1)%npoints_back())
+   if (n > 0) then
+       px(:n) = dataset(1)%points(:n)%x
+       py(:n) = dataset(1)%points(:n)%y
+   endif
+   backc = cast_to_c(dataset(1)%cond)
+!
+   end subroutine get_background_points
+
+! -----------------------------------------------------------------------------------------------------
+
+! Receives background points and conditions from C++ after loading a project.
+! Must be called after set_diffraction_data.
+   subroutine set_background_points(px, py, np, backc) bind(C,name="set_background_points")
+   USE variables, only: dataset
+   USE pointmod, only: point_type
+   USE VIEW
+   USE molcom, only: jscreen
+   integer(c_int), value, intent(in)              :: np
+   real(c_float), dimension(*), intent(in)        :: px, py
+   type(c_back_condition_type), intent(in)        :: backc
+   type(point_type), dimension(:), allocatable    :: points
+!
+   if (np <= 0) return
+   allocate(points(np))
+   points(:)%x = px(:np)
+   points(:)%y = py(:np)
+   call dataset(1)%set_points(points)
+   dataset(1)%cond = cast_to_f(backc)
+   style(STYLE_BACKP)%vis = 1
+   if (jscreen > 0) call vedinew(rescale=0)
+!
+   end subroutine set_background_points
+
 end module background_interop
