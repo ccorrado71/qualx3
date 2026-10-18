@@ -132,9 +132,9 @@ void PeakSearchDialog::onButtonBoxClicked(QAbstractButton *button)
 
 void PeakSearchDialog::updatePeakListTable()
 {
-    MainWindow *mw = qobject_cast<MainWindow *>(this->parent());
-    //FIX THIS LATER
-    //mw->updatePeakListTable();
+    // peak_search_action() redraws only the peak lines on the pattern (update_peak_graph1
+    // does not call back update_peak_list), so refresh the C++ side explicitly
+    mWindow->updatePeakListTable();
 }
 
 void PeakSearchDialog::onIntensitySpinBoxValueChanged(double arg1)

@@ -387,6 +387,8 @@ void MainWindow::updatePeakListTable()
     if (ui->peakListWidget->isVisible())
         ui->peakListWidget->updatePeakListTable();
     loadExperimentalPeaks();
+    // Also refreshes the experimental peak bars below the pattern (experimentalPeaksChanged)
+    ui->peakCompareWidget->setExperimentalPeaks(AppState::peaks());
     updateReport();
 }
 
