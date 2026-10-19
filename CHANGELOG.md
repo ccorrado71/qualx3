@@ -4,12 +4,13 @@ All notable changes to qualx are documented in this file.
 
 ## [Unreleased]
 
-## [1.0.6] - 2026-10-15
+## [1.0.7] - 2026-10-19
 
 ### Added
 - "Export as CIF..." for COD entries.
 - Experimental peaks and the reflections of the selected card are now shown as bars below the pattern.
 - The main plot legend now shows the card ID.
+- Background points are now saved in the project file (`.qxp`), so the background can still be edited after reopening a project.
 
 ### Changed
 - The pie chart in the quantitative analysis now shows percentages as inline labels instead of a separate legend.
@@ -21,7 +22,11 @@ All notable changes to qualx are documented in this file.
 ### Fixed
 - Wavelength combo box not editable when the dialog opens, and pasted wavelengths with more than 8 decimals being discarded.
 - Linux AppImage and source installation issues: the AppImage crashing with "Illegal instruction" on CPUs lacking the build machine's instruction sets (the Fortran code is now compiled for generic x86-64), failing with "undefined symbol" errors when `LD_LIBRARY_PATH` points to another Qt installation or when loading the host's GIO modules, and `cmake --install` failing with "No valid ELF RPATH or RUNPATH entry" when building with the distribution's Qt (a `/opt` install now uses the system Qt). Many thanks to Roberto de Avillez for testing and reporting these problems in detail.
+- Windows installer never showing the license page; it now shows the GPLv3, replacing an outdated license agreement that was bundled with it.
+- Build with Intel Fortran (ifx) failing at link time ("relocation R_X86_64_32S ... can not be used when making a PIE object").
 - PDF manual not opening from the AppImage with sandboxed (e.g. snap) viewers.
+- Crash when adding a background point after opening a project in which only the background had been computed.
+- Experimental peak bars not updated when the peak search conditions change.
 - Duplicate legend entry when an accepted phase is also selected.
 - "Selected_Peaks" legend entry not removed when the peak selection is cleared.
 - Search > Restraints "Load & Merge" emptying the peak comparison table and the quantitative report.
