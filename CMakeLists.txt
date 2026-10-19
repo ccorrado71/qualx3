@@ -392,7 +392,7 @@ message("Qt6_VERSION: ${Qt6_VERSION}")
 
 # CPack configuration
 
-set(CPACK_RESOURCE_FILE_LICENSE  ${CMAKE_CURRENT_SOURCE_DIR}/deploy/Windows/licence.txt)
+set(CPACK_RESOURCE_FILE_LICENSE  ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_PACKAGE_VENDOR "Institute of Crystallography - CNR")
 set(CPACK_PACKAGE_CONTACT "corrado.cuocci@ic.cnr.it")
 set(CPACK_PACKAGE_DESCRIPTION "Automatic solution and refinement of crystal structures")
@@ -412,15 +412,18 @@ if(WIN32)
 
     CPACK_ADD_COMPONENT(${COMPONENT_NAME_MAIN})
 
-    # The component HAS to be installed
-    cpack_ifw_configure_component(${COMPONENT_NAME_MAIN} ESSENTIAL FORCED_INSTALLATION)
-
-    # Adds license info to package.xml file
-    # Also copies licence.txt to 'meta' directory to display the license text in the installer.
-    cpack_ifw_configure_component(${COMPONENT_NAME_MAIN} LICENSES "QualX License" ${CPACK_RESOURCE_FILE_LICENSE})
-
-    # Customizing the UI with a script
-    cpack_ifw_configure_component(${COMPONENT_NAME_MAIN} SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/deploy/Windows/installscript.qs)
+    # All component settings must go in a single call: since include(CPack) comes
+    # later, CPack only sees the variables left by the last call, and each call
+    # resets the options it is not given (earlier calls were silently lost,
+    # so the license page never appeared).
+    #  - ESSENTIAL FORCED_INSTALLATION: the component HAS to be installed
+    #  - LICENSES: adds license info to package.xml and copies LICENSE (GPLv3)
+    #    to the 'meta' directory, to display it in the installer
+    #  - SCRIPT: customizes the installation (shortcuts, VC++ runtime)
+    cpack_ifw_configure_component(${COMPONENT_NAME_MAIN}
+        ESSENTIAL FORCED_INSTALLATION
+        LICENSES "GNU General Public License v3.0" ${CPACK_RESOURCE_FILE_LICENSE}
+        SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/deploy/Windows/installscript.qs)
 
     # Adds basic repository entries to config.xml file
     # Runs repogen command on the packages directory
