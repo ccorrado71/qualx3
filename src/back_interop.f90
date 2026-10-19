@@ -191,6 +191,9 @@ module background_interop
    points(:)%y = py(:np)
    call dataset(1)%set_points(points)
    dataset(1)%cond = cast_to_f(backc)
+!  The coefficients are recomputed from the points when they are edited (UserBack):
+!  only their arrays and the polynomial origin need to be set up here.
+   call dataset(1)%init_background_coef()
    style(STYLE_BACKP)%vis = 1
    if (jscreen > 0) call vedinew(rescale=0)
 !

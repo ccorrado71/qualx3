@@ -86,6 +86,7 @@ MODULE datasetmod
      procedure          :: set_data
      procedure          :: resize
      procedure          :: set_points
+     procedure          :: init_background_coef
      procedure          :: make_background
      procedure          :: set_background
      procedure          :: subtract_background
@@ -624,15 +625,30 @@ CONTAINS
 
 !----------------------------------------------------------------------------------------
 
-   subroutine make_background(datas)
+   subroutine init_background_coef(datas)
+!
+!  Allocate the background coefficient arrays and set the origin of the polynomial
+!  (as compute_background does). Needed before UserBack can recompute the
+!  background from the points, also when the background comes from a project file.
+!
    USE arrayutil
-   USE background, only: NMAXCOEFB, compute_background
+   USE background, only: NMAXCOEFB
    class(dataset_type), intent(inout) :: datas
    call resize_array(datas%coef,NMAXCOEFB)
    call resize_array(datas%bcode,NMAXCOEFB)
    call resize_array(datas%bsd,NMAXCOEFB)
    datas%bcode = 0
    datas%bsd = 0
+   datas%thzerob = (datas%xminc0() + datas%xmaxc0()) / 2.0
+   end subroutine init_background_coef
+
+!----------------------------------------------------------------------------------------
+
+   subroutine make_background(datas)
+   USE arrayutil
+   USE background, only: compute_background
+   class(dataset_type), intent(inout) :: datas
+   call datas%init_background_coef()
    call new_array(datas%yb,datas%nc2-datas%nc1+1)
    call compute_background(datas%x0(datas%nc1:datas%nc2),datas%y(datas%nc1:datas%nc2),datas%yb,   &
                           datas%points,datas%coef,datas%thzerob,datas%cond,datas%wave(1))

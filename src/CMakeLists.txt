@@ -290,6 +290,11 @@ qt_add_resources(PROJECT_SOURCES resource.qrc)
 add_library(qualx_fortran OBJECT ${FORTRAN_SOURCES})
 target_include_directories(qualx_fortran PRIVATE ${LIBRARY_INCLUDES})
 target_compile_definitions(qualx_fortran PRIVATE USE_CONFIG_H)
+# The objects are linked into a PIE executable. Inside the qualx target they got
+# position-independent code from Qt; on their own they don't, and ifx (unlike
+# gfortran on most distros) defaults to non-PIC code, so the link would fail with
+# "relocation R_X86_64_32S ... can not be used when making a PIE object".
+set_target_properties(qualx_fortran PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 qt_add_executable(${EXECUTABLE_NAME}
     ${PROJECT_SOURCES}
