@@ -18,12 +18,50 @@
 #include <QHeaderView>
 #include <QSignalBlocker>
 #include <QItemSelectionModel>
+#include <QProxyStyle>
 #include <QSet>
 
 #include <algorithm>
 #include <cmath>
 
 static QHash<QString, QColor> s_colorOverrides;
+
+namespace {
+// The Windows 11 style paints the cell under the mouse and the current (last
+// clicked) cell almost like the selection: while scrolling, the cells passing
+// under the mouse look selected, and an old cell stays highlighted next to the
+// selected row. Draw the table's items without the hover and focus states, so
+// only the real (row) selection is highlighted.
+class NoHoverFocusItemStyle : public QProxyStyle
+{
+public:
+    void drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPainter *p,
+                       const QWidget *w) const override
+    {
+        if (pe == PE_PanelItemViewItem || pe == PE_PanelItemViewRow) {
+            QStyleOption o(*opt);
+            o.state &= ~(State_MouseOver | State_HasFocus);
+            QProxyStyle::drawPrimitive(pe, &o, p, w);
+            return;
+        }
+        QProxyStyle::drawPrimitive(pe, opt, p, w);
+    }
+
+    void drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
+                     const QWidget *w) const override
+    {
+        if (ce == CE_ItemViewItem) {
+            if (const auto *vopt = qstyleoption_cast<const QStyleOptionViewItem *>(opt)) {
+                QStyleOptionViewItem o(*vopt);
+                o.state &= ~(State_MouseOver | State_HasFocus);
+                QProxyStyle::drawControl(ce, &o, p, w);
+                return;
+            }
+        }
+        QProxyStyle::drawControl(ce, opt, p, w);
+    }
+};
+} // namespace
 
 QColor cardColor(const QString &id)
 {
@@ -59,6 +97,9 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     ui->table->verticalHeader()->setDefaultSectionSize(22);
     ui->table->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->table->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    auto *itemStyle = new NoHoverFocusItemStyle;
+    itemStyle->setParent(ui->table);
+    ui->table->setStyle(itemStyle);
 
     filterModel = new TextFilterProxyModel(this);
     filterModel->setSourceModel(sourceModel);
