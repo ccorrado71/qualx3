@@ -20,13 +20,9 @@ Component.prototype.createOperations = function()
                                "iconPath=@TargetDir@/bin/qualx.exe", "iconId=0",
                                "description=Start QualX");
 
-        component.addOperation("CreateShortcut",
-                               "@TargetDir@/MaintenanceTool.exe",
-                               "@StartMenuDir@/Uninstall.lnk",
-                               "workingDirectory=@TargetDir@",
-                               "iconPath=@TargetDir@/MaintenanceTool.exe", "iconId=0",
-                               "description=Uninstall QualX",
-                               "--start-uninstaller");
+        // No "Uninstall" shortcut: Windows 11 redirects Start menu shortcuts to a
+        // registered uninstaller to Settings > Installed apps, which is where QualX
+        // is uninstalled from anyway.
 
         // return value 3010 means it need a reboot, but in most cases it is not needed for running Qt application
         // return value 5100 means there's a newer version of the runtime already installed
