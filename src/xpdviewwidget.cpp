@@ -1588,8 +1588,9 @@ void XpdViewWidget::drawCardPeaks()
 void XpdViewWidget::updateCardPeaksLegend()
 {
     for (const auto &[id, legendGraph] : m_cardPeakLegendGraphs) {
+        const QString &cardId = id;
         const bool accepted = std::any_of(refSet.cbegin(), refSet.cend(),
-                                          [&id](const ReflectionBar &rb) { return rb.id == id; });
+                                          [&cardId](const ReflectionBar &rb) { return rb.id == cardId; });
         if (accepted)
             legendGraph->removeFromLegend();
         else
