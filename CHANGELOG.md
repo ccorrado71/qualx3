@@ -13,6 +13,7 @@ All notable changes to qualx are documented in this file.
 - Background points are now saved in the project file (`.qxp`), so the background can still be edited after reopening a project.
 
 ### Changed
+- Windows installer: no more Start menu folder page and no Uninstall shortcut (uninstall from Settings > Installed apps)
 - The pie chart in the quantitative analysis now shows percentages as inline labels instead of a separate legend.
 - Restraints dialog: for COD and user databases only the Inorganic and Organic subfiles can be selected; the other subfiles, available only in PDF-2 databases, are disabled.
 - Database downloads now point to Zenodo (https://zenodo.org/records/23297507): `cod_inorg.zip` (inorganic phases) and `cod.zip` (whole COD).
@@ -20,6 +21,7 @@ All notable changes to qualx are documented in this file.
 - Packages no longer bundle the HTML documentation (available online), only the PDF manual.
 
 ### Fixed
+- Results table on Windows 11: the cell under the mouse and the last clicked cell looked selected
 - Wavelength combo box not editable when the dialog opens, and pasted wavelengths with more than 8 decimals being discarded.
 - Linux AppImage and source installation issues: the AppImage crashing with "Illegal instruction" on CPUs lacking the build machine's instruction sets (the Fortran code is now compiled for generic x86-64), failing with "undefined symbol" errors when `LD_LIBRARY_PATH` points to another Qt installation or when loading the host's GIO modules, and `cmake --install` failing with "No valid ELF RPATH or RUNPATH entry" when building with the distribution's Qt (a `/opt` install now uses the system Qt). Many thanks to Roberto de Avillez for testing and reporting these problems in detail.
 - Windows installer never showing the license page; it now shows the GPLv3, replacing an outdated license agreement that was bundled with it.
