@@ -2396,7 +2396,7 @@ void MainWindow::onActionCheckForUpdatesTriggered()
     m_updater->checkUpdate();
 #else
     auto updater = new Updater(this);
-    updater->setUrl(QStringLiteral("https://www.ba.ic.cnr.it/content/old/qualx3/updates.json"));
+    updater->setUrl(QStringLiteral("https://api.github.com/repos/ccorrado71/qualx3/releases/latest"));
     updater->setNotifyOnFinish(true);
     updater->checkForUpdates();
 #endif

@@ -61,6 +61,7 @@ private:
     QNetworkAccessManager *m_manager;
 
     bool compare(const QString &x, const QString &y);
+    void reportCheckFailed(const QString &reason);
 };
 
 #endif // UPDATER_H

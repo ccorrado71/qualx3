@@ -110,8 +110,10 @@ void Updater::checkForUpdates()
 
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
+    // GitHub's API rejects requests without a User-Agent
     if (!userAgentString().isEmpty())
         request.setRawHeader("User-Agent", userAgentString().toUtf8());
+    request.setRawHeader("Accept", "application/vnd.github+json");
 
     m_manager->get(request);
 }
@@ -165,7 +167,7 @@ void Updater::onReply(QNetworkReply *reply)
     /* There was a network error */
     if (reply->error() != QNetworkReply::NoError)
     {
-        setUpdateAvailable(false);
+        reportCheckFailed(reply->errorString());
         emit checkingFinished(url());
         return;
     }
@@ -176,20 +178,42 @@ void Updater::onReply(QNetworkReply *reply)
     /* JSON is invalid */
     if (document.isNull())
     {
-        setUpdateAvailable(false);
+        reportCheckFailed(tr("The update information could not be read."));
         emit checkingFinished(url());
         return;
     }
 
-    /* Get the platform information */
-    QJsonObject updates = document.object().value("updates").toObject();
-    QJsonObject platform = updates.value(platformKey()).toObject();
+    const QJsonObject root = document.object();
+    if (root.contains("tag_name"))
+    {
+        /* GitHub "latest release" (api.github.com/repos/<owner>/<repo>/releases/latest):
+           drafts and pre-releases are already excluded. Tags look like "v1.0.7". */
+        QString tag = root.value("tag_name").toString();
+        if (tag.startsWith('v', Qt::CaseInsensitive))
+            tag.remove(0, 1);
+        m_latestVersion = tag;
+        m_openUrl = root.value("html_url").toString();
+        m_changelog = root.value("body").toString();
+        m_downloadUrl.clear();
+    }
+    else
+    {
+        /* Legacy updates.json: one entry per platform */
+        QJsonObject updates = root.value("updates").toObject();
+        QJsonObject platform = updates.value(platformKey()).toObject();
 
-    /* Get update information */
-    m_openUrl = platform.value("open-url").toString();
-    m_changelog = platform.value("changelog").toString();
-    m_downloadUrl = platform.value("download-url").toString();
-    m_latestVersion = platform.value("latest-version").toString();
+        m_openUrl = platform.value("open-url").toString();
+        m_changelog = platform.value("changelog").toString();
+        m_downloadUrl = platform.value("download-url").toString();
+        m_latestVersion = platform.value("latest-version").toString();
+    }
+
+    if (m_latestVersion.isEmpty())
+    {
+        reportCheckFailed(tr("The update information could not be read."));
+        emit checkingFinished(url());
+        return;
+    }
 
     /* Compare latest and current version */
     setUpdateAvailable(compare(latestVersion(), moduleVersion()));
@@ -237,6 +261,23 @@ void Updater::setUpdateAvailable(const bool available)
         box.exec();
     }
 
+}
+
+// The check failed (no connection, server unreachable, unexpected reply): say so,
+// instead of claiming that the latest version is installed.
+void Updater::reportCheckFailed(const QString &reason)
+{
+    m_updateAvailable = false;
+    if (!notifyOnFinish())
+        return;
+
+    QMessageBox box;
+    box.setTextFormat(Qt::RichText);
+    box.setIcon(QMessageBox::Warning);
+    box.setStandardButtons(QMessageBox::Close);
+    box.setText("<h3>" + tr("Unable to check for updates") + "</h3>");
+    box.setInformativeText(reason);
+    box.exec();
 }
 
 bool Updater::compare(const QString &x, const QString &y)
