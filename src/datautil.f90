@@ -83,7 +83,13 @@ contains
            call this%set_wave(nwave,wave,ratio)
        endif
 !
-       if (count_type == COUNT_D_TYPE) countp = thvalue(countp,this%wave(1))
+       if (count_type == COUNT_D_TYPE) then
+!          x are d-spacings: convert to 2theta, sort in ascending order and
+!          recompute the step in 2theta (thstepo was computed on d, negative)
+           countp = thvalue(countp,this%wave(1))
+           if (countp(1)%x > countp(size(countp))%x) countp = countp(size(countp):1:-1)
+           this%tstep = get_tstep(countp(:)%x)
+       endif
        call this%set_data(countp(:)%x,countp(:)%y,size(countp),filename,POW_DATA)
    endif
    end subroutine load_datafile
