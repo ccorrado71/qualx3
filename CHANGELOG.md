@@ -4,6 +4,17 @@ All notable changes to qualx are documented in this file.
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-10-21
+
+### Changed
+- Help > Check for Updates on Linux and macOS now looks up the latest release on GitHub instead of the old ba.ic.cnr.it website, and reports a failed check (e.g. no connection) instead of claiming that the latest version is installed.
+
+### Fixed
+- Selected rows in the results list painted white on Linux and macOS (regression in 1.0.7).
+- New, Import Diffraction Pattern, Save Project and Save Project As shown without icon (as text in the toolbar) in the Linux AppImage.
+- Crash when importing pdCIF data given as d-spacings.
+- Build failing on macOS (Clang).
+
 ## [1.0.7] - 2026-10-19
 
 ### Added
