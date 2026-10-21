@@ -281,6 +281,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QRadioButton" name="squareRootRadioButton">
+              <property name="text">
+               <string>Square root</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QRadioButton" name="logarithmicRadioButton">
               <property name="text">
                <string>Logarithmic</string>

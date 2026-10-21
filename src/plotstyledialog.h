@@ -65,7 +65,7 @@ private:
     bool changeApplied;    
     xpdutils::xAbscissaType mAbscissa;
     double mYOffset;
-    QCPAxis::ScaleType mYScaleType;
+    PlotSettings::YScale mYScale;
 
     void connectLineWidget(LineStyleWidget *lsWidget);
     void setObserved(int index);

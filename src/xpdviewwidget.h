@@ -82,6 +82,10 @@ public:
     void connectSelectionChanged();
     PlotSettings pSettings() const;
     void setPlotSettings(const PlotSettings &newPlotSettings);
+    // Intensity scale of the plotted data: changing it converts the curves already
+    // drawn (the reflection bars keep their position and size).
+    PlotSettings::YScale yScale() const { return m_yScale; }
+    void setYScale(PlotSettings::YScale scale);
     void drawGraphicItem(graphItem &item, const QVector<double> &xvet, const QVector<double> &yvet, double wave);
     void clearGraphSelection(graphItem &item);
 
@@ -131,6 +135,9 @@ private:
     MouseAction mAction;
     MouseAction savedZoomAction;
     PlotSettings plotSettings;
+    PlotSettings::YScale m_yScale = PlotSettings::YLinear; // scale of the data held by the graphs
+    double toPlotY(double counts) const { return PlotSettings::toPlotY(m_yScale, counts); }
+    double fromPlotY(double value) const { return PlotSettings::fromPlotY(m_yScale, value); }
     const int scrollBarLen = 1000000000; //Length of the scrollbar. It can be any large value.
 
     void makePlot(const QVector<double> &xvet, const QVector<double> &yvet, graphItem &item);
