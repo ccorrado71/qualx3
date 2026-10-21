@@ -39,10 +39,15 @@ public:
                        const QWidget *w) const override
     {
         if (pe == PE_PanelItemViewItem || pe == PE_PanelItemViewRow) {
-            QStyleOption o(*opt);
-            o.state &= ~(State_MouseOver | State_HasFocus);
-            QProxyStyle::drawPrimitive(pe, &o, p, w);
-            return;
+            // Copy the full view-item option: a plain QStyleOption copy would drop
+            // the QStyleOptionViewItem fields, and styles such as Fusion (Linux,
+            // macOS) then skip the selection background, leaving selected rows white.
+            if (const auto *vopt = qstyleoption_cast<const QStyleOptionViewItem *>(opt)) {
+                QStyleOptionViewItem o(*vopt);
+                o.state &= ~(State_MouseOver | State_HasFocus);
+                QProxyStyle::drawPrimitive(pe, &o, p, w);
+                return;
+            }
         }
         QProxyStyle::drawPrimitive(pe, opt, p, w);
     }
