@@ -43,28 +43,6 @@ CONTAINS
    call load_datafile(datas,input_file,(jscreen > 0),ier)
    if (ier == 0) then
        if (add_data == 0) then
-!           if (ifProject.ne.0) then   ! importante se esegui run successivi
-!               iflag = 2
-!!              comment the next line to add pattern
-!               call chiudi_bin(iflag) ! call InitExpo
-!           endif
-!           StructureName = file_rem_ext(file_get_name(input_file))
-!           call cryst(1)%set_name(StructureName)
-!!
-!           do i=1,size(fname)
-!              if (i /= INP_FILE .and. i /= OUT_FILE) then
-!                  fname(i) = s_blank_delete(trim(StructureName)//ext(i))
-!              endif
-!           enddo
-!           fname(INP_FILE) = input_file
-!           fname(OUT_FILE) = output_file
-!!
-!           close(lo,iostat=ierc)
-!           itype = 0
-!           iform = 1
-!           nlenn = 80
-!           jop = jopen(lo,fname(OUT_FILE),itype,iform,ier2)
-!!
            call clear_dataset(dataset)
        endif
        call push_back_dataset(dataset,datas)
