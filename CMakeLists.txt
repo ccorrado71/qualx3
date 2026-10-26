@@ -137,10 +137,29 @@ if(UNIX AND NOT APPLE)
     # for AppImage builds, where installation happens into a throwaway
     # AppDir (often inside a container with no meaningful $HOME).
     if(NOT BUILD_APPIMAGE)
+        # Destination of .desktop file and icons, chosen at install time:
+        #  - packaging (DESTDIR set, e.g. CPack DEB): system dir inside DESTDIR
+        #  - root (e.g. 'sudo cmake --install' from install.sh): system dir, because
+        #    sudo sets HOME=/root and ~/.local would not be seen by the user session
+        #  - normal user: ~/.local/share
+        if(CMAKE_INSTALL_PREFIX STREQUAL "/usr")
+            set(DESKTOP_SYSTEM_DATADIR "/usr/share")
+        else()
+            set(DESKTOP_SYSTEM_DATADIR "/usr/local/share")
+        endif()
         file(WRITE ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake "
-            set(HOME \"\$ENV{HOME}\")
-            set(APPS_DIR \"\${HOME}/.local/share/applications\")
-            set(ICON_BASE \"\${HOME}/.local/share/icons/hicolor\")
+            execute_process(COMMAND id -u OUTPUT_VARIABLE USER_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
+            set(PACKAGING OFF)
+            if(NOT \"\$ENV{DESTDIR}\" STREQUAL \"\")
+                set(PACKAGING ON)
+                set(DATA_DIR \"\$ENV{DESTDIR}${DESKTOP_SYSTEM_DATADIR}\")
+            elseif(USER_ID STREQUAL \"0\")
+                set(DATA_DIR \"${DESKTOP_SYSTEM_DATADIR}\")
+            else()
+                set(DATA_DIR \"\$ENV{HOME}/.local/share\")
+            endif()
+            set(APPS_DIR \"\${DATA_DIR}/applications\")
+            set(ICON_BASE \"\${DATA_DIR}/icons/hicolor\")
 
             file(MAKE_DIRECTORY \"\${APPS_DIR}\")
             file(COPY \"${CMAKE_BINARY_DIR}/qualx.desktop\"
@@ -155,9 +174,11 @@ if(UNIX AND NOT APPLE)
                 endif()
             endforeach()
 
-            execute_process(COMMAND gtk-update-icon-cache -f -t \"\${ICON_BASE}\" ERROR_QUIET)
-            execute_process(COMMAND update-desktop-database \"\${APPS_DIR}\" ERROR_QUIET)
-            message(STATUS \"Desktop integration installed for user \${HOME}\")
+            if(NOT PACKAGING)   # caches are updated by the package manager triggers
+                execute_process(COMMAND gtk-update-icon-cache -f -t \"\${ICON_BASE}\" ERROR_QUIET)
+                execute_process(COMMAND update-desktop-database \"\${APPS_DIR}\" ERROR_QUIET)
+            endif()
+            message(STATUS \"Desktop integration installed in \${DATA_DIR}\")
         ")
         install(SCRIPT ${CMAKE_BINARY_DIR}/install_desktop_linux.cmake
                 COMPONENT ${COMPONENT_NAME_MAIN})
