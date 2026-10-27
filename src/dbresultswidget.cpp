@@ -16,6 +16,7 @@
 #include <QMenu>
 #include <QStandardItemModel>
 #include <QHeaderView>
+#include <QResizeEvent>
 #include <QSignalBlocker>
 #include <QItemSelectionModel>
 #include <QProxyStyle>
@@ -124,6 +125,9 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     ui->table->horizontalHeader()->setSortIndicatorShown(true);
     ui->table->horizontalHeader()->setSortIndicator(m_sortColumn, m_sortOrder);
 
+    // Refit the columns when the available width changes (see fitColumnsToWidth)
+    ui->table->viewport()->installEventFilter(this);
+
     // ── Navigation toolbar ──────────────────────────────────────────
     // Use addAction() for buttons so they get native toolbar-button rendering
     // (same as toolBarEntry), and addWidget() only for spinboxes/labels.
@@ -229,8 +233,57 @@ void DbResultsWidget::setResults(const QVector<CardType>& results)
     }
 
     pageModel->setCurrentPage(0);
-    ui->table->resizeColumnsToContents();
+    fitColumnsToWidth();
     emit hasResultsChanged(hasResults());
+}
+
+bool DbResultsWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->table->viewport() && event->type() == QEvent::Resize) {
+        const auto *re = static_cast<QResizeEvent *>(event);
+        if (re->size().width() != re->oldSize().width())
+            fitColumnsToWidth();
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+// All columns except Chemical Name and Chemical Formula have a predictable width and
+// are sized to their contents. Name and formula share the remaining width of the table:
+// - if both fit, the formula gets its contents width and the name all the rest, so the
+//   table fills the available width;
+// - otherwise the remaining width is split in proportion to their contents (long strings
+//   are elided, the full text is in the tooltip), so the other columns stay visible.
+// Columns can still be resized by hand until the table width changes.
+void DbResultsWidget::fitColumnsToWidth()
+{
+    constexpr int colName = 3, colFormula = 4;
+    QHeaderView *header = ui->table->horizontalHeader();
+
+    int fixedWidth = 0;
+    for (int col = 0; col < header->count(); ++col) {
+        if (col == colName || col == colFormula) continue;
+        ui->table->resizeColumnToContents(col);
+        fixedWidth += header->sectionSize(col);
+    }
+
+    ui->table->resizeColumnToContents(colName);
+    ui->table->resizeColumnToContents(colFormula);
+    const int nameHint    = header->sectionSize(colName);
+    const int formulaHint = header->sectionSize(colFormula);
+    const int avail = ui->table->viewport()->width() - fixedWidth;
+
+    int nameWidth, formulaWidth;
+    if (nameHint + formulaHint <= avail) {
+        formulaWidth = formulaHint;
+        nameWidth    = avail - formulaHint;
+    } else {
+        nameWidth    = avail * nameHint / (nameHint + formulaHint);
+        formulaWidth = avail - nameWidth;
+    }
+    // Below this width a horizontal scrollbar is preferable to unreadable columns
+    const int minWidth = qMax(header->minimumSectionSize(), 80);
+    header->resizeSection(colName,    qMax(nameWidth,    minWidth));
+    header->resizeSection(colFormula, qMax(formulaWidth, minWidth));
 }
 
 void DbResultsWidget::populateRow(int row, const CardType &card)
@@ -251,8 +304,13 @@ void DbResultsWidget::populateRow(int row, const CardType &card)
     sourceModel->setItem(row, 0, colorItem);
     sourceModel->setItem(row, 1, new QStandardItem(card.getQuality()));
     sourceModel->setItem(row, 2, new QStandardItem(card.getId()));
-    sourceModel->setItem(row, 3, new QStandardItem(chemName));
-    sourceModel->setItem(row, 4, new QStandardItem(card.getChemicalFormula()));
+    // Name and formula may be elided (see fitColumnsToWidth): show the full text as tooltip
+    auto *nameItem = new QStandardItem(chemName);
+    nameItem->setToolTip(chemName);
+    sourceModel->setItem(row, 3, nameItem);
+    auto *formulaItem = new QStandardItem(card.getChemicalFormula());
+    formulaItem->setToolTip(card.getChemicalFormula());
+    sourceModel->setItem(row, 4, formulaItem);
 
     const bool hasFom = card.isFomCalculated();
     auto numItem = [](double v) {
@@ -304,7 +362,7 @@ void DbResultsWidget::mergeResults(const QVector<CardType> &newCards)
     }
 
     pageModel->setCurrentPage(0);
-    ui->table->resizeColumnsToContents();
+    fitColumnsToWidth();
     emit hasResultsChanged(hasResults());
 }
 

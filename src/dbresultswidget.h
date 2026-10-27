@@ -56,8 +56,12 @@ signals:
     void entrySelectionChanged(bool hasSelection);
     void selectedCardsChanged(const QVector<CardType> &cards);
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     QVector<CardType> selectedCards() const;
+    void fitColumnsToWidth();
 
 private slots:
     void currentPageChanged(int page);
