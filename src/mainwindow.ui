@@ -859,6 +859,9 @@
    </property>
   </action>
   <action name="actionCancel_Search">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/stop.png</normaloff>:/images/images/stop.png</iconset>

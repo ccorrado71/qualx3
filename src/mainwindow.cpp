@@ -434,6 +434,8 @@ void MainWindow::enableActions(EnabledActions action, bool state)
         break;
     case RestoreAction:
         restoreEnabledActions();
+        // Not in a menu, so restoreEnabledActions() does not handle it
+        ui->actionCancel_Search->setEnabled(false);
         break;
     case PeaksAction: //unused!
         //ui->toolBarPattern
@@ -1732,6 +1734,8 @@ void MainWindow::onActionSearchMatchTriggered()
     statusProgressBar->setRange(0, 100);
     statusProgressBar->setValue(0);
     statusProgressBar->show();
+    enableActions(SaveAction);
+    enableActions(RunAction);
     QApplication::setOverrideCursor(Qt::WaitCursor);
     QApplication::processEvents();
 
@@ -1745,6 +1749,8 @@ void MainWindow::onActionSearchMatchTriggered()
         AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
     else
         AppState::db().makeQueryWithoutStrongest(builder, acceptedCards, progress);
+
+    enableActions(RestoreAction);
 
     QApplication::restoreOverrideCursor();
     statusProgressBar->hide();
@@ -1948,6 +1954,8 @@ void MainWindow::onRestraintsSearchMatch()
     statusProgressBar->setRange(0, 100);
     statusProgressBar->setValue(0);
     statusProgressBar->show();
+    enableActions(SaveAction);
+    enableActions(RunAction);
     QApplication::setOverrideCursor(Qt::WaitCursor);
     QApplication::processEvents();
 
@@ -1958,6 +1966,8 @@ void MainWindow::onRestraintsSearchMatch()
 
     QVector<CardType> acceptedCards;
     AppState::db().makeQueryStrongest(builder, acceptedCards, progress);
+
+    enableActions(RestoreAction);
 
     QApplication::restoreOverrideCursor();
     statusProgressBar->hide();
