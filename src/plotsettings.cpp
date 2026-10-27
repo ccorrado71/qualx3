@@ -3,6 +3,8 @@
 #include <QSettings>
 #include <QDebug>
 
+#include <cmath>
+
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
   #define OBJECT_MODE QGradient::ObjectMode
 #else
@@ -25,10 +27,11 @@
 #define YGRID_PEN "ygridpen"
 #define LEGEND_VISIBLE "legendvisible"
 #define YOFFSET "yoffset"
+#define YSCALE "yscale"
 
 PlotSettings::PlotSettings() :
     hasOffset(false),
-    yScaleType(QCPAxis::stLinear),
+    yScale(YLinear),
     xTickLabels(true),
     yTickLabels(true),
     prefix("PlotSettings"),
@@ -75,7 +78,7 @@ void PlotSettings::restoreDefaults()
     hasOffset = defHasOffset;
     legendVisible = defLegendVisible;
     abscissa = TTHETA;
-    yScaleType = QCPAxis::stLinear;
+    yScale = YLinear;
     xTickLabels = true;
     yTickLabels = true;
 }
@@ -92,7 +95,51 @@ void PlotSettings::setAbscissa(const xAbscissaType &value)
 
 QString PlotSettings::getYLabel() const
 {
-    return (yScaleType == QCPAxis::stLinear ? "Counts" : "LOG(Counts)");
+    switch (yScale) {
+    case YSquareRoot:  return "SQRT(Counts)";
+    case YLogarithmic: return "LOG(Counts)";
+    default:           return "Counts";
+    }
+}
+
+namespace {
+const double LOG_FLOOR = 0.01;                      // lowest intensity shown on the log scale
+const double LOG10_FLOOR = std::log10(LOG_FLOOR);   // -2
+const double LOG_SQUEEZE = 1e-6;                    // slope below the floor
+}
+
+double PlotSettings::toPlotY(YScale scale, double counts)
+{
+    switch (scale) {
+    case YSquareRoot:
+        return std::copysign(std::sqrt(std::fabs(counts)), counts);
+    case YLogarithmic:
+        if (counts > LOG_FLOOR) return std::log10(counts);
+        return LOG10_FLOOR + (counts - LOG_FLOOR) * LOG_SQUEEZE;
+    default:
+        return counts;
+    }
+}
+
+double PlotSettings::fromPlotY(YScale scale, double value)
+{
+    switch (scale) {
+    case YSquareRoot:
+        return std::copysign(value * value, value);
+    case YLogarithmic:
+        if (value > LOG10_FLOOR) return std::pow(10.0, value);
+        return LOG_FLOOR + (value - LOG10_FLOOR) / LOG_SQUEEZE;
+    default:
+        return value;
+    }
+}
+
+void PlotSettings::applyYScaleTo(CustomPlotZoom *plot) const
+{
+    // The data are already sqrt(I) / log10(I), so a linear axis gives equally spaced
+    // ticks and grid lines labelled in those units
+    plot->yAxis->setScaleType(QCPAxis::stLinear);
+    plot->yAxis->setLabel(getYLabel());
 }
 
 void PlotSettings::read()
@@ -115,6 +162,8 @@ void PlotSettings::read()
     yGridPen = settings.value(YGRID_PEN, defYGridPen).value<QPen>();
     legendVisible = settings.value(LEGEND_VISIBLE, defLegendVisible).value<bool>();
     yOffset = settings.value(YOFFSET, defYOffset).toDouble();
+    yScale = YScale(settings.value(YSCALE, YLinear).toInt());
+    if (yScale < YLinear || yScale > YLogarithmic) yScale = YLinear;
     settings.endGroup();
 }
 
@@ -138,6 +187,7 @@ void PlotSettings::write()
     settings.setValue(YGRID_PEN, yGridPen);
     settings.setValue(LEGEND_VISIBLE, legendVisible);
     settings.setValue(YOFFSET, yOffset);
+    settings.setValue(YSCALE, int(yScale));
     settings.endGroup();
 }
 
@@ -216,8 +266,7 @@ void PlotSettings::applyTo(CustomPlotZoom *plot) const
     plot->legend->setVisible(legendVisible);
 
     plot->xAxis->setLabel(abscissaString(abscissa));
-    plot->yAxis->setScaleType(yScaleType);
-    plot->yAxis->setLabel(getYLabel());
+    applyYScaleTo(plot);
 
     plot->xAxis->setTickLabels(xTickLabels);
     plot->yAxis->setTickLabels(yTickLabels);

@@ -10,6 +10,11 @@ using namespace xpdutils;
 class PlotSettings
 {
 public:
+    // Intensity scale of the y axis. For square root and logarithm the intensities are
+    // transformed (see toPlotY/fromPlotY) and drawn on a linear axis, so ticks and grid
+    // lines are equally spaced in sqrt(I) / log10(I) units.
+    enum YScale { YLinear = 0, YSquareRoot, YLogarithmic };
+
     PlotSettings();
     QColor backColor, backColor1, backColor2;
     ColorWidget::ColorType backColorType;
@@ -22,12 +27,20 @@ public:
     double yOffset;
     bool hasOffset;
     bool legendVisible;
-    QCPAxis::ScaleType yScaleType;
+    YScale yScale;
     bool xTickLabels, yTickLabels;
 
     void read();
     void write();
     void applyTo(CustomPlotZoom *plot) const;
+    void applyYScaleTo(CustomPlotZoom *plot) const;
+
+    // Intensity (counts) <-> y plot coordinate for the given scale. The square root
+    // keeps the sign (sign(y)*sqrt(|y|)), as difference curves can be negative. The
+    // logarithm is log10(y) above 0.01; lower (also negative) values are squeezed
+    // just below log10(0.01) = -2, invertibly, so switching back restores them.
+    static double toPlotY(YScale scale, double counts);
+    static double fromPlotY(YScale scale, double value);
     void restoreDefaults();
 
     xAbscissaType getAbscissa() const;

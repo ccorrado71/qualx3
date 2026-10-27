@@ -219,15 +219,25 @@ CONTAINS
 !-------------------------------------------------------------------------
 
    subroutine scale_data(this,scal)
+!
+!  Rescale the counts linearly to [0, scal] (default 1000): the minimum count
+!  becomes 0 and the maximum becomes scal.
+!
    class(dataset_type), intent(inout) :: this
    real, optional, intent(in)         :: scal
-   real                               :: scald
+   real                               :: scald, ymin, ymax
    if (present(scal)) then
        scald = scal
    else
        scald = 1000.
    endif
-   this%y = scald * this%y / maxval(this%y)
+   ymin = minval(this%y)
+   ymax = maxval(this%y)
+   if (ymax > ymin) then
+       this%y = scald * (this%y - ymin) / (ymax - ymin)
+   else
+       this%y = 0.0     ! flat pattern: nothing to scale
+   endif
    this%data_scaled = .true.
    end subroutine scale_data
 

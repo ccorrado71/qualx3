@@ -82,6 +82,7 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     setAcceptDrops(true);
 
     plotSettings.read();
+    m_yScale = plotSettings.yScale;
 }
 
 void XpdViewWidget::hideGraphicArea()
@@ -100,6 +101,7 @@ void XpdViewWidget::setGraphicArea()
     clearPlottables();
     clearItems();
 
+    m_yScale = plotSettings.yScale; // no data drawn yet: nothing to convert
     plotSettings.applyTo(this);
 
     axisRect(0)->setVisible(true);
@@ -183,6 +185,8 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
 {
     QVector<double> xvet = xvet0;
     QVector<double> yvet = yvet0;
+    for (double &y : yvet)
+        y = toPlotY(y);
     if (plotSettings.getAbscissa() == xpdutils::DVALUE) {
         xpdutils::tthetaToD(xvet,yvet,wave);
         xAxis->setRangeReversed(true);
@@ -718,7 +722,7 @@ void XpdViewWidget::drawSelectedComparePoints(const QVector<double> &tth,
         const QColor c = (i < colors.size() && colors[i].isValid()) ? colors[i] : expColor;
         const QRgb key = c.rgb();
         groupedX[key].append(x);
-        groupedY[key].append(intensity[i]);
+        groupedY[key].append(toPlotY(intensity[i]));
     }
 
     for (auto it = groupedX.constBegin(); it != groupedX.constEnd(); ++it) {
@@ -853,14 +857,14 @@ void XpdViewWidget::myMoveEvent(QMouseEvent *event)
             }
             //xString2 = (plotSettings.getAbscissa() == xpdutils::TTHETA) ? twoTheta : "d";
             //xp2_val = xpdutils::tthvalue(xp_val, wave, plotSettings.getAbscissa());
-            QString label1 = QString("%1: %2 I: %3").arg(xString1).arg(x_val).arg(y_val);
+            QString label1 = QString("%1: %2 I: %3").arg(xString1).arg(x_val).arg(fromPlotY(y_val));
             labelWidget1->setText(fontMetrics().elidedText(label1,Qt::ElideRight,labelWidget1->size().width()-10));
 
 
             QString label2 = QString("Count: #%1 (%2, %3) %4: %5 Graph: %6").
                              arg(indexMin+1).
                              arg(xp_val).
-                             arg(yp_val).
+                             arg(fromPlotY(yp_val)).
                              arg(xString2).
                              arg(xp2_val).
                              arg(graph(graphIndex)->name());
@@ -1014,7 +1018,7 @@ void XpdViewWidget::addDeletePoint(QPoint mousePos)
 
     if (mAction == AddBackgroundPoint || mAction == AddPeak) {
         double xval = xAxis->pixelToCoord(mousePos.x());
-        double yval = yAxis->pixelToCoord(mousePos.y());
+        double yval = fromPlotY(yAxis->pixelToCoord(mousePos.y()));
         //process_action_points(mAction, xval, yval, &ier);
         emit addDeletePointSignal(mAction, xval, yval, ier);
         if (mAction == AddPeak) {
@@ -1034,7 +1038,7 @@ void XpdViewWidget::addDeletePoint(QPoint mousePos)
 
         //if (dist.manhattanLength() < radius) {
             //process_action_points(mAction, closePoint.x(), closePoint.y(), &ier);
-        emit addDeletePointSignal(mAction, closePoint.x(), closePoint.y(), ier);
+        emit addDeletePointSignal(mAction, closePoint.x(), fromPlotY(closePoint.y()), ier);
         //}
 
     } else if (mAction == DeletePeak) {
@@ -1101,6 +1105,58 @@ void XpdViewWidget::dropEvent(QDropEvent *event)
 void XpdViewWidget::setPlotSettings(const PlotSettings &newPlotSettings)
 {
     plotSettings = newPlotSettings;
+    // The scale changes only through setYScale(), which also converts the data
+    plotSettings.yScale = m_yScale;
+}
+
+void XpdViewWidget::setYScale(PlotSettings::YScale scale)
+{
+    if (scale == m_yScale)
+        return;
+
+    const PlotSettings::YScale oldScale = m_yScale;
+    auto convert = [oldScale, scale](double v) {
+        return PlotSettings::toPlotY(scale, PlotSettings::fromPlotY(oldScale, v));
+    };
+
+    // The y offset is in plot units: remove it while converting, add it back after
+    const double offset = mLastYOffset;
+    if (offset != 0.0)
+        applyOffset(0.0);
+
+    // Convert the intensities of every curve. Skip the graphs placed on the reflection
+    // bars (selected reflections, systematic absences): they are positions in the bar
+    // area, which does not depend on the scale. Legend-only graphs have no data.
+    for (int i = 0; i < graphCount(); ++i) {
+        if (i == selectedRef.graphIndex || i == sysAbs.graphIndex)
+            continue;
+        QCPGraphDataContainer *data = graph(i)->data().data();
+        for (auto it = data->begin(); it != data->end(); ++it)
+            it->value = convert(it->value);
+    }
+
+    // Keep the curves' y limits (used to set the y range) in the new scale
+    auto convertLimits = [&convert](graphItem &item) {
+        if (item.graphIndex < 0) return;
+        item.min = convert(item.min);
+        item.max = convert(item.max);
+    };
+    for (graphItem &item : obs) convertLimits(item);
+    for (graphItem &item : profCurves) convertLimits(item);
+    for (graphItem *item : {&calc, &back, &bpoints, &diff, &cdiff, &peaks, &smooth, &undpeaks})
+        convertLimits(*item);
+
+    m_yScale = scale;
+    plotSettings.yScale = scale;
+    plotSettings.applyYScaleTo(this);
+
+    if (graphCount() > 0) {
+        redrawPlot(true);   // new y range; the bars keep their share of it
+        if (offset != 0.0)
+            applyOffset(offset);
+    } else {
+        replot();
+    }
 }
 
 PlotSettings XpdViewWidget::pSettings() const
@@ -1286,9 +1342,12 @@ void XpdViewWidget::clearGraphSelection(graphItem &item)
 //     }
 // }
 
-void XpdViewWidget::drawGraphicItem(graphItem &item, const QVector<double> &xvet, const QVector<double> &yvet, double wave)
+void XpdViewWidget::drawGraphicItem(graphItem &item, const QVector<double> &xvet, const QVector<double> &yvet0, double wave)
 {
     if (xvet.size() > 0) {
+        QVector<double> yvet = yvet0;
+        for (double &y : yvet)
+            y = toPlotY(y);
         int id = item.graphIndex;
         if (id < 0) {
             item.wave = wave;
@@ -1558,7 +1617,10 @@ void XpdViewWidget::drawCardPeaks()
         g->setName(cpd.id);
         g->setPen(QPen(cpd.color, 1.5));
         g->setLineStyle(QCPGraph::lsImpulse);
-        g->setData(xData, cpd.intensity);
+        QVector<double> yData = cpd.intensity;
+        for (double &y : yData)
+            y = toPlotY(y);
+        g->setData(xData, yData);
         g->setSelectable(QCP::stNone);
         g->removeFromLegend();
         m_cardPeakGraphs.append(g);

@@ -113,18 +113,17 @@ PlotStyleDialog::PlotStyleDialog(QWidget *parent) :
            mAbscissa = xpdutils::ONE_OVER_DVALUE2;
        }
     });
-    connect(ui->linearRadioButton, &QRadioButton::clicked, this, [=](){
-       if (mYScaleType != QCPAxis::stLinear) {
-           enableApplyButton();
-           mYScaleType = QCPAxis::stLinear;
-       }
-    });
-    connect(ui->logarithmicRadioButton, &QRadioButton::clicked, this, [=](){
-       if (mYScaleType != QCPAxis::stLogarithmic) {
-           enableApplyButton();
-           mYScaleType = QCPAxis::stLogarithmic;
-       }
-    });
+    auto connectYScale = [this](QRadioButton *button, PlotSettings::YScale scale) {
+        connect(button, &QRadioButton::clicked, this, [this, scale](){
+           if (mYScale != scale) {
+               enableApplyButton();
+               mYScale = scale;
+           }
+        });
+    };
+    connectYScale(ui->linearRadioButton,      PlotSettings::YLinear);
+    connectYScale(ui->squareRootRadioButton,  PlotSettings::YSquareRoot);
+    connectYScale(ui->logarithmicRadioButton, PlotSettings::YLogarithmic);
     connect(ui->axisComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), ui->axisStackedWidget, &QStackedWidget::setCurrentIndex);
     connectLineWidget(ui->xAxisLSWidget);
     connectLineWidget(ui->yAxisLSWidget);
@@ -280,11 +279,13 @@ void PlotStyleDialog::setWidgets(bool init, const QPen &backPen, const QCPScatte
     } else if (mAbscissa == xpdutils::ONE_OVER_DVALUE2) {
         ui->oneOverD2RadioButton->setChecked(true);
     }
-    mYScaleType = psettings.yScaleType;
-    if (mYScaleType == QCPAxis::stLinear) {
-        ui->linearRadioButton->setChecked(true);
-    } else if (mYScaleType == QCPAxis::stLinear) {
+    mYScale = psettings.yScale;
+    if (mYScale == PlotSettings::YSquareRoot) {
+        ui->squareRootRadioButton->setChecked(true);
+    } else if (mYScale == PlotSettings::YLogarithmic) {
         ui->logarithmicRadioButton->setChecked(true);
+    } else {
+        ui->linearRadioButton->setChecked(true);
     }
     ui->xAxisLSWidget->setLineStyle(psettings.xAxisPen);
     ui->yAxisLSWidget->setLineStyle(psettings.yAxisPen);
@@ -651,10 +652,12 @@ void PlotStyleDialog::apply(XpdViewWidget *plot, bool update)
         plotChanged = true;        
     }
 
-    if (mYScaleType != pSettings.yScaleType) {
-        if (update) pSettings.yScaleType = mYScaleType;
-        plot->yAxis->setScaleType(pSettings.yScaleType);
-        plot->yAxis->setLabel(pSettings.getYLabel());
+    // On Cancel (update = false) go back to the scale the dialog was opened with.
+    // setYScale() converts the curves already drawn and sets up the axis.
+    const PlotSettings::YScale yScale = update ? mYScale : settings0.yScale;
+    if (yScale != plot->yScale()) {
+        plot->setYScale(yScale);
+        pSettings.yScale = yScale;
         plotChanged = true;
     }
 
