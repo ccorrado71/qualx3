@@ -547,6 +547,9 @@
    </property>
   </action>
   <action name="actionAdd_Background_Point">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/addpoint.png</normaloff>:/images/images/addpoint.png</iconset>
@@ -556,6 +559,9 @@
    </property>
   </action>
   <action name="actionDelete_Background_Point">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/deletepoint.xpm</normaloff>:/images/images/deletepoint.xpm</iconset>
@@ -575,6 +581,9 @@
    </property>
   </action>
   <action name="actionAdd_Peak">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/addpeak.xpm</normaloff>:/images/images/addpeak.xpm</iconset>
@@ -594,6 +603,9 @@
    </property>
   </action>
   <action name="actionDelete_Peak">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/images/delpeak.xpm</normaloff>:/images/images/delpeak.xpm</iconset>

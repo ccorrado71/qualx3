@@ -1550,11 +1550,17 @@ void MainWindow::createActionGroup()
     zoomGroup->addAction(ui->actionHorizontal_Zoom);
     zoomGroup->addAction(ui->actionRectangle_Zoom);
     zoomGroup->addAction(ui->actionPan);
-    zoomGroup->addAction(ui->actionAdd_Background_Point);
-    zoomGroup->addAction(ui->actionDelete_Background_Point);
-    zoomGroup->addAction(ui->actionAdd_Peak);
-    zoomGroup->addAction(ui->actionDelete_Peak);
     connect(zoomGroup,&QActionGroup::triggered, this, &MainWindow::zoomGroupTriggered);
+
+    // Pattern tools (toolBarPattern): at most one checked; clicking the checked one
+    // again unchecks it and returns to the current zoom action
+    patternGroup = new QActionGroup(this);
+    patternGroup->setExclusionPolicy(QActionGroup::ExclusionPolicy::ExclusiveOptional);
+    patternGroup->addAction(ui->actionAdd_Background_Point);
+    patternGroup->addAction(ui->actionDelete_Background_Point);
+    patternGroup->addAction(ui->actionAdd_Peak);
+    patternGroup->addAction(ui->actionDelete_Peak);
+    connect(patternGroup,&QActionGroup::triggered, this, &MainWindow::patternGroupTriggered);
 }
 
 void MainWindow::zoomGroupTriggered(QAction *action)
@@ -1567,16 +1573,27 @@ void MainWindow::zoomGroupTriggered(QAction *action)
         if (mAction != RectangleZoom) setAction(RectangleZoom);
     } else if (action == ui->actionPan) {
         if (mAction != Pan) setAction(Pan);
-    } else if (action == ui->actionAdd_Background_Point) {
-        if (mAction != AddBackgroundPoint) setAction(AddBackgroundPoint, false);
+    }
+}
+
+void MainWindow::patternGroupTriggered(QAction *action)
+{
+    if (!action->isChecked()) {
+        // Same tool clicked again: leave it (also restores the cursor)
+        setAction(savedZoomAction, false);
+        return;
+    }
+
+    if (action == ui->actionAdd_Background_Point) {
+        setAction(AddBackgroundPoint, false);
     } else if (action == ui->actionDelete_Background_Point) {
-        if (mAction != DeleteBackgroundPoint) setAction(DeleteBackgroundPoint, false);
+        setAction(DeleteBackgroundPoint, false);
     } else if (action == ui->actionAdd_Peak) {
-        if (mAction != AddPeak) setAction(AddPeak, false);
+        setAction(AddPeak, false);
         ui->peakDockWidget->show();
         ui->peakDockWidget->raise();
     } else if (action == ui->actionDelete_Peak) {
-        if (mAction != DeletePeak) setAction(DeletePeak, false);
+        setAction(DeletePeak, false);
     }
 }
 
@@ -1596,6 +1613,18 @@ void MainWindow::checkAction(MouseAction action)
         break;
     case Pan:
         ui->actionPan->setChecked(true);
+        break;
+    case AddBackgroundPoint:
+        ui->actionAdd_Background_Point->setChecked(true);
+        break;
+    case DeleteBackgroundPoint:
+        ui->actionDelete_Background_Point->setChecked(true);
+        break;
+    case AddPeak:
+        ui->actionAdd_Peak->setChecked(true);
+        break;
+    case DeletePeak:
+        ui->actionDelete_Peak->setChecked(true);
         break;
     default:
         break;
@@ -1634,6 +1663,15 @@ void MainWindow::readAction()
 
 void MainWindow::setAction(const MouseAction &action, bool writeConfig)
 {
+    // A zoom action ends any pattern tool: uncheck it and remember the zoom action,
+    // to return to it when the pattern tool is left
+    if (action == NoZoom || action == HorizontalZoom || action == RectangleZoom || action == Pan) {
+        savedZoomAction = action;
+        if (patternGroup && patternGroup->checkedAction())
+            patternGroup->checkedAction()->setChecked(false);
+    }
+    mAction = action;
+
     XpdViewWidget::MouseAction xpdAction = static_cast<XpdViewWidget::MouseAction>(action);
     xpdViewer()->setAction(xpdAction);
 

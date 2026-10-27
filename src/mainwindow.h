@@ -93,6 +93,7 @@ public:
 private slots:
     void closeEvent(QCloseEvent *event);
     void zoomGroupTriggered(QAction *action);
+    void patternGroupTriggered(QAction *action);
     void plotStyleClosed(QDialogButtonBox::StandardButton button);
 
     //File
@@ -163,6 +164,7 @@ private:
     MouseAction mAction;
     MouseAction savedAction;
     MouseAction savedZoomAction;
+    QActionGroup *patternGroup = nullptr;
     QMap<QAction *, bool> stateActions;
     void enumerateEnabledActionsMenu(QMenu *menu);
 
