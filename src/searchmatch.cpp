@@ -2,14 +2,14 @@
 #include "appstate.h"
 #include "searchoptionsdialog.h"
 
-extern "C" void apply_background_subtraction();
+extern "C" void ensure_background();
 extern "C" void run_peaksearchwin();
 extern "C" int peak_number();
 extern "C" void get_d_delta_values(float dval[], float deltadval[], float tthval[], float intval[], float fwhmval[], double *wave, double delta2theta);
 
 int ensurePeaksFound()
 {
-    apply_background_subtraction();
+    ensure_background();
     int npeaks = peak_number();
     if (npeaks == 0) {
         run_peaksearchwin();

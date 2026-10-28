@@ -140,6 +140,22 @@ module background_interop
 
 ! -----------------------------------------------------------------------------------------------------
 
+! Make sure a background is available without subtracting it: the search works on
+! the net intensities (see computeFOM) while the pattern is shown with its background.
+   subroutine ensure_background() bind(C,name="ensure_background")
+   USE variables, only: dataset
+   USE VIEW
+   USE molcom, only: jscreen
+!
+   if (.not.dataset(1)%back_subtracted .and. .not.dataset(1)%has_back()) then
+       call dataset(1)%make_background()
+       if (jscreen > 0) call vedinew()
+   endif
+!
+   end subroutine ensure_background
+
+! -----------------------------------------------------------------------------------------------------
+
 ! Number of background points, to pre-allocate C arrays before calling get_background_points.
    subroutine get_background_npoints(np) bind(C,name="get_background_npoints")
    USE variables, only: dataset

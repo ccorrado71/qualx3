@@ -51,12 +51,25 @@ contains
    integer                                  :: ntph, nts
    real                                     :: sumsa, sumda, sumdtot, sumstot, SQRTDS, SQRTDA
    integer                                  :: numass
+   real                                     :: yback
+   logical                                  :: use_back
 !  Input variables to add
-   logical :: kscal = .true.
-   real    :: crd_scale = 1.0
+   logical :: kscal
+   real    :: crd_scale
+!
+!  Initialized here, not in the declarations (that would imply SAVE and leak
+!  values from the previous card when no peak is associated)
+   kscal = .true.
+   crd_scale = 1.0
+   fomd = 0.0
+   fomI = 0.0
 !
 !  Fom value have to be in output
    fom_tot = 0
+!
+!  The background is not subtracted from the pattern: use the net counts
+   use_back = .false.
+   if (allocated(dataset(1)%yb)) use_back = size(dataset(1)%yb) == size(dataset(1)%y)
 !
 !  Define the experimental range
    tthmin = dataset(1)%tmin - delta2theta
@@ -172,7 +185,9 @@ contains
 !
 !                 Database peak not associated: find the closest count
                   icl = clocate(dataset(1)%x,xd_buf(i))
-                  Idiff = Id_buf(i)*crd_scale - dataset(1)%y(icl)
+                  yback = 0.0
+                  if (use_back) yback = dataset(1)%yb(icl)
+                  Idiff = Id_buf(i)*crd_scale - (dataset(1)%y(icl) - yback)
                   if (Idiff < 0) ndmin = ndmin + 1  !count unassociated peaks below observed
               endif
            enddo
