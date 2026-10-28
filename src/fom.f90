@@ -25,7 +25,6 @@ contains
                          fompeakpos_out,fomintensity_out,scale_out, &
                          exp_tth,exp_intensity,exp_size)  bind(C,name="computeFOM")
    use variables, only: dataset
-!corr   use peak_mod, only: pkind, numpeaks
    use, intrinsic :: iso_c_binding, only: c_double, c_int
    use arrayutil, only: clocate
    real(c_double), dimension(*), intent(in) :: tth           ! 2theta array for the card
@@ -52,17 +51,11 @@ contains
    integer                                  :: ntph, nts
    real                                     :: sumsa, sumda, sumdtot, sumstot, SQRTDS, SQRTDA
    integer                                  :: numass
-!
-!  External variables to add
-   !real                                     :: delta2theta = 0.25
-   !real                                     :: w_phases = 0.5
-   !real                                     :: w2thetad = 0.5
-   !real                                     :: w_intensity = 0.5
 !  Input variables to add
    logical :: kscal = .true.
    real    :: crd_scale = 1.0
-!  Fom value have to be in output
 !
+!  Fom value have to be in output
    fom_tot = 0
 !
 !  Define the experimental range
@@ -89,7 +82,6 @@ contains
    enddo
 !
 !  Allocate array to size of experimental peaks (ns)
-!corr   ns = numpeaks(pkind)
    if (exp_size > cap_exp) then
        if (allocated(pkas_buf)) deallocate(pkas_buf, Idmult_buf, exp_tth_r_buf, iass_buf)
        allocate(pkas_buf(exp_size), Idmult_buf(exp_size), exp_tth_r_buf(exp_size), iass_buf(exp_size))
@@ -103,8 +95,6 @@ contains
    pkas_buf(1:exp_size) = 0
    pkad_buf(1:nd) = 0
    do i=1,nd
-!corr      nlm = clocate(pkind%getx(),xd(i))
-!corr      diffss = abs(pkind(nlm)%getx() - xd(i))
       nlm = clocate(exp_tth_r_buf(1:exp_size),xd_buf(i))
       diffss = abs(exp_tth(nlm) - xd_buf(i))
       if (diffss < delta2theta) then
@@ -232,7 +222,6 @@ contains
    fompeakpos_out    = real(fomd,       c_double)
    fomintensity_out  = real(fomI,       c_double)
    scale_out         = real(crd_scale,  c_double)
-   !write(0,*)'FOMD = ',fomd,natot,nd
 !
    end subroutine computeFOM
 

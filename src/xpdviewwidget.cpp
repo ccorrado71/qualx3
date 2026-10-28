@@ -1467,6 +1467,26 @@ void XpdViewWidget::setLegendVisible(bool visible)
     replot();
 }
 
+// Show the background curve and points if they were hidden from Plot Style
+// (e.g. before editing the background points). Nothing to do if the background
+// has not been computed yet: adding the first point computes and shows it.
+void XpdViewWidget::showBackground()
+{
+    bool changed = false;
+    for (graphItem *item : {&back, &bpoints}) {
+        const int id = item->graphIndex;
+        if (id < 0 || item->visible) continue;
+        item->visible = true;
+        graph(id)->setVisible(true);
+        graph(id)->addToLegend();
+        changed = true;
+    }
+    if (changed) {
+        legend->setMaximumSize(legend->minimumOuterSizeHint());
+        redrawPlot(true);   // the background takes part in the y limits
+    }
+}
+
 void XpdViewWidget::applyOffset(double yOffset)
 {
     //Unapply the last yoffset

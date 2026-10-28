@@ -1586,8 +1586,10 @@ void MainWindow::patternGroupTriggered(QAction *action)
 
     if (action == ui->actionAdd_Background_Point) {
         setAction(AddBackgroundPoint, false);
+        xpdViewer()->showBackground();   // the points being edited must be visible
     } else if (action == ui->actionDelete_Background_Point) {
         setAction(DeleteBackgroundPoint, false);
+        xpdViewer()->showBackground();
     } else if (action == ui->actionAdd_Peak) {
         setAction(AddPeak, false);
         ui->peakDockWidget->show();

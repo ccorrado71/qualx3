@@ -66,6 +66,7 @@ public:
     void drawSystematicAbsences();
     void clearSystematicAbsences();
     void setLegendVisible(bool visible);
+    void showBackground();
     void setCardPeaks(const QVector<CardPeakData> &peaks);
     void addPhaseReflections(const CardType &card, const QColor &color);
     void removePhaseReflections(const QString &id);

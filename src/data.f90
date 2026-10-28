@@ -273,11 +273,6 @@ END MODULE datamod
    USE datamod
 !
    implicit none
-!corr   interface
-!corr     subroutine run_peaksearch(gui)
-!corr     logical, intent(in), optional :: gui
-!corr     end subroutine run_peaksearch
-!corr   end interface
    integer, intent(in) :: paction
    real, intent(in)    :: xp,yp
    type(point_type)    :: padd
