@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <limits>
+#include <numeric>
 #include <QLabel>
 #include <QHash>
 
@@ -98,6 +100,7 @@ void XpdViewWidget::setGraphicArea()
     m_cardPeakLegendGraphs.clear(); // pointers invalidated by clearGraphs()
     m_selectedCompareGraphs.clear(); // pointers invalidated by clearGraphs()
     m_peaksLegendGraph = nullptr; // pointer invalidated by clearGraphs()
+    m_peakBarsGraph = nullptr; // pointer invalidated by clearGraphs()
     clearPlottables();
     clearItems();
 
@@ -235,8 +238,24 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
             removeGraph(m_peaksLegendGraph);
             m_peaksLegendGraph = nullptr;
         }
+        if (m_peakBarsGraph) {
+            removeGraph(m_peakBarsGraph);
+            m_peakBarsGraph = nullptr;
+        }
         makePlot(xvet,yvet,peaks);
         graph()->removeFromLegend();
+        // The peaks graph keeps one point per peak (selection, deletion and
+        // markers use its indices) but is not drawn: the bars are drawn by a
+        // companion graph, from the background to the peak top
+        graph()->setLineStyle(QCPGraph::lsNone);
+        plotWave.append(peaks.wave);
+        m_peakBarsGraph = addGraph();
+        m_peakBarsGraph->setPen(peaks.getPen());
+        m_peakBarsGraph->setLineStyle(QCPGraph::lsLine);
+        m_peakBarsGraph->setAdaptiveSampling(false);
+        m_peakBarsGraph->setSelectable(QCP::stNone);
+        m_peakBarsGraph->removeFromLegend();
+        updatePeakBars();
         {
             // Legend-only companion graph: a vertical tick icon represents the
             // impulse bars better than the line style's default horizontal sample.
@@ -642,6 +661,7 @@ void XpdViewWidget::deleteSelectedPeaks()
     for (int i = 0; i < keys.size(); i++) {
         graph(idPeak)->data()->remove(keys.at(i));
     }
+    updatePeakBars();
 
     clearSelectedPeaks();
 }
@@ -1622,25 +1642,75 @@ void XpdViewWidget::setCardPeaks(const QVector<CardPeakData> &peaks)
     replot();
 }
 
+void XpdViewWidget::setBackgroundProvider(std::function<double(double)> backgroundAt)
+{
+    m_backgroundAt = std::move(backgroundAt);
+}
+
+// Experimental peak bars: from the background at the peak 2theta to the peak
+// top, as NaN-separated vertical segments (lsImpulse always starts from zero).
+// Built from the (hidden) peaks graph, which is already in plot units.
+void XpdViewWidget::updatePeakBars()
+{
+    if (!m_peakBarsGraph || peaks.graphIndex < 0) return;
+
+    const xpdutils::xAbscissaType abscissa = plotSettings.getAbscissa();
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    QCPGraphDataContainer *data = graph(peaks.graphIndex)->data().data();
+    QVector<double> xBars, yBars;
+    xBars.reserve(3*data->size());
+    yBars.reserve(3*data->size());
+    for (auto it = data->constBegin(); it != data->constEnd(); ++it) {
+        double base = 0.0;
+        if (m_backgroundAt) {
+            const double tth = (abscissa == xpdutils::TTHETA)
+                                   ? it->key : xpdutils::tthvalue(it->key, peaks.wave, abscissa);
+            base = m_backgroundAt(tth);
+        }
+        xBars << it->key << it->key << it->key;
+        yBars << toPlotY(base) << it->value << nan;
+    }
+    m_peakBarsGraph->setData(xBars, yBars, true);
+}
+
 void XpdViewWidget::drawCardPeaks()
 {
     if (m_cardPeaks.isEmpty()) return;
 
     const bool useDValue = (plotSettings.getAbscissa() == xpdutils::DVALUE);
 
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+
     for (const CardPeakData &cpd : m_cardPeaks) {
         const QVector<double> &xData = useDValue ? cpd.d : cpd.tth;
         if (xData.isEmpty() || cpd.intensity.size() != xData.size()) continue;
+        const bool onBackground = m_backgroundAt && cpd.tth.size() == xData.size();
+
+        // The pattern is shown with its background, so each bar starts from the
+        // background at its 2theta (in counts). lsImpulse always starts from zero:
+        // draw each bar as a vertical segment (base, base+I) and separate the
+        // segments with a NaN gap.
+        // The data must be passed already sorted, so that the three points
+        // of a bar sharing the same key keep their order.
+        QVector<int> order(xData.size());
+        std::iota(order.begin(), order.end(), 0);
+        std::sort(order.begin(), order.end(), [&xData](int a, int b) { return xData[a] < xData[b]; });
+        QVector<double> xBars, yBars;
+        xBars.reserve(3*xData.size());
+        yBars.reserve(3*xData.size());
+        for (int i : order) {
+            const double base = onBackground ? m_backgroundAt(cpd.tth[i]) : 0.0;
+            xBars << xData[i] << xData[i] << xData[i];
+            yBars << toPlotY(base) << toPlotY(base + cpd.intensity[i]) << nan;
+        }
 
         QCPGraph *g = addGraph();
         plotWave.append(cpd.wave);   // keeps plotWave in sync with graph count
         g->setName(cpd.id);
         g->setPen(QPen(cpd.color, 1.5));
-        g->setLineStyle(QCPGraph::lsImpulse);
-        QVector<double> yData = cpd.intensity;
-        for (double &y : yData)
-            y = toPlotY(y);
-        g->setData(xData, yData);
+        g->setLineStyle(QCPGraph::lsLine);
+        g->setAdaptiveSampling(false);
+        g->setData(xBars, yBars, true);
         g->setSelectable(QCP::stNone);
         g->removeFromLegend();
         m_cardPeakGraphs.append(g);

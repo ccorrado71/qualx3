@@ -156,6 +156,39 @@ module background_interop
 
 ! -----------------------------------------------------------------------------------------------------
 
+! Background linearly interpolated at tth (0 if there is no background to show).
+! Used to draw the card peak bars on top of the background.
+   real(c_float) function background_at(tth) bind(C,name="background_at")
+   USE variables, only: dataset
+   USE arrayutil, only: clocate
+   real(c_float), value, intent(in) :: tth
+   integer :: n, j
+   real    :: t
+!
+   background_at = 0.0
+   if (.not.allocated(dataset)) return
+   if (size(dataset) == 0) return
+   if (dataset(1)%back_subtracted .or. .not.dataset(1)%has_back()) return
+   n = dataset(1)%npoints()
+   if (size(dataset(1)%yb) /= n .or. size(dataset(1)%x0) /= n) return
+!
+   associate(x => dataset(1)%x0, yb => dataset(1)%yb)
+     if (tth <= x(1)) then
+         background_at = yb(1)
+     else if (tth >= x(n)) then
+         background_at = yb(n)
+     else
+         j = clocate(x,real(tth))   ! nearest point: make it the left one
+         if (x(j) > tth) j = j - 1
+         t =(tth - x(j)) / (x(j+1) - x(j))
+         background_at = yb(j) + t*(yb(j+1) - yb(j))
+     endif
+   end associate
+!
+   end function background_at
+
+! -----------------------------------------------------------------------------------------------------
+
 ! Number of background points, to pre-allocate C arrays before calling get_background_points.
    subroutine get_background_npoints(np) bind(C,name="get_background_npoints")
    USE variables, only: dataset

@@ -6,6 +6,8 @@
 #include "plotsettings.h"
 #include "reflectionbar.h"
 
+#include <functional>
+
 class CardType;
 struct ExperimentalPeaks;
 
@@ -68,6 +70,7 @@ public:
     void setLegendVisible(bool visible);
     void showBackground();
     void setCardPeaks(const QVector<CardPeakData> &peaks);
+    void setBackgroundProvider(std::function<double(double)> backgroundAt); // background (counts) at a 2theta
     void addPhaseReflections(const CardType &card, const QColor &color);
     void removePhaseReflections(const QString &id);
     void clearPhaseReflections();
@@ -157,11 +160,14 @@ private:
     QScrollBar *horizontalScrollBar;
 
     QVector<CardPeakData> m_cardPeaks;
+    std::function<double(double)> m_backgroundAt;   // base of the card peak bars
     QVector<QCPGraph *>   m_cardPeakGraphs;
     QVector<QPair<QString, QCPGraph *>> m_cardPeakLegendGraphs; // card id -> its legend-only graph
     QVector<QCPGraph *>   m_selectedCompareGraphs;
     QCPGraph             *m_peaksLegendGraph = nullptr; // legend-only vertical-tick icon for "Peaks"
     void drawCardPeaks();
+    void updatePeakBars();
+    QCPGraph             *m_peakBarsGraph = nullptr;    // drawn bars of the experimental peaks
     void updateCardPeaksLegend();
     void clearSelectedComparePoints();
     void refreshAcceptedPhaseBars();

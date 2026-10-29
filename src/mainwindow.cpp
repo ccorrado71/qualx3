@@ -51,6 +51,7 @@ extern "C" void SavePeaksC(const char *filename, int length, int tipo);
 extern "C" void delete_peaksC(int pkvet[], int npeak);
 extern "C" void process_action_points(int kaction, double xp, double yp,int *ier);
 extern "C" void apply_background_subtraction();
+extern "C" float background_at(float tth);
 extern "C" void kalpha2_stripping();
 extern "C" int peak_number();
 extern "C" void computeFOM(double tth[], double intensity[], int tsize, double *fomd,
@@ -125,6 +126,9 @@ MainWindow::MainWindow(QWidget *parent)
     xpdViewer()->connectHorizontalScrollBar(ui->horizontalScrollBar);
     xpdViewer()->connectAddDeletePoints();
     xpdViewer()->connectSelectionChanged();
+    xpdViewer()->setBackgroundProvider([](double tth) {
+        return static_cast<double>(background_at(static_cast<float>(tth)));
+    });
     connect(xpdViewer(), &XpdViewWidget::deleteSelectedPeaksSignal, this, &MainWindow::deleteSelectedPeaks);
     connect(xpdViewer(), &XpdViewWidget::addDeletePointSignal, this, &MainWindow::addDeleteSelectedPoint);
     connect(xpdViewer(), &XpdViewWidget::fileDropped, this, &MainWindow::onActionFileDropped);
