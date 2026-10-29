@@ -1086,10 +1086,10 @@ void XpdViewWidget::selectionChanged()
     {
         QCPGraph *gr = graph(i);
         if (gr->visible()) {
-            QCPPlottableLegendItem *item = legend->itemWithPlottable(gr);
-            if (item->selected() || gr->selected())
+            QCPPlottableLegendItem *item = legend->itemWithPlottable(gr); // null if not in the legend
+            if ((item && item->selected()) || gr->selected())
             {
-                item->setSelected(true);
+                if (item) item->setSelected(true);
                 gr->setSelection(QCPDataSelection(gr->data()->dataRange()));
             }
         }

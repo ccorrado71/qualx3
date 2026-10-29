@@ -92,6 +92,51 @@ CONTAINS
 !
    end subroutine run_peaksearch
 
+! ---------------------------------------------------------------------
+
+   subroutine update_peak_intensities()
+!
+!  Recompute the intensities of the current peaks after a change of the background,
+!  keeping the peak list (positions, added/deleted peaks): the background is no longer
+!  subtracted from the pattern, so the peak intensities depend on it.
+!  Same definition as the peak search: net counts at the peak, corrected by get_intensities.
+!
+   USE peak_mod
+   USE variables, only: dataset
+   USE molcom, only: jscreen
+   implicit none
+   interface
+      subroutine update_peak_list() bind(C,name="update_peak_list")
+      end subroutine update_peak_list
+   end interface
+   real, dimension(:), allocatable :: yc
+!
+   if (numpeaks(pkind) == 0 .and. numpeaks(pkindtot) == 0) return
+   if (allocated(dataset(1)%yb)) then
+       if (size(dataset(1)%yb) /= dataset(1)%npoints()) return
+       yc = dataset(1)%y - dataset(1)%yb
+   else
+       yc = dataset(1)%y
+   endif
+!
+   call recompute(pkind)
+   call recompute(pkindtot)
+   if (jscreen > 0) call update_peak_list()   ! peak table, experimental peaks, report
+!
+   contains
+
+     subroutine recompute(pk)
+     type(peak_type), dimension(:), allocatable, intent(inout) :: pk
+     integer :: i
+     if (numpeaks(pk) == 0) return
+     do i=1,numpeaks(pk)
+        call pk(i)%get_int(dataset(1)%x,yc)   ! height of the peak above the background
+     enddo
+     call get_intensities(pk,dataset(1)%x,yc)
+     end subroutine recompute
+!
+   end subroutine update_peak_intensities
+
 END MODULE datamod
 
 !---------------------------------------------------------------------------
@@ -300,10 +345,9 @@ END MODULE datamod
 !
    call UserBack()      ! ricalcola il background
 !
-   if (style(STYLE_PEAKS)%vis == 1) then  ! peaksearch
-       call run_peaksearch()
-   else
-       call vedinew(rescale=0)
-   endif
+!  Keep the peak list (it may have been edited or used by a search): only update
+!  the intensities, which depend on the background
+   call update_peak_intensities()
+   call vedinew(rescale=0)
 !
    end subroutine update_background

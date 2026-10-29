@@ -72,6 +72,7 @@ module background_interop
    !USE proginterface
    USE variables, only: dataset
    USE arrayutil
+   USE datamod, only: update_peak_intensities
    !interface
    !  subroutine run_peaksearch(gui)
    !  logical, intent(in), optional :: gui
@@ -95,6 +96,7 @@ module background_interop
         dataset(1)%cond%maxf = dataset(1)%xmaxc0()
         backc = cast_to_c(dataset(1)%cond)
         call dataset(1)%make_background()
+        call update_peak_intensities()
         style(STYLE_BACK)%vis = 1
         style(STYLE_BACKP)%vis = 1
         call vedinew()
@@ -103,11 +105,7 @@ module background_interop
         dataset(1)%cond = cast_to_f(backc)
         call dataset(1)%make_background()
         backc = cast_to_c(dataset(1)%cond)
-!
-!       Peaksearch attivo: rigenera i picchi
-        !if (style(STYLE_PEAKS)%vis == 1) then 
-        !    call run_peaksearch()
-        !endif
+        call update_peak_intensities()
         call vedinew()
 
       case (3)    ! Apply filter
@@ -115,6 +113,7 @@ module background_interop
         ncmin = clocate(dataset(1)%x0,dataset(1)%cond%minf)
         ncmax = clocate(dataset(1)%x0,dataset(1)%cond%maxf)
         call smoothback(dataset(1)%yb(ncmin:ncmax),dataset(1)%cond%niterf,dataset(1)%cond%nwinf)
+        call update_peak_intensities()
         call vedinew()
 
    end select
