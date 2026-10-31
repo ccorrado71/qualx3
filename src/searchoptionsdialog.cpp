@@ -4,9 +4,9 @@
 extern "C" double delta2thetaPeaks();
 
 #include <QAbstractButton>
+#include <QDesktopServices>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
-#include <QMessageBox>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSlider>
@@ -56,13 +56,7 @@ SearchOptionsDialog::SearchOptionsDialog(QWidget *parent)
     connect(ui->buttonBox, &QDialogButtonBox::rejected,
             this, &QDialog::reject);
     connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, []() {
-        QMessageBox::information(nullptr, QObject::tr("Help"),
-            QObject::tr("Adjust the weights and options used during database search.\n\n"
-                        "Min. FOM: minimum figure of merit threshold.\n"
-                        "2θ/d: relative weight of 2theta/d-spacing matching.\n"
-                        "Intensity: relative weight of intensity matching.\n"
-                        "Phases: bias towards single- or multi-phase solutions.\n"
-                        "Δ2θ: 2theta tolerance (use Auto for automatic selection)."));
+        QDesktopServices::openUrl(QUrl("https://ccorrado71.github.io/qualx3/search-match/search-match.html"));
     });
     connect(ui->buttonBox, &QDialogButtonBox::clicked,
             this, &SearchOptionsDialog::onButtonClicked);

@@ -5,6 +5,7 @@
 
 #include <QCheckBox>
 #include <QDialog>
+#include <QDesktopServices>
 #include <QDialogButtonBox>
 #include <QGridLayout>
 #include <QHeaderView>
@@ -13,7 +14,6 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
@@ -642,11 +642,5 @@ void RestraintsDialog::onCancelAllRestraintsClicked()
 
 void RestraintsDialog::onHelpClicked()
 {
-    QMessageBox::information(this, tr("Help"),
-        tr("<b>Composition</b>: Filter by chemical elements present in the structure.<br><br>"
-           "<b>Subfiles</b>: Filter by subfile category (inorganic, organic, …).<br><br>"
-           "<b>Chemical Name</b>: Filter by chemical or mineral name.<br><br>"
-           "<b>Entries</b>: Filter by entry ID range.<br><br>"
-           "<b>Symmetries</b>: Filter by space group or crystal system.<br><br>"
-           "<b>Cell and Properties</b>: Filter by unit cell parameters, density, volume, …"));
+    QDesktopServices::openUrl(QUrl("https://ccorrado71.github.io/qualx3/search-match/restraints.html"));
 }
