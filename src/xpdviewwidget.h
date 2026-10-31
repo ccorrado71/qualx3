@@ -69,6 +69,7 @@ public:
     void clearSystematicAbsences();
     void setLegendVisible(bool visible);
     void showBackground();
+    void hideBackgroundPoints();
     void setCardPeaks(const QVector<CardPeakData> &peaks);
     void setBackgroundProvider(std::function<double(double)> backgroundAt); // background (counts) at a 2theta
     void addPhaseReflections(const CardType &card, const QColor &color);

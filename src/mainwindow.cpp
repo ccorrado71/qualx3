@@ -1765,6 +1765,7 @@ void MainWindow::onActionSearchMatchTriggered()
         return;
     }
 
+    xpdViewer()->hideBackgroundPoints();   // not useful during search-match
     loadExperimentalPeaks();
     const ExperimentalPeaks &ep0 = AppState::peaks();
 
@@ -1958,6 +1959,8 @@ void MainWindow::onRestraintsSearch(bool merge)
 {
     if (!m_restraintsDialog->hasRestraints()) return;
 
+    xpdViewer()->hideBackgroundPoints();   // not useful during the search
+
     DbQueryBuilder builder;
     builder.setPrintEnabled(true);
     applyDialogRestraints(builder);
@@ -1982,6 +1985,7 @@ void MainWindow::onRestraintsSearchMatch()
     const int npeaks = peak_number();
     if (npeaks == 0) return;
 
+    xpdViewer()->hideBackgroundPoints();   // not useful during search-match
     loadExperimentalPeaks();
     const ExperimentalPeaks &ep2 = AppState::peaks();
 

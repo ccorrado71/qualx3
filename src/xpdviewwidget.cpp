@@ -43,6 +43,7 @@ XpdViewWidget::XpdViewWidget(QWidget *parent)
     bpoints.setName();
     bpoints.setLineStyle(Qt::NoPen);
     bpoints.setLineConnectionType(QCPGraph::lsNone);
+    bpoints.visible = true;   // shown by default; addPlot() keeps it hidden once hidden
     diff.gtype = graphItem::Difference;
     diff.defaultIDColor = 4;
     diff.setColorLine();
@@ -214,9 +215,15 @@ void XpdViewWidget::addPlot(const QVector<double> &xvet0, const QVector<double> 
         break;
 
     case graphItem::Background_Points:
-        bpoints.visible = visible;
+        // Fortran always draws the points as visible: keep them hidden if they were
+        // hidden here (Plot Style, hideBackgroundPoints()), so a redraw does not show them again
+        if (!visible) bpoints.visible = false;
         bpoints.wave = wave;
         makePlot(xvet,yvet,bpoints);
+        if (!bpoints.visible) {
+            graph()->setVisible(false);
+            graph()->removeFromLegend();
+        }
         break;
 
     case graphItem::Difference:
@@ -1495,8 +1502,9 @@ void XpdViewWidget::showBackground()
     bool changed = false;
     for (graphItem *item : {&back, &bpoints}) {
         const int id = item->graphIndex;
-        if (id < 0 || item->visible) continue;
-        item->visible = true;
+        if (item->visible) continue;
+        item->visible = true;   // also when not drawn yet, so it is shown once computed
+        if (id < 0) continue;
         graph(id)->setVisible(true);
         graph(id)->addToLegend();
         changed = true;
@@ -1505,6 +1513,20 @@ void XpdViewWidget::showBackground()
         legend->setMaximumSize(legend->minimumOuterSizeHint());
         redrawPlot(true);   // the background takes part in the y limits
     }
+}
+
+// Hide the background points (not useful during search-match). They can be shown
+// again from Plot Style, or by editing the background points (showBackground()).
+void XpdViewWidget::hideBackgroundPoints()
+{
+    if (!bpoints.visible) return;
+    bpoints.visible = false;
+    const int id = bpoints.graphIndex;
+    if (id < 0) return;
+    graph(id)->setVisible(false);
+    graph(id)->removeFromLegend();
+    legend->setMaximumSize(legend->minimumOuterSizeHint());
+    replot();
 }
 
 void XpdViewWidget::applyOffset(double yOffset)
