@@ -149,7 +149,7 @@
        <item>
         <spacer name="spacerPropertiesBottom">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -192,7 +192,7 @@
          <item>
           <spacer name="spacerEntriesClear">
            <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
+            <enum>Qt::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -207,7 +207,7 @@
        <item>
         <spacer name="spacerEntries">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -312,7 +312,7 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -350,7 +350,7 @@
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -375,7 +375,7 @@
        <item>
         <spacer name="spacerSymmetries">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -396,12 +396,15 @@
        <property name="text">
         <string>Help</string>
        </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::DialogQuestion"/>
+       </property>
       </widget>
      </item>
      <item>
       <spacer name="buttonSpacer">
        <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -420,21 +423,21 @@
      </item>
      <item>
       <widget class="QPushButton" name="loadMergeButton">
-       <property name="text">
-        <string>Load and Merge Cards</string>
-       </property>
        <property name="enabled">
         <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Load and Merge Cards</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="searchButton">
-       <property name="text">
-        <string>Search with Restraints</string>
-       </property>
        <property name="enabled">
         <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Search with Restraints</string>
        </property>
       </widget>
      </item>
@@ -449,6 +452,9 @@
       <widget class="QPushButton" name="closeButton">
        <property name="text">
         <string>Close</string>
+       </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::WindowClose"/>
        </property>
       </widget>
      </item>
