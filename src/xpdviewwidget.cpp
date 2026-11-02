@@ -7,9 +7,11 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <limits>
 #include <numeric>
 #include <QLabel>
+#include <QWheelEvent>
 #include <QHash>
 
 XpdViewWidget::XpdViewWidget(QWidget *parent)
@@ -420,6 +422,10 @@ void XpdViewWidget::addReflections(float xvet[], int h[], int k[], int l[], int 
 void XpdViewWidget::drawPlot()
 {
     getYLimits(yLowerRangeNoRef, yUpperRange);
+    if (rescalePlotEnabled())
+        m_yZoom = 1.0;      // new pattern: full range
+    else
+        applyVerticalZoom();
 
     //Compute space for reflections
     double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04; //space for single set of reflections
@@ -490,7 +496,10 @@ void XpdViewWidget::drawPlot()
 
 void XpdViewWidget::redrawPlot(bool computeLimits)
 {
-    if (computeLimits) getYLimits(yLowerRangeNoRef, yUpperRange);
+    if (computeLimits) {
+        getYLimits(yLowerRangeNoRef, yUpperRange);
+        applyVerticalZoom();
+    }
 
     //Compute space for reflections
     double spaceRef = (yUpperRange - yLowerRangeNoRef) * 0.04; //space for single set of reflections
@@ -1631,6 +1640,49 @@ void XpdViewWidget::applyAutoScale()
             yLowerRange = yLowerRangeSav;
         }
     }
+}
+
+// Vertical zoom kept when the plot is redrawn: only the upper limit of the curves is
+// lowered, so the region of the bars below the curves keeps its size
+void XpdViewWidget::applyVerticalZoom()
+{
+    if (m_yZoom < 1.0)
+        yUpperRange = yLowerRangeNoRef + (yUpperRange - yLowerRangeNoRef) * m_yZoom;
+}
+
+void XpdViewWidget::resetVerticalZoom()
+{
+    m_yZoom = 1.0;
+}
+
+// Ctrl+wheel: vertical zoom of the curves. The lower limit of the curves stays fixed and
+// only the upper one changes; the bars of the peaks and of the phases are rescaled by
+// redrawPlot() with the new range, so they keep the same place and size on screen.
+// Without Ctrl the wheel keeps its horizontal zoom.
+void XpdViewWidget::wheelEvent(QWheelEvent *event)
+{
+    if (!(event->modifiers() & Qt::ControlModifier) || graphCount() == 0) {
+        CustomPlotZoom::wheelEvent(event);
+        return;
+    }
+    event->accept();
+    const double steps = event->angleDelta().y() / 120.0;
+    if (steps == 0.0) return;
+
+    double fullLower, fullUpper;
+    getYLimits(fullLower, fullUpper);
+    const double lower = yLowerRangeNoRef;
+    const double fullRange = fullUpper - lower;
+    if (fullRange <= 0.0) return;
+
+    const double factor = std::pow(0.85, steps);   // wheel up expands, as the horizontal zoom
+    const double curRange = yAxis->range().upper - lower;
+    const double newRange = qBound(fullRange * 1e-3, curRange * factor, fullRange);
+    if (newRange == curRange) return;
+
+    m_yZoom = newRange / fullRange;
+    yUpperRange = lower + newRange;
+    redrawPlot(false);
 }
 
 void XpdViewWidget::connectHorizontalScrollBar(QScrollBar *newHorizontalScrollBar)

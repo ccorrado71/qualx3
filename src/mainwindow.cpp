@@ -1548,6 +1548,7 @@ void MainWindow::onActionPlotStyleTriggered()
 void MainWindow::onActionResetZoomTriggered()
 {
     xpdViewer()->xAxis->rescale();
+    xpdViewer()->resetVerticalZoom();
     xpdViewer()->redrawPlot(true);
 }
 

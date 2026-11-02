@@ -80,6 +80,7 @@ public:
     void clearPreviewCardReflections();
     void applyOffset(double yOffset = 0);
     void applyAutoScale();
+    void resetVerticalZoom();
     void enableRescalePlot(bool value);
     void connectLabels(QLabel *newLabel1, QLabel *newLabel2, QLabel *newLabel3);
     void connectHorizontalScrollBar(QScrollBar *newHorizontalScrollBar);
@@ -121,6 +122,7 @@ private slots:
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
     QVector<graphItem> profCurves;
@@ -136,6 +138,8 @@ private:
     double yLowerRange, yUpperRange;
     double yLowerRangeNoRef;
     double mLastYOffset;
+    double m_yZoom = 1.0;   // vertical zoom (Ctrl+wheel): shown fraction of the y range of the curves
+    void applyVerticalZoom();
     bool rescalePlot;
     MouseAction mAction;
     MouseAction savedZoomAction;
