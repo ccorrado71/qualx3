@@ -197,10 +197,20 @@ private:
     void onRestraintsSearch(bool merge);
     void onRestraintsSearchMatch();
     void onCardSelected(const QString &id);
+    int cardPlotWidth() const;
+    void updateCardPlot();
     void applyDialogRestraints(DbQueryBuilder &builder);
     void performResidualSearch(const CardType &acceptedCard);
     void recalculateFOMs(const QString &statusSuffix = QString());
     void loadDiffractionPatterns(QStringList files);
     void loadProject(QString fileName);
+
+    // Reflections plot of the card shown in cardBrowser, redrawn when the browser is resized
+    QVector<double> cardPlotTth;
+    QVector<double> cardPlotI;
+    QColor cardPlotColor;
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 };
 #endif // MAINWINDOW_H

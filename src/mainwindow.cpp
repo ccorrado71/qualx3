@@ -23,8 +23,12 @@
 #include "maintenancetool.h"
 #include "printdialog.h"
 #include "reportwidget.h"
+#include "reflectionsplotimage.h"
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QResizeEvent>
+#include <QTextBlock>
+#include <QTextCursor>
 #include <QTextDocument>
 #include <QFileInfo>
 #include <QUrl>
@@ -39,6 +43,7 @@
 #include <QStandardPaths>
 
 #include <algorithm>
+#include <cmath>
 
 MainWindow *mMainWindow;
 QString MainWindow::pathDataFiles = "";
@@ -85,6 +90,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->cardBrowser->setOpenExternalLinks(true);
+    ui->cardBrowser->viewport()->installEventFilter(this);   // redraw the reflections plot
     ui->resultsWidget->setEntryToolBar(ui->toolBarEntry);
     ui->resultsWidget->setContextMenuActions({
         ui->actionLoad_Add,
@@ -151,6 +157,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    ui->cardBrowser->viewport()->removeEventFilter(this);
     delete ui;
 }
 
@@ -620,6 +627,8 @@ void MainWindow::onActionNewTriggered()
     ui->peakCompareWidget->setExperimentalPeaks(ExperimentalPeaks());
     ui->quantWidget->clearPhases();
     ui->cardBrowser->clear();
+    cardPlotTth.clear();
+    cardPlotI.clear();
     ui->dockWidgetCard->setWindowTitle(tr("Card"));
 
     AppState::peaks().clear();
@@ -2088,10 +2097,18 @@ void MainWindow::actionManageDatabasesTriggered()
         AppState::setDatabases(dlg.databases());
 }
 
+namespace {
+const QUrl cardPlotUrl("qualx-card://reflections-plot.png");
+const int  cardPlotHeight = 150;
+}
+
 void MainWindow::onCardSelected(const QString &id)
 {
     const CardInfo info = AppState::db().queryCard(id);
     if (!info.valid) return;
+
+    cardPlotTth.clear();
+    cardPlotI.clear();
 
     auto row = [](const QString &label, const QString &value) -> QString {
         if (value.isEmpty() || value == "0" ) return QString();
@@ -2174,6 +2191,23 @@ void MainWindow::onCardSelected(const QString &id)
 
         html += QString("<h4 style='margin:6px 0 2px 0'>Reflections "
                         "(&lambda; = %1 &Aring;)</h4>").arg(wave, 0, 'f', 5);
+
+        // Stick pattern of the reflections (intensity vs 2theta), embedded as an
+        // image resource of the document. It is added before setHtml(), which keeps it.
+        if (hasI) {
+            for (int i = 0; i < dv.size(); ++i) {
+                const double t = xpdutils::tthvalue(dv[i], wave);
+                if (std::isnan(t)) continue;   // reflection not reachable at this wavelength
+                cardPlotTth.append(t);
+                cardPlotI.append(info.intensities[i]);
+            }
+            if (!cardPlotTth.isEmpty()) {
+                cardPlotColor = cardColor(info.id);
+                updateCardPlot();
+                html += QString("<p style='margin:2px 0 6px 0'><img src='%1' width='%2' height='%3'></p>")
+                            .arg(cardPlotUrl.toString()).arg(cardPlotWidth()).arg(cardPlotHeight);
+            }
+        }
         html += "<table border='1' cellspacing='0' cellpadding='3' "
                 "style='border-collapse:collapse;font-size:8pt'>";
         html += "<tr style='background:#ddd'>"
@@ -2207,6 +2241,54 @@ void MainWindow::onCardSelected(const QString &id)
 
     ui->cardBrowser->setHtml(html);
     ui->dockWidgetCard->setWindowTitle(id);
+}
+
+// Width of the reflections plot: the whole width available in cardBrowser
+int MainWindow::cardPlotWidth() const
+{
+    const QTextDocument *doc = ui->cardBrowser->document();
+    return std::max(250, ui->cardBrowser->viewport()->width() - 2 * int(doc->documentMargin()) - 16);
+}
+
+// Draws the reflections plot of the current card at the width of cardBrowser and
+// stores it as a document resource; if the card is already shown, the image size
+// in the document is updated too (the browser has been resized)
+void MainWindow::updateCardPlot()
+{
+    if (cardPlotTth.isEmpty()) return;
+    QTextDocument *doc = ui->cardBrowser->document();
+    const int width = cardPlotWidth();
+    const QImage plot = reflectionsPlotImage(cardPlotTth, cardPlotI, cardPlotColor,
+                                             ui->cardBrowser->palette(),
+                                             QSize(width, cardPlotHeight),
+                                             ui->cardBrowser->devicePixelRatioF(),
+                                             QString::fromUtf8("2θ (°)"));
+    doc->addResource(QTextDocument::ImageResource, cardPlotUrl, plot);
+
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment frag = it.fragment();
+            if (!frag.charFormat().isImageFormat()) continue;
+            QTextImageFormat fmt = frag.charFormat().toImageFormat();
+            if (fmt.name() != cardPlotUrl.toString()) continue;
+            fmt.setWidth(width);
+            QTextCursor cursor(doc);
+            cursor.setPosition(frag.position());
+            cursor.setPosition(frag.position() + frag.length(), QTextCursor::KeepAnchor);
+            cursor.setCharFormat(fmt);   // also relayouts the document with the new image
+            return;
+        }
+    }
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->cardBrowser->viewport() && event->type() == QEvent::Resize) {
+        const auto *re = static_cast<QResizeEvent *>(event);
+        if (re->size().width() != re->oldSize().width())
+            updateCardPlot();
+    }
+    return QMainWindow::eventFilter(watched, event);
 }
 
 void MainWindow::performResidualSearch(const CardType &acceptedCard)
