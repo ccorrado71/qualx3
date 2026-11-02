@@ -161,7 +161,7 @@ void PeakCompareWidget::rebuild()
         double         tthExp = 0, iExp = 0;
         bool           hasExp      = false;
         bool           isSelAssoc  = false;
-        bool           compensated = false; // exp intensity fully covered by accepted phases
+        double         compensated = 0.0;   // fraction of exp intensity covered by accepted phases (0-1)
         QVector<Match> accepted;   // one entry per accepted phase
         Match          selected;
     };
@@ -186,7 +186,8 @@ void PeakCompareWidget::rebuild()
                 residual -= acc[j].cardI[k];
             }
         }
-        r.compensated = (nAcc > 0 && residual <= 0.0);
+        if (r.iExp > 0.0)
+            r.compensated = qBound(0.0, 1.0 - residual / r.iExp, 1.0);
         if (m_hasCard && selAssoc[i].dbPeakIndex >= 0) {
             const int k = selAssoc[i].dbPeakIndex;
             r.selected   = { m_card.getTth()[k], selCardI[k],
@@ -248,8 +249,11 @@ void PeakCompareWidget::rebuild()
     for (int r = 0; r < rows.size(); ++r) {
         const Row &row = rows[r];
 
-        if (row.hasExp && row.compensated) {
-            static const QColor gray(180, 180, 180);
+        if (row.hasExp && row.compensated > 0.0) {
+            // Gray shade from the residual intensity: light gray for a peak only partly
+            // covered by the accepted phases, dark gray when it is fully covered
+            const int level = qRound(235 - (235 - 150) * row.compensated);
+            const QColor gray(level, level, level);
             m_model->setItem(r, 0, coloredNumItem(row.tthExp, gray));
             m_model->setItem(r, 1, coloredNumItem(row.iExp,   gray));
         } else {
