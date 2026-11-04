@@ -6,6 +6,7 @@ All notable changes to qualx are documented in this file.
 
 ### Changed
 - The Windows installer can now install over a previous version in the same folder: after confirmation it uninstalls that version first, instead of asking for a different folder.
+- Help > Check for Updates on Windows now looks up the latest release on GitHub, as on Linux and macOS, instead of using the maintenance tool. Configure with `-DWINDOWS_IFW_UPDATER=ON` to go back to the old method.
 
 ## [1.0.8] - 2026-10-21
 

@@ -315,6 +315,10 @@ target_include_directories(${EXECUTABLE_NAME} PUBLIC ${LIBRARY_INCLUDES})
 
 target_compile_definitions(${EXECUTABLE_NAME} PUBLIC "USE_CONFIG_H")
 
+if(WINDOWS_IFW_UPDATER)
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE WINDOWS_IFW_UPDATER)
+endif()
+
 if (WIN32)
     if (IFORT_LIB_DIR)
         target_link_libraries(${EXECUTABLE_NAME} PRIVATE

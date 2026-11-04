@@ -2526,7 +2526,7 @@ void MainWindow::onActionDefaultLayoutTriggered()
 
 void MainWindow::onActionCheckForUpdatesTriggered()
 {
-#if defined(Q_OS_WIN)
+#if defined(Q_OS_WIN) && defined(WINDOWS_IFW_UPDATER)
     auto m_updater = new MaintenanceTool(this);
     connect(m_updater, &MaintenanceTool::stateChanged, [=](MaintenanceTool::ProcessState state){
         if (state == MaintenanceTool::NotRunning && m_updater->hasUpdate()) {

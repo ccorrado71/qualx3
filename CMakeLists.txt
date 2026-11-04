@@ -19,6 +19,10 @@ option(BUILD_DEB_PACKAGE "Build for Debian package installation in /usr" OFF)
 # which makes no sense when installing into an AppDir.
 option(BUILD_APPIMAGE "Build a portable tree for AppImage packaging" OFF)
 
+# Windows only: Check for Updates uses the Qt IFW maintenance tool (the old method)
+# instead of looking up the latest release on GitHub.
+option(WINDOWS_IFW_UPDATER "Windows: update through the IFW maintenance tool instead of GitHub" OFF)
+
 # Set default installation prefix
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(BUILD_DEB_PACKAGE)
@@ -448,6 +452,7 @@ if(WIN32)
 
     # Adds basic repository entries to config.xml file
     # Runs repogen command on the packages directory
+    # Keep it whatever WINDOWS_IFW_UPDATER is: installations up to 1.0.8 update from it
     cpack_ifw_add_repository("Qualx3Repository" URL "https://www.ba.ic.cnr.it/content/old/qualx3/repository")
 
     include(CPack)
