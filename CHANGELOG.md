@@ -4,6 +4,9 @@ All notable changes to qualx are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- The Windows installer can now install over a previous version in the same folder: after confirmation it uninstalls that version first, instead of asking for a different folder.
+
 ## [1.0.8] - 2026-10-21
 
 ### Changed
