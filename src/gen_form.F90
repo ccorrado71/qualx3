@@ -2154,7 +2154,7 @@ contains
           if (str_set_real(strdir, xpdopt%fwhm, 0.0)) go to 10
 
       elseif (word_is_contained(word,'scale')) then
-          if (str_set_real(strdir, xpdopt%fwhm, 0.0)) go to 10
+          if (str_set_real(strdir, xpdopt%scal, 0.0)) go to 10
 
       elseif (word_is_contained(word,'range')) then
           call getnum1(strdir,vet=vet,iv=iv)
