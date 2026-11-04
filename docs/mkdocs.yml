@@ -29,6 +29,7 @@ nav:
     - Overview: introduction/index.md
     - Getting Started: introduction/getting-started.md
     - Examples: introduction/examples.md
+    - Shortcuts: introduction/shortcuts.md
   - Data Reduction:
     - Overview: data-reduction/index.md
     - Background: data-reduction/background.md

@@ -15,6 +15,7 @@ pandoc \
   "${SCRIPT_DIR}/docs/introduction/index.md" \
   "${SCRIPT_DIR}/docs/introduction/getting-started.md" \
   "${SCRIPT_DIR}/docs/introduction/examples.md" \
+  "${SCRIPT_DIR}/docs/introduction/shortcuts.md" \
   "${SCRIPT_DIR}/docs/data-reduction/index.md" \
   "${SCRIPT_DIR}/docs/data-reduction/background.md" \
   "${SCRIPT_DIR}/docs/data-reduction/peak-search.md" \
@@ -24,6 +25,7 @@ pandoc \
   "${SCRIPT_DIR}/docs/search-match/restraints.md" \
   "${SCRIPT_DIR}/docs/references.md" \
   -o "${OUT}" \
+  --resource-path="${SCRIPT_DIR}/docs" \
   --pdf-engine=xelatex \
   --toc \
   --toc-depth=2 \

@@ -2,7 +2,7 @@
 
 ## Windows
 
-1. Download the Windows installer (`qualx-<version>_install.exe`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
+1. Download the Windows installer (`qualx3-<version>-win64.exe`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
 2. Run the installer and follow the on-screen instructions. The default installation folder is `C:\Program Files\Qualx`.
 3. QualX will be available from the Start Menu and the desktop shortcut.
 
@@ -14,7 +14,7 @@
 
 ## macOS
 
-1. Download the macOS DMG file (`qualx-<version>_macos.dmg`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
+1. Download the macOS DMG file (`qualx-<version>-arm64.dmg`) from the [download page](https://github.com/ccorrado71/qualx3/releases).
 2. Double-click the DMG to mount it.
 3. Drag the **QualX** icon into the **Applications** folder.
 4. Eject the mounted volume.
@@ -140,5 +140,11 @@ For instructions on installing a database, see [Database Installation](database-
 
 ## First Launch
 
-On first launch QualX will ask you to configure the path to the database files.
+At every launch QualX scans the `QualXDB` folder in your home directory and
+registers the databases it finds. If no database is configured and this folder
+does not exist, QualX asks whether to choose a different folder containing the
+databases, or to configure them later via **Search → Manage Databases**. See
+[Database Installation](database-installation.md#what-happens-if-the-folder-is-not-found)
+for details.
+
 See [Getting Started](introduction/getting-started.md) for a step-by-step guide.

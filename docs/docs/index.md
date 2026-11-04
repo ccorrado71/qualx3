@@ -4,10 +4,12 @@
 It allows phase identification of crystalline materials by comparing experimental
 diffraction patterns against reference databases.
 
+![QualX main window](images/qualx_screenshot.png)
+
 ## Download
 
-- **Software** — see [Software Installation](installation.md) for download links (Windows, macOS, Linux)
-- **Databases** — see [Database Installation](database-installation.md) for download links (required to run QualX)
+- **Software** (Windows, macOS, Linux) — download the package for your system from the [Releases page](https://github.com/ccorrado71/qualx3/releases). See [Software Installation](installation.md) for the installation guide.
+- **Databases** (required to run QualX) — download them from [Zenodo](https://doi.org/10.5281/zenodo.23297506). See [Database Installation](database-installation.md) for the installation guide.
 
 ## Features
 
@@ -25,6 +27,7 @@ diffraction patterns against reference databases.
 - [Database Installation](database-installation.md)
 - [Getting Started](introduction/getting-started.md)
 - [Search & Match](search-match/search-match.md)
+- [Keyboard and Mouse Shortcuts](introduction/shortcuts.md)
 
 ## Citing QualX
 
