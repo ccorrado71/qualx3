@@ -100,13 +100,10 @@ message("Fortran compiler is: ${Fortran_COMPILER_NAME}")
 # Copy files in building folder
 if(WIN32)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION ${CMAKE_BINARY_DIR})
-    # file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION ${CMAKE_BINARY_DIR})
 elseif(UNIX AND NOT APPLE)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION ${CMAKE_BINARY_DIR})
-    # file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION ${CMAKE_BINARY_DIR})
 elseif(APPLE)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/share DESTINATION "${CMAKE_BINARY_DIR}/src/${EXECUTABLE_NAME}.app/Contents/")
-    # file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION "${CMAKE_BINARY_DIR}/src/${EXECUTABLE_NAME}.app/Contents/")
 endif()
 
 # Install the executable into "${CMAKE_INSTALL_PREFIX}/bin
@@ -115,7 +112,6 @@ install(TARGETS ${EXECUTABLE_NAME}
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${COMPONENT_NAME_MAIN})
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/share/qualx DESTINATION share COMPONENT ${COMPONENT_NAME_MAIN})
-# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/DB DESTINATION . COMPONENT ${COMPONENT_NAME_MAIN})
 
 # PDF manual (generated file — build with 'bash docs/make_pdf.sh' first).
 # The HTML documentation is no longer bundled: Help > Documentation (HTML)
