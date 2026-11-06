@@ -186,6 +186,9 @@ DbResultsWidget::DbResultsWidget(QWidget* parent)
     // Card selection: emit id (for info panel) and full CardType (for peak compare)
     connect(ui->table->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &) {
+        // Moving with the arrow keys on Linux can leave old rows painted as selected,
+        // although they are not: repaint the whole view, after the view has scrolled
+        ui->table->viewport()->update();
         if (!current.isValid()) return;
         const QString id = ui->table->model()->index(current.row(), 2).data().toString();
         if (id.isEmpty()) return;
