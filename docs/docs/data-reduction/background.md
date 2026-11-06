@@ -4,7 +4,7 @@
 
 Background estimation is performed by fitting a polynomial (Chebyshev) or
 filter-based curve to the diffraction pattern. The estimated background can
-be visualised and subtracted before peak search.
+be visualised and, optionally, subtracted from the pattern.
 
 ## Controls
 
@@ -33,5 +33,10 @@ to subtract the estimated background from the pattern.
 The original pattern is preserved and can be restored by reloading the project.
 
 !!! note
-    Background subtraction is recommended before running Peak Search, as it
-    improves peak detection accuracy.
+    Since version 1.1.0 the background is no longer subtracted from the pattern
+    before a search, so this step is optional. The pattern stays displayed with
+    its background, while Peak Search and the Figure of Merit work on the net
+    intensities (pattern minus background).
+
+    Peak intensities are updated whenever the background changes. The FOM values
+    of a previous search are not: run the search again to update them.

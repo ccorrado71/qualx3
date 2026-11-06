@@ -56,7 +56,7 @@ too large to inspect by hand.
 ## Suggested workflow
 
 1. Import one of the example patterns (**File → Import Diffraction Pattern**).
-2. Run background subtraction and peak search as described in
+2. Run background estimation and peak search as described in
    [Getting Started](getting-started.md).
 3. Run **Search → Search & Match** against a reference database containing
    the expected phases (e.g. corundum, silicon, zincite, fluorite, brucite,

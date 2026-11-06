@@ -2,11 +2,34 @@
 
 All notable changes to qualx are documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2026-11-04
+
+### Added
+- Square-root intensity scale for the y axis. The square-root and logarithmic scales now show the transformed values on the axis, with equally spaced ticks.
+- Vertical zoom of the curves with Ctrl+mouse wheel. Reset Zoom restores the full view.
+- Stick plot of the reflections in the card browser.
+- "Keyboard and Mouse Shortcuts" page in the documentation.
 
 ### Changed
+- The background is no longer subtracted from the pattern before a search: the pattern keeps being shown with its background, while the figure of merit works on the net intensities. FOM values can therefore differ from those of previous versions. Pattern > Subtract Background still subtracts it explicitly.
+- Experimental peaks and card peaks are now drawn on top of the background instead of from zero.
+- Peak intensities are recomputed whenever the background changes. Editing background points no longer re-runs the peak search, so manually added or deleted peaks are kept.
+- Imported counts are rescaled to the range 0-1000 with the minimum at 0.
+- Add/Delete Background Point now show the background if it is hidden.
+- The pattern toolbar tools are now exclusive, and clicking the active tool again turns it off.
+- Background points are hidden when a search is started. They can be shown again from Plot Style or by editing them.
+- Results table columns fit the available width.
+- Cancel Search is enabled only while a search is running.
+- Compare table: compensated experimental peaks are shaded in gray according to their residual intensity.
+- The Help buttons of the Restraints and Search Options dialogs open the online documentation.
 - The Windows installer can now install over a previous version in the same folder: after confirmation it uninstalls that version first, instead of asking for a different folder.
 - Help > Check for Updates on Windows now looks up the latest release on GitHub, as on Linux and macOS, instead of using the maintenance tool. Configure with `-DWINDOWS_IFW_UPDATER=ON` to go back to the old method.
+- `sudo cmake --install` (and `install.sh`) now puts the `.desktop` file and the icons in the system folders, so that they are visible to the user session.
+
+### Fixed
+- `scale` directive setting the wrong parameter (the FWHM instead of the scale).
+- Possible crash when selecting a curve in the plot.
+- Scale and intensity FOM of a card with no associated peaks inherited from the previous card.
 
 ## [1.0.8] - 2026-10-21
 
